@@ -1,0 +1,64 @@
+<div class="main-content">
+  <div class="reportinghebdo-theme">
+
+    <h4 class="title">Reporting Hebdomadaire</h4>
+
+    <!-- Filtres -->
+    <div class="filters">
+      <select [(ngModel)]="selectedEntite" class="form-select">
+        <option [ngValue]="null">Sélectionner une entité</option>
+        <option *ngFor="let e of entites" [ngValue]="e.id">
+          {{ e.nom }}
+        </option>
+      </select>
+
+      <input type="date" [(ngModel)]="dateDebut" class="form-control">
+      <input type="date" [(ngModel)]="dateFin" class="form-control">
+
+      <button class="btn btn-primary" (click)="loadActivites()">
+        Rechercher
+      </button>
+    </div>
+
+    <!-- Tableau -->
+    <div class="table-wrapper" *ngIf="activites.length > 0">
+      <table class="table-reporting">
+        <thead>
+          <tr>
+            <th>Nom</th>
+            <th>Titre</th>
+            <th>Date début</th>
+            <th>Date fin</th>
+            <th>Statut</th>
+            <th>Lieu</th>
+            <th>Objectif</th>
+            <th>Créé par</th>
+            <th>Type</th>
+           
+
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let a of activites">
+            <td>{{ a.nom }}</td>
+            <td>{{ a.titre }}</td>
+            <td>{{ a.dateDebut | date:'dd/MM/yyyy' }}</td>
+            <td>{{ a.dateFin | date:'dd/MM/yyyy' }}</td>
+            <td>{{ a.statut }}</td>
+            <td>{{ a.lieu }}</td>
+            <td>{{ a.objectifParticipation }}</td>
+            <td>{{ a.createdBy }}</td>
+            <td>{{ a.typeActivite.libelle }}</td>
+           
+
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p *ngIf="activites.length === 0" class="empty">
+      Aucune activité trouvée
+    </p>
+
+  </div>
+</div>
