@@ -12,7 +12,18 @@
       "submenu": [],
       "roles": [ "PERSONNEL", "SUPERADMIN"]
     },
-
+    {
+      "path": "/courrier",
+      "title": "GESTIONS COURRIERS",
+      "iconType": "feather",
+      "icon": "monitor",
+      "class": "",
+      "groupTitle": false,
+      "badge": "",
+      "badgeClass": "",
+      "submenu": [],
+      "roles": [ "PERSONNEL", "SUPERADMIN"]
+    },
     {
       "path": "/entite",
       "title": "Entité ODC",
