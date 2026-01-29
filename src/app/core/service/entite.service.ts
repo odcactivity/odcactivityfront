@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from 'environments/environment';
 
 export interface Entite {
   id: number;
@@ -12,7 +13,8 @@ export interface Entite {
 })
 export class EntiteService {
 
-  private baseUrl = 'http://localhost:8089/entite'; // ton endpoint backend
+  private baseUrl =environment.apiUrl;
+   
 
   constructor(private http: HttpClient) {}
 

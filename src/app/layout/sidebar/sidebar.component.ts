@@ -1,175 +1,74 @@
-import {
-  Router,
-  NavigationEnd,
-  RouterLink,
-  RouterLinkActive,
-} from '@angular/router';
-import { DOCUMENT, NgClass, NgIf } from '@angular/common';
-import {
-  Component,
-  Inject,
-  ElementRef,
-  OnInit,
-  Renderer2,
-  HostListener,
-  OnDestroy,
-} from '@angular/core';
-import { RouteInfo } from './sidebar.metadata';
-import { TranslateModule } from '@ngx-translate/core';
-import { FeatherModule } from 'angular-feather';
+import { Component, OnInit } from '@angular/core';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import { NgScrollbar } from 'ngx-scrollbar';
+import { NgIf } from '@angular/common';
+import { FeatherModule } from 'angular-feather';
+import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '@core';
 import { SidebarService } from './sidebar.service';
-import { Utilisateur } from '@core/models/Utilisateur.model';
 
 @Component({
   selector: 'app-sidebar',
   templateUrl: './sidebar.component.html',
   styleUrls: ['./sidebar.component.sass'],
+  standalone: true,
   imports: [
     RouterLink,
-    NgScrollbar,
     RouterLinkActive,
-    NgClass,
+    NgScrollbar,
+    NgIf,
     FeatherModule,
     TranslateModule,
-    NgIf
-  ],
+  ]
 })
-export class SidebarComponent implements OnInit, OnDestroy {
-  public sidebarItems: RouteInfo[] = [];
-  public innerHeight?: number;
-  public bodyTag!: HTMLElement;
-  listMaxHeight?: string;
-  listMaxWidth?: string;
-  headerHeight = 60;
-  routerObj: any;
-  useRole: string[] = [];
+export class SidebarComponent implements OnInit {
+  sidebarItems: any[] = [];
 
   nomComplet = 'Utilisateur';
   genre = 'Homme';
+  useRole: string[] = [];
+  listMaxHeight = '500';
 
   constructor(
-    @Inject(DOCUMENT) private document: Document,
-    private renderer: Renderer2,
-    public elementRef: ElementRef,
     private authService: AuthService,
-    private router: Router,
     private sidebarService: SidebarService
-  ) {
-    this.routerObj = this.router.events.subscribe((event) => {
-      if (event instanceof NavigationEnd) {
-        this.renderer.removeClass(this.document.body, 'overlay-open');
-        this.sidebbarClose();
-      }
-    });
+  ) {}
+
+  ngOnInit(): void {
     this.useRole = this.authService.getCurrentUserFromStorage()?.roles || [];
-  }
 
-  @HostListener('window:resize', ['$event'])
-  windowResizecall() {
-    if (window.innerWidth < 1025) {
-      this.renderer.removeClass(this.document.body, 'side-closed');
+    // Charger JSON Menu + filtrer par rôle
+    this.sidebarService.getRouteInfo().subscribe(routes => {
+      this.sidebarItems = routes
+        .filter(item => this.checkRoles(item.roles))
+        .map(item => ({
+          ...item,
+          submenu: (item.submenu || []).filter(x => this.checkRoles(x.roles)),
+          open: false
+        }));
+    });
+
+    // Charger infos user
+    const user = this.authService.getCurrentUserFromStorage();
+    if (user && user.bearer) {
+      const decoded = this.authService.getDecodedToken(user.bearer);
+      this.nomComplet = `${decoded.prenom} ${decoded.nom}`;
+      this.genre = decoded.genre || 'Homme';
     }
+
     this.setMenuHeight();
-    this.checkStatuForResize(false);
   }
 
-  @HostListener('document:mousedown', ['$event'])
-  onGlobalClick(event: Event): void {
-    if (!this.elementRef.nativeElement.contains(event.target)) {
-      this.renderer.removeClass(this.document.body, 'overlay-open');
-      this.sidebbarClose();
-    }
+  checkRoles(roles?: string[]): boolean {
+    return !roles || roles.length === 0 || roles.some(r => this.useRole.includes(r));
   }
 
-  callToggleMenu(event: Event, length: number) {
-    if (length > 0) {
-      const parentElement = (event.target as HTMLElement).closest('li');
-      if (!parentElement) return;
-      const activeClass = parentElement.classList.contains('active');
-      if (activeClass) {
-        this.renderer.removeClass(parentElement, 'active');
-      } else {
-        this.renderer.addClass(parentElement, 'active');
-      }
-    }
-  }
-
-  ngOnInit() {
-    const userRoles: string[] = this.authService.getCurrentUserFromStorage()?.roles || [];
-
-    if (this.authService.currentUserValue) {
-      this.sidebarService.getRouteInfo().subscribe((routes: RouteInfo[]) => {
-        this.sidebarItems = routes.filter((sidebarItem) => {
-          const roles = sidebarItem.roles || [];
-          return roles.length === 0 || roles.some(r => userRoles.includes(r));
-        });
-      });
-    }
-
-    this.initLeftSidebar();
-    this.bodyTag = this.document.body;
-
-    const userString = localStorage.getItem('currentUser');
-    if (userString) {
-      const user = JSON.parse(userString);
-      const token = user.bearer;
-      if (token) {
-        const decoded = this.authService.getDecodedToken(token);
-        this.nomComplet = `${decoded.prenom} ${decoded.nom}`;
-        this.genre = `${decoded.genre}`;
-      }
-    }
-  }
-
-  ngOnDestroy() {
-    this.routerObj.unsubscribe();
-  }
-
-  initLeftSidebar() {
-    this.setMenuHeight();
-    this.checkStatuForResize(true);
+  toggle(item: any) {
+    item.open = !item.open;
   }
 
   setMenuHeight() {
-    this.innerHeight = window.innerHeight;
-    const height = this.innerHeight - this.headerHeight;
+    const height = window.innerHeight - 60;
     this.listMaxHeight = height + '';
-    this.listMaxWidth = '500px';
-  }
-
-  isOpen() {
-    return this.bodyTag.classList.contains('overlay-open');
-  }
-
-  checkStatuForResize(firstTime: boolean) {
-    if (window.innerWidth < 1025) {
-      this.renderer.addClass(this.document.body, 'sidebar-gone');
-    } else {
-      this.renderer.removeClass(this.document.body, 'sidebar-gone');
-    }
-  }
-
-  mouseHover() {
-    const body = this.elementRef.nativeElement.closest('body');
-    if (body?.classList.contains('submenu-closed')) {
-      this.renderer.addClass(this.document.body, 'side-closed-hover');
-      this.renderer.removeClass(this.document.body, 'submenu-closed');
-    }
-  }
-
-  mouseOut() {
-    const body = this.elementRef.nativeElement.closest('body');
-    if (body?.classList.contains('side-closed-hover')) {
-      this.renderer.removeClass(this.document.body, 'side-closed-hover');
-      this.renderer.addClass(this.document.body, 'submenu-closed');
-    }
-  }
-
-  sidebbarClose() {
-    if (window.innerWidth < 1025) {
-      this.renderer.addClass(this.document.body, 'sidebar-gone');
-    }
   }
 }

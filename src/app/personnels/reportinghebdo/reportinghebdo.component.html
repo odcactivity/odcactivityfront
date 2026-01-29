@@ -5,39 +5,59 @@
 
     <!-- Filtres -->
     <div class="filters">
-      <select [(ngModel)]="selectedEntite" class="form-select">
+
+      <select
+        class="form-select"
+        [(ngModel)]="selectedEntite"
+      >
         <option [ngValue]="null">Sélectionner une entité</option>
         <option *ngFor="let e of entites" [ngValue]="e.id">
           {{ e.nom }}
         </option>
       </select>
 
-      <input type="date" [(ngModel)]="dateDebut" class="form-control">
-      <input type="date" [(ngModel)]="dateFin" class="form-control">
+      <input
+        type="date"
+        class="form-control"
+        [(ngModel)]="dateDebut"
+      >
 
-      <button class="btn btn-primary" (click)="loadActivites()">
+      <input
+        type="date"
+        class="form-control"
+        [(ngModel)]="dateFin"
+      >
+
+      <button
+        class="btn btn-primary"
+        [disabled]="!selectedEntite || !dateDebut || !dateFin"
+        (click)="loadActivites()"
+      >
         Rechercher
       </button>
+
     </div>
 
-    <!-- Tableau -->
-    <div class="table-wrapper" *ngIf="activites.length > 0">
+    <!-- Tableau (s'affiche seulement si données) -->
+    <div
+      class="table-wrapper"
+      *ngIf="hasSearched && activites.length > 0"
+    >
       <table class="table-reporting">
         <thead>
           <tr>
-            <th>Nom</th>
+            <th>Nom de la formation </th>
             <th>Titre</th>
             <th>Date début</th>
             <th>Date fin</th>
             <th>Statut</th>
             <th>Lieu</th>
-            <th>Objectif</th>
-            <th>Créé par</th>
-            <th>Type</th>
-           
-
+            <th>Nombre de participant</th>
+            <th>cible</th>
+            <th>Tranche âge</th>
           </tr>
         </thead>
+
         <tbody>
           <tr *ngFor="let a of activites">
             <td>{{ a.nom }}</td>
@@ -47,16 +67,18 @@
             <td>{{ a.statut }}</td>
             <td>{{ a.lieu }}</td>
             <td>{{ a.objectifParticipation }}</td>
-            <td>{{ a.createdBy }}</td>
-            <td>{{ a.typeActivite.libelle }}</td>
-           
-
+            <td>Etudiant-Professionnel</td>
+            <td>20-35</td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <p *ngIf="activites.length === 0" class="empty">
+    <!-- Message si aucune donnée -->
+    <p
+      class="empty"
+      *ngIf="hasSearched && activites.length === 0"
+    >
       Aucune activité trouvée
     </p>
 

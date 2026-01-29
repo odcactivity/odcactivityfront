@@ -2,30 +2,34 @@
   "routes": [
     {
       "path": "/dashboard/main",
-      "title": "Maison",
+      "title": "Dashboard",
       "iconType": "feather",
       "icon": "monitor",
       "class": "",
       "groupTitle": false,
-      "badge": "",
-      "badgeClass": "",
       "submenu": [],
-      "roles": [ "PERSONNEL", "SUPERADMIN"]
+      "roles": ["PERSONNEL", "SUPERADMIN"]
     },
+
     {
-      "path": "/courrier",
-      "title": "GESTIONS COURRIERS",
+      "path": "",
+      "title": "Entité",
       "iconType": "feather",
-      "icon": "monitor",
+      "icon": "layers",
       "class": "",
       "groupTitle": false,
-      "badge": "",
-      "badgeClass": "",
-      "submenu": [],
-      "roles": [ "PERSONNEL", "SUPERADMIN"]
-    },
-    {
-      "path": "/entite",
+      "submenu": [
+        {
+          "path": "/utilisateur",
+          "title": "Personnel",
+          "iconType": "feather",
+          "icon": "users",
+          "class": "",
+          "submenu": [],
+          "roles": ["SUPERADMIN"]
+        },
+        { 
+        "path": "/entite",
       "title": "Entité ODC",
       "iconType": "feather",
       "icon": "layers",
@@ -35,189 +39,114 @@
       "badgeClass": "",
       "submenu": [],
       "roles": ["SUPERADMIN"]
-    },
-    {
-      "path": "/utilisateur",
-      "title": "Personnels",
-      "iconType": "feather",
-      "icon": "users",
-      "class": "",
-      "groupTitle": false,
-      "badge": "",
-      "badgeClass": "",
-      "submenu": [],
+      },
+        {
+          "path": "/role",
+          "title": "Rôle",
+          "iconType": "feather",
+          "icon": "shield",
+          "class": "",
+          "submenu": [],
+          "roles": ["SUPERADMIN"]
+        }
+      ],
       "roles": ["SUPERADMIN"]
     },
+
     {
-      "path": "/role",
-      "title": "Role",
+      "path": "/courrier",
+      "title": "Gestion des Courriers",
       "iconType": "feather",
-      "icon": "shield",
+      "icon": "mail",
       "class": "",
       "groupTitle": false,
-      "badge": "",
-      "badgeClass": "",
       "submenu": [],
-      "roles": ["SUPERADMIN"]
+      "roles": ["PERSONNEL", "SUPERADMIN"]
     },
+
     {
-      "path": "/dashboardActivite",
-      "title": "Dashboard Activité",
-      "iconType": "feather",
-      "icon": "bar-chart-2",
-      "class": "",
-      "groupTitle": false,
-      "badge": "",
-      "badgeClass": "",
-      "submenu": [],
-      "roles": ["PERSONNEL","SUPERADMIN"]
-    },
-    {
-      "path": "/typeActivite",
-      "title": "Type Activité",
-      "iconType": "feather",
-      "icon": "tag",
-      "class": "",
-      "groupTitle": false,
-      "badge": "",
-      "badgeClass": "",
-      "submenu": [],
-      "roles": ["PERSONNEL","SUPERADMIN"]
-    },
-    {
-      "path": "/critere",
-      "title": "Critère",
-      "iconType": "feather",
-      "icon": "filter",
-      "class": "",
-      "groupTitle": false,
-      "badge": "",
-      "badgeClass": "",
-      "submenu": [],
-      "roles": ["PERSONNEL","SUPERADMIN"]
-    },
-    {
-      "path": "/etape",
-      "title": "Étape",
-      "iconType": "feather",
-      "icon": "flag",
-      "class": "",
-      "groupTitle": false,
-      "badge": "",
-      "badgeClass": "",
-      "submenu": [],
-      "roles": ["PERSONNEL","SUPERADMIN"]
-    },
-    {
-      "path": "/salle",
-      "title": "Salle",
-      "iconType": "feather",
-      "icon": "map-pin",
-      "class": "",
-      "groupTitle": false,
-      "badge": "",
-      "badgeClass": "",
-      "submenu": [],
-      "roles": ["PERSONNEL","SUPERADMIN"]
-    },
-    {
-      "path": "/activite",
+      "path": "",
       "title": "Activité",
       "iconType": "feather",
       "icon": "zap",
       "class": "",
       "groupTitle": false,
-      "badge": "",
-      "badgeClass": "",
-      "submenu": [],
-      "roles": ["PERSONNEL","SUPERADMIN"]
-    },
-     {
-      "path": "/activityvalidation",
-      "title": "Validation Activité",
-      "iconType": "feather",
-      "icon": "repeat",
-      "class": "",
-      "groupTitle": false,
-      "badge": "",
-      "badgeClass": "",
-      "submenu": [],
-      "roles": ["PERSONNEL","SUPERADMIN"]
-    },
-    {
-      "path": "/participant",
-      "title": "Participant",
-      "iconType": "feather",
-      "icon": "user-check",
-      "class": "",
-      "groupTitle": false,
-      "badge": "",
-      "badgeClass": "",
-      "submenu": [],
-      "roles": ["PERSONNEL","SUPERADMIN"]
-    },
-    
-    {
-      "path": "/dashboard2",
-      "title": "Mes Statistiques",
-      "iconType": "feather",
-      "icon": "bar-chart-2",
-      "class": "",
-      "groupTitle": false,
-      "badge": "",
-      "badgeClass": "",
-      "submenu": [],
-      "roles": ["PERSONNEL"]
-    },
-    {
-      "path": "/supportactivites",
-      "title": "Support activité",
-      "iconType": "feather",
-      "icon": "map-pin",
-      "class": "",
-      "groupTitle": false,
-      "badge": "",
-      "badgeClass": "",
-      "submenu": [],
-      "roles": ["PERSONNEL","SUPERADMIN"]
+      "submenu": [
+        {
+          "path": "/dashboardActivite",
+          "title": "Dashboard Activité",
+          "submenu": [],
+          "roles": ["PERSONNEL", "SUPERADMIN"]
+        },
+        {
+          "path": "/typeActivite",
+          "title": "Type Activité",
+          "submenu": [],
+          "roles": ["SUPERADMIN"]
+        },
+        {
+          "path": "/critere",
+          "title": "Critère",
+          "submenu": [],
+          "roles": ["SUPERADMIN"]
+        },
+        {
+          "path": "/activite",
+          "title": "Liste Activités",
+          "submenu": [],
+          "roles": ["PERSONNEL", "SUPERADMIN"]
+        },
+        {
+          "path": "/salle",
+          "title": "Salle",
+          "submenu": [],
+          "roles": ["SUPERADMIN"]
+        },
+        {
+          "path": "/activityvalidation",
+          "title": "Validation Activité",
+          "submenu": [],
+          "roles": ["SUPERADMIN", "PERSONNEL"]
+        },
+        {
+          "path": "/participant",
+          "title": "Participants",
+          "submenu": [],
+          "roles": ["PERSONNEL", "SUPERADMIN"]
+        }
+      ],
+      "roles": ["PERSONNEL", "SUPERADMIN"]
     },
 
-     {
-  "path": "/reporting",
-  "title": "Reporting KPIS",
-  "iconType": "feather",
-  "icon": "bar-chart",
-  "class": "",
-  "groupTitle": false,
-  "badge": "",
-  "badgeClass": "",
-  "submenu": [],
-  "roles": ["PERSONNEL", "SUPERADMIN"]
-},
-
-{
- "path": "/reportinghebdo",
-  "title": "Reporting Hebdomadaire",
-  "iconType": "feather",
-  "icon": "bar-chart",
-  "class": "",
-  "groupTitle": false,
-  "badge": "",
-  "badgeClass": "",
-  "submenu": [],
-  "roles": ["PERSONNEL", "SUPERADMIN"]
-},
     {
-      "path": "/listeNoire",
-      "title": "Liste Noire",
+      "path": "",
+      "title": "Reporting",
       "iconType": "feather",
-      "icon": "user-x",
+      "icon": "bar-chart",
       "class": "",
       "groupTitle": false,
-      "badge": "",
-      "badgeClass": "",
-      "submenu": [],
-      "roles": ["PERSONNEL","SUPERADMIN"]
+      "submenu": [
+        {
+          "path": "/supportactivites",
+          "title": "Rapport",
+          "submenu": [],
+          "roles": ["PERSONNEL", "SUPERADMIN"]
+        },
+        {
+          "path": "/reporting",
+          "title": "Reporting KPI",
+          "submenu": [],
+          "roles": ["PERSONNEL", "SUPERADMIN"]
+        },
+        {
+          "path": "/reportinghebdo",
+          "title": "Reporting Hebdomadaire",
+          "submenu": [],
+          "roles": ["PERSONNEL", "SUPERADMIN"]
+        }
+      ],
+      "roles": ["PERSONNEL", "SUPERADMIN"]
     }
   ]
 }
+

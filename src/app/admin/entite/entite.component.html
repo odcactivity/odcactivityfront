@@ -38,8 +38,7 @@
     >
       <div class="card shadow cursor-pointer transition-transform duration-300 scale-100 hover:scale-105">
         <div class="position-relative">
-          <img
-            [src]="row.logo"
+            <img [src]="`assets/images/entite/${row.id}.png`"
             alt="{{ row.nom }}"
             class="card-img-top rounded-top"
             style="height: 16rem; object-fit: cover;"
