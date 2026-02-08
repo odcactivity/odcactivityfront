@@ -1,0 +1,22 @@
+.table-reporting {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.table-reporting th,
+.table-reporting td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: left;
+}
+
+.table-reporting th {
+  background-color: #f8f8f8;
+  font-weight: bold;
+}
+
+.table-wrapper {
+  overflow-x: auto; /* permet de scroller si le tableau est large */
+}
