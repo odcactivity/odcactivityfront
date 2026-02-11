@@ -36,6 +36,7 @@ export class EntiteComponent {
   rows = [];
   entite:  Entite[] = [];
   users:  Utilisateur[] = [];
+   directions: Entite[] = []; // Liste des directions uniquement
   selectedFile: File | null = null;
   selectedUtilisateur: Utilisateur | null = null; // Déclaration de la variable pour stocker l'utilisateur sélectionné
   allTypeActivite: TypeActivite[] = []; // Pour la liste déroulante des types d'activités
@@ -51,6 +52,7 @@ export class EntiteComponent {
   loadingIndicator = true;
   isRowSelected = false;
   reorderable = true;
+  showParentDirection = false; // Pour afficher/cacher le champ parent
   public selected: number[] = [];
   columns = [
     { prop: 'nom' }
@@ -97,17 +99,49 @@ export class EntiteComponent {
     this.getAllEntite();
     this.getAllUtilisateur();
     this.getAllTypeActivite();
+    this.getDirections(); // Charger uniquement les direction
     this.register = this.fb.group({
       id: [''],
       nom: ['', [Validators.required]],
       description: ['', [Validators.required]],
       logo: [''],
-      // responsable: [null, [Validators.required]],
+      type: [null, [Validators.required]], // Nouveau champ pour le type d'entité
+      parentId: [null], // ID de la direction parente pour les services
       responsable: [null], // Permet de ne pas forcer la sélection d'un responsable
       typeActivite: [null],
       // typeActivite: [null, [Validators.required]], // Ajoutez ce FormControl pour correspondre à formControlName
       selectedTypeActivites: [null], // Vous utilisez déjà selectedTypeActivites pour stocker les IDs
 
+    });
+  }
+
+    // Gestion du changement de type d'entité
+  onTypeEntiteChange(event: any) {
+    const selectedType = event.target.value;
+    this.showParentDirection = selectedType === 'SERVICE';
+    
+    // Mettre à jour les validateurs
+    const parentControl = this.register.get('parentId');
+    
+    if (this.showParentDirection) {
+      parentControl?.setValidators([Validators.required]);
+    } else {
+      parentControl?.clearValidators();
+      parentControl?.setValue(null);
+    }
+    
+    parentControl?.updateValueAndValidity();
+  }
+
+  // Récupérer uniquement les directions
+  getDirections() {
+    this.glogalService.get('entite/directions').subscribe({
+      next: (data: Entite[]) => {
+        this.directions = data;
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement des directions', err);
+      }
     });
   }
 
@@ -237,9 +271,16 @@ export class EntiteComponent {
   const newEntite = {
     nom: form.value.nom,
     description: form.value.description,
+    type: form.value.type, // Ajout du type d'entité
+    parentId: form.value.parentId || null,
     responsableId: form.value.responsable?.id || null,
     typeActiviteIds: form.value.typeActivite || [],
   };
+
+  // Ajouter parentId seulement si c'est un SERVICE
+    if (form.value.type === 'SERVICE' && form.value.parentId) {
+      newEntite.parentId = form.value.parentId;
+    }
 
   // ✅ correspond à @RequestPart("entite")
   formData.append(
@@ -258,6 +299,7 @@ export class EntiteComponent {
       this.modalService.dismissAll();
      this.addRecordSuccess();
      this.getAllEntite();
+     this.resetForm();
     },
     error: (err) => {
       this.loadingIndicator = false;
@@ -270,6 +312,13 @@ export class EntiteComponent {
     },
   });
 }
+
+// Réinitialiser le formulaire
+  resetForm() {
+    this.register.reset();
+    this.showParentDirection = false;
+    this.selectedFile = null;
+  }
 
   // add new record
   addRow(content: any) {
@@ -334,4 +383,6 @@ export interface selectEntiteInterface {
   description: string;
   logo: string;
   responsable: Utilisateur;
+  type?: string;
+  parentId?: number;
 }

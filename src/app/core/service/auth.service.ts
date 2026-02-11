@@ -62,9 +62,9 @@ export class AuthService {
     return this.http.post<any>(`${this.BASE_URL}/auth/login`, { username, password })
       .pipe(
         map(response => {
-          if (response && response.bearer) {
+          if (response && response.token) {
             /*const user = response.user;*/
-            const decoded = this.decodeJwt(response.bearer);
+            const decoded = this.decodeJwt(response.token);
             localStorage.setItem('bearerid',decoded.id);
             const user: Utilisateur = {
               id: decoded.id,
@@ -74,7 +74,7 @@ export class AuthService {
             };
             const roles = decoded && decoded.role ? [decoded.role] : [];
 
-            const currentUserWithRoles = { ...user, bearer: response.bearer, roles };
+            const currentUserWithRoles = { ...user, bearer: response.token, roles };
 
 
             localStorage.setItem('currentUser', JSON.stringify(currentUserWithRoles));

@@ -4,8 +4,8 @@
 
 export const environment = {
   production: false,
-  apiUrl: 'http://activiteodc-env.eba-qpcww8sx.us-east-1.elasticbeanstalk.com',
-  uploadUrl: 'http://activiteodc-env.eba-qpcww8sx.us-east-1.elasticbeanstalk.com',
+  apiUrl: 'http://localhost:8089',
+  uploadUrl: 'http://localhost:8089/upload',
 };
 
 /*

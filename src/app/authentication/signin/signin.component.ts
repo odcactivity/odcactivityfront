@@ -36,7 +36,7 @@ export class SigninComponent implements OnInit {
     private router: Router,
     private authService: AuthService,
     private globaleService: GlobalService,
-    @Inject(PLATFORM_ID) private platformId: Object,
+    @Inject(PLATFORM_ID) private platformId: object,
     private cdRef: ChangeDetectorRef,
     private toast: MatSnackBar // Utilisez MatSnackBar comme 'toast'
   ) { }
@@ -81,12 +81,16 @@ export class SigninComponent implements OnInit {
 
     this.authService.login(this.f['username'].value, this.f['password'].value).subscribe({
       next: response => {
-        const token = response?.bearer; // Assurez-vous que la propriété est 'bearer' et peut être undefined
+        const token = response?.token; // ✅ CORRECTION : response.token au lieu de response.bearer
 
         if (isPlatformBrowser(this.platformId) && token) {
-          localStorage.setItem("currentUser", JSON.stringify(response));
-          const roles = this.authService.getCurrentUserFromStorage().roles; // Assurez-vous que cette méthode existe et retourne un tableau de rôles
-          this.authService.currentUserSubject.next(response); // Mettre à jour le BehaviorSubject
+          // ✅ CORRECTION : Stocker l'objet utilisateur formaté, pas la réponse brute
+          const currentUserWithRoles = this.authService.getCurrentUserFromStorage();
+          localStorage.setItem("currentUser", JSON.stringify(currentUserWithRoles));
+          this.authService.currentUserSubject.next(currentUserWithRoles);
+
+          // Le reste de votre code de redirection reste identique...
+          const roles = currentUserWithRoles.roles;
 
           // Redirection en fonction du rôle
           if (roles?.includes('SUPERADMIN')) {
@@ -103,7 +107,7 @@ export class SigninComponent implements OnInit {
             });
           }
 
-          // Affichage du toast de succès
+          // Toast de succès...
           const Toast = Swal.mixin({
             toast: true,
             position: "top-end",
@@ -126,14 +130,16 @@ export class SigninComponent implements OnInit {
         this.resetForm();
       },
       error: error => {
+        // Votre gestion d'erreur reste identique...
         Swal.fire({
+          input: "file",
           icon: 'error',
           title: '<span class="text-orange-500">Erreur d\'authentification</span>',
-          html: '<p class="text-orange-500">L’identifiant ou le mot de passe fourni ne concorde pas. Veuillez vérifier l’exactitude des informations saisies et réitérer votre tentative.</p>',
+          html: '<p class="text-orange-500">identifiant ou le mot de passe fourni ne concorde pas. Veuillez vérifier exactitude des informations saisies et réitérer votre tentative.</p>',
           confirmButtonText: 'Réessayer',
           customClass: {
             confirmButton: 'bg-orange-500 text-white hover:bg-orange-600',
-          },
+          }
         });
         this.resetForm();
       }
