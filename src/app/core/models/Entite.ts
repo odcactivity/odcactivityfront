@@ -10,4 +10,5 @@ export class Entite {
   listeResultat?: string;
   utilisateur?: Utilisateur;
   responsable?: Utilisateur;
+  type?: 'DIRECTION' | 'SERVICE';  
 }

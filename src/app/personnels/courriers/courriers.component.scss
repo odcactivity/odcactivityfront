@@ -1,0 +1,25 @@
+::ng-deep .modal-header.editRowModal {
+    border-bottom: none;
+    justify-content: space-between;
+    background-color: orange;
+    //color: white;
+    padding: 1rem;
+}
+
+
+::ng-deep .modal-header.entiteCibleModal {
+  border-bottom: none;
+  justify-content: space-between;
+  background-color: orange;
+}
+
+::ng-deep .modal-title {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+::ng-deep .modal-subtitle {
+    font-size: 0.875rem;
+    font-weight: 400;
+    opacity: 0.9;
+}

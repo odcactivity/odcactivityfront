@@ -5,9 +5,9 @@
       </li>
       <li class="breadcrumb-item bcrumb-1">
         <a routerLink="/dashboardActivite">
-          <i class="fas fa-home font-17"></i></a>
+          <i class="fas fa-paper-plane"></i></a>
       </li>
-      <li class="breadcrumb-item"> Support des activitées</li>
+      <li class="breadcrumb-item"> Gestion Des Courriers</li>
     </ul>
     <div class="section-body">
       <div class="row clearfix">
@@ -43,9 +43,9 @@
 
                                 <div class="mt-2" style="display: flex;">
                                     <label class="mt-2">Entité <span class="text-dangerx">*</span></label>
-                                    <select class="form-select readonly-select customselect" name="direction" [(ngModel)]="directionId" (change)="getCourrierByEntite()">
+                                    <select class="form-select readonly-select customselect" name="idEntite" [(ngModel)]="idEntite" (change)="getCourrierByEntite()">
                                         <option value="" [ngValue]="null" disabled>-- Sélectionnez une entité --</option>
-                                        <option *ngFor="let d of directions"  [value]="d.id">{{entite.nom}}</option>
+                                        <option *ngFor="let dir of directions"  [value]="dir.id">{{dir.nom}}</option>
                                     </select>
                                 </div>
                                 @if(this.idEntite){
@@ -218,24 +218,30 @@
             <!-- Imput courrier Modal Window -->
             <ng-template #entiteCibleModal let-modal>
                 <div class="modal-header entiteCibleModal">
+                  <div class="modal-title-container">
+                    <h5 class="modal-title fw-bold"> Assigner un courrier</h5>
+                    <small class="modal-subtitle">Formulaire d'envoi des courrier</small>
+                  </div>
                     <button type="button" class="close" aria-label="Close" (click)="modal.dismiss()">
                     <span aria-hidden="true"><i class="material-icons">close</i></span>
                     </button>
                 </div>
                 <div class="modal-body">
                     <div class="row">
+
+                      <!-- Choisir le service qui doit va traiter  -->
                         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
                           <label>Entité cible <span class="text-danger">*</span></label>
-                          <select class="form-select form-control readonly-select" name="entiteCible" [(ngModel)]="serviceId">
+                          <select class="form-select form-control readonly-select" name="entiteCible" [(ngModel)]="entiteCible">
                             <option value="" [ngValue]="null" disabled>-- Sélectionnez une entité --</option>
-                            <option *ngFor="let entit of entites"  [value]="entit.id">{{entit.nom}}</option>
+                            <option *ngFor="let serv of services"  [value]="serv.id">{{serv.nom}}</option>
                           </select>
                             <small class="form-text text-danger"> L'entité cible est
                               obligatoire
                             </small>
-                          
                         </div>
 
+                        <!-- Choisir la personne qui doit traiter le courrier -->
                         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
                           <label>Personnel <span class="text-danger"></span></label>
                           <select class="form-select form-control readonly-select" name="personnel" [(ngModel)]="personnel">
@@ -245,9 +251,9 @@
                             <!-- <small class="form-text text-danger"> L'entité cible est
                               obligatoire
                             </small> -->
-                          
-                        </div>
-                    </div>
+                         </div>
+
+                      </div>
   
                     <div class="modal-footer">
                         <button type="button" class="btn btn-warning" [disabled]="!this.entiteCible" (click)="imputCourrier()">
@@ -258,16 +264,22 @@
                         <button type="button" class="btn btn-dark text-white" (click)="modal.close('Close click')">Fermer</button>
                       </div>
                 </div>
+
             </ng-template>
-  
   
               <!-- Add Record Modal Window -->
               <ng-template #addRecord let-modal>
                 <div class="modal-header editRowModal">
-                  <button type="button" class="close" aria-label="Close" (click)="modal.dismiss()">
-                    <span aria-hidden="true"><i class="material-icons">close</i></span>
-                  </button>
-                </div>
+                  <div class="modal-title-container">
+                    <h5 class="modal-title fw-bold">Nouveau courrier</h5>
+                    <small class="modal-subtitle">Formulaire d'enregistrement d'un nouveau courrier</small>
+                  </div>
+                    <button type="button" class="close" aria-label="Close" (click)="modal.dismiss()">
+                     <span aria-hidden="true"><i class="material-icons">close</i></span>
+                    </button>
+                  </div>
+
+                <!-- Demande d'enregistrement d'un nouveau courrier -->
                 <div class="modal-body">
                   <form class="register-form" [formGroup]="register" (ngSubmit)="onAddRowSave(register)">
                     <div class="row">
@@ -319,7 +331,7 @@
                         <label>Entité <span class="text-danger">*</span></label>
                         <select class="form-select form-control readonly-select" formControlName="entite" readonly>
                           <option value="" [ngValue]="null" disabled>-- Sélectionnez une activitée --</option>
-                          <option *ngFor="let entit of entites"  [value]="entit.id">{{entit.nom}}</option>
+                          <option *ngFor="let dir of directions"  [value]="dir.id">{{dir.nom}}</option>
                         </select>
                         @if (!editForm.get('entite')?.valid && editForm.get('entite')?.touched) {
 
@@ -359,7 +371,9 @@
                   </form>
                 </div>
               </ng-template>
+
               <!-- Edit Record Modal Window -->
+              <!-- Afficher l'historique des courriers -->
               <ng-template #history let-modal>
                 <div class="modal-header editRowModal">
                   <h4 class="modal-title" id="modal-basic-title">

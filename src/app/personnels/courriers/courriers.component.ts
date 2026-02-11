@@ -5,7 +5,6 @@ import { AuthService } from '@core';
 import { Activity } from '@core/models/Activity';
 import { ActivitySupports } from '@core/models/ActivitySupports';
 import { Entite } from '@core/models/Entite';
-//import { selectEntiteInterface } from '@core/models/Entite';
 // import { ActivitySupportsOngletsInterface } from '@core/models/ActivitySupportsOngletsInterface';
 import { Salle } from '@core/models/Salle';
 import { Utilisateur } from '@core/models/Utilisateur.model';
@@ -24,22 +23,16 @@ import Swal from 'sweetalert2';
   templateUrl: './courriers.component.html',
   styleUrl: './courriers.component.scss'
 })
-
 export class CourriersComponent {
 
   @ViewChild(DatatableComponent, { static: false }) table!: DatatableComponent;
   // 
-  //entites:  Entite[] = [];
-  entite: EntiteWithParent[] = [];
-  //directions: Entite[]=[];
-  directions: EntiteWithParent[] = [];
-  //services: Entite[]=[];
-  services: EntiteWithParent[] = [];
-  
+  entites: Entite[] = [];          // toutes les entités
+  directions: Entite[] = [];       // Entité de type==="DIRECTION" 
+  services: Entite[] = [];         // Entité de type ==="SERVICE"
   personnel: any = undefined;
   entiteCible: any = undefined;
   Historiques: any[] = [];
-  directionId: number | undefined; // pour stocker l'id sélectionné
   // 
   rows = [];
   salles:  Salle[] = [];
@@ -52,7 +45,7 @@ export class CourriersComponent {
   selectedFile: File | null = null;
   listType: string = '1';
   scrollBarHorizontal = window.innerWidth < 1200;
-  selectedRowData!: EntiteWithParent;
+  selectedRowData!: selectActivitySupportInterface;
   filteredData: any[] = [];
   editForm: UntypedFormGroup;
   register!: UntypedFormGroup;
@@ -171,44 +164,45 @@ export class CourriersComponent {
 
   getAllSupport(){}
 
-  /**
-   * Récupère toutes les entités depuis l'API
-   * et filtre les directions et sous-entités pour l'UI
-   */
-
+  // Afficher toutes les directions de DCIR
   getAllEntite(){
     this.loadingIndicator = true;
     this.glogalService.get('entite').subscribe({
-      next:(value: EntiteWithParent[]) =>{
-        // Ici on dit à TypeScript que les entités ont type et parent
-           this.entite = value;
-        // this.Direction = value.find(el => el.nom === 'Direction');
+      // Parcourrir le liste des entités
+      next:(value: Entite[]) =>{
+        // Afficher le nombre d'entité  
+         console.log("DATA BRUTE API:", value);
+         value.forEach(e => {
+        // Afficher tous les noms de entités et leurs types
+        console.log("ENTITE:", e.nom, " | TYPE:", e.type);
+      });
+        
 
-        // Filtrer uniquement les entités de type "DIRECTION"
-           this.directions = this.entite.filter(e => e.type === 'DIRECTION');
-        // Filtrer uniquement les entités de type "SOU_ENTITE"
-           this.services = this.entite.filter(e => e.type === 'SERVICE');
+        // Afficher tous entités
+        this.entites = value;
+         // les directions
+        this.directions = value.filter(e => e.type === 'DIRECTION');
+          // les services
+        this.services = value.filter(e => e.type === 'SERVICE');
+
+        //Affichage des données pour verification envoyees par API
+        console.log("ALL:", this.entites.map(e=>e.nom));
+        console.log("DIRECTIONS:", this.directions.map(e=>e.nom));
+        console.log("SERVICES:", this.services.map(e=>e.nom));
+
+            this.loadingIndicator = false;
+
+
+       
 
         setTimeout(() =>{
-          this.loadingIndicator = false;
+        this.loadingIndicator = false;
         },500);
       }
     })
   }
 
-  /**
-   * Méthode utile si tu veux filtrer les sous-entités
-   * en fonction d'une direction choisie dans l'UI
-   */
-
-  
-  getSousEntitesByDirection(directionId: number): Entite[] {
-    return this.services.filter(s => s.parent?.id === directionId);
-    // Ici parentId est l'id de la direction associée à la sous-entité
-  }
-
-
-
+  // Afficher la liste des courriers liées à une direction
   idEntite: any
   getCourrierByEntite(){
     // console.log("event -> ", this.idEntite);
@@ -257,6 +251,7 @@ export class CourriersComponent {
     })
   }
 
+// Archiver un courrier par Entite
   archiveCourrier(row: any) {
     this.glogalService.update("api/courriers/archiver", row.id, {}).subscribe({
       next: (resp) => {         
@@ -291,7 +286,7 @@ export class CourriersComponent {
     });
   }
 
-
+  // Telecharger le fichier joint associé à un courrier
   download(row: any) {
     this.loadingIndicator = true;
     this.supportactivityService.downloadCourrierFile(row.id).subscribe({
@@ -357,7 +352,6 @@ export class CourriersComponent {
     });
     this.selectedRowData = row;
   }
-
 
 
   imputCourrier(){
@@ -649,11 +643,9 @@ export class CourriersComponent {
   addRecordSuccess() {
     this.toastr.success('Adjonction réalisée avec succès.', '');
   }
-
   editRecordSuccess() {
     this.toastr.success('Modification opéré', '');
   }
-
   deleteRecordSuccess(count: number) {
     this.toastr.error(count + 'Eradication diligente pleinement consommée.', '');
   }
@@ -673,16 +665,4 @@ export interface selectActivitySupportInterface {
   numero?: string;
   historiques?: any[];
   activite?: Activity;
-}
-
-// Interface pour gérer entités avec type et parent côté front
-export interface EntiteWithParent {
-  id?: number;
-  nom: string;
-  description: string;
-  logo?: string;
-  responsable?: Utilisateur;
-  type?: 'DIRECTION' | 'SERVICE';
-  parent?: EntiteWithParent;
-  responsableId?: number;
 }
