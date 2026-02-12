@@ -1,244 +1,268 @@
 <section class="main-content">
-  <ul class="breadcrumb breadcrumb-style ">
+  <ul class="breadcrumb breadcrumb-style">
     <li class="breadcrumb-item">
       <h5 class="page-title m-b-0">Table</h5>
     </li>
     <li class="breadcrumb-item bcrumb-1">
       <a routerLink="/dashboard/main">
-        <i class="fas fa-home font-17"></i></a>
+        <i class="fas fa-home font-17"></i>
+      </a>
     </li>
     <li class="breadcrumb-item">Entité ODC</li>
   </ul>
 
   <div class="d-flex align-items-center gap-3 fs-5 fw-bold">
-    <div class="d-flex flex-column align-items-start bg-warning rounded-pill px-3 py-1">
-      <div class="px-3 pb-0 bg-dark rounded-pill text-white">
+    <div class="d-flex flex-column align-items-start">
+      <div class="px-3 py-1 bg-warning rounded-pill text-white">
         Nos Entités
       </div>
     </div>
-
     <div class="header-buttons-left">
       <div class="tbl-btn-style">
-        <button class="btn btn-icon icon-left bg-warning text-white rounded-button" (click)="addRow(addRecord)" >
+        <button class="btn btn-icon icon-left bg-warning text-white rounded-button" (click)="addRow(addRecord)">
           <i class="material-icons">add</i>
         </button>
       </div>
     </div>
   </div>
 
-  <div  class="fs-5 fw-bold text-dark mt-3">
-    <span class="text-warning">Années en cours</span>: {{ currentYear }}
+  <div class="fs-5 fw-bold text-dark mt-3 d-flex justify-content-between align-items-center">
+    @if (viewMode === 'directions') {
+      <span class="text-warning">Directions</span>
+    } @else {
+      <span class="text-warning">Services de : {{ selectedDirection?.nom }}</span>
+      <button class="btn btn-sm bg-warning text-white border-0 px-3 py-1 rounded-pill shadow-sm d-flex align-items-center gap-2" 
+        (click)="backToDirections()"
+        style="transition: all 0.2s ease;">
+  <i class="fas fa-arrow-left"></i>
+  <span>Retour aux directions</span>
+</button>
+    }
   </div>
 
-  <div  class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3 mt-4">
-    <div
-      *ngFor="let row of entite;"
-      (click)="viewEntiteDetails(row)"
-      class="col"
-    >
-      <div class="card shadow cursor-pointer transition-transform duration-300 scale-100 hover:scale-105">
-        <div class="position-relative">
-            <img [src]="`assets/images/entite/${row.id}.png`"
-            alt="{{ row.nom }}"
-            class="card-img-top rounded-top"
-            style="height: 16rem; object-fit: cover;"
-          />
-          <div class="position-absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent rounded-top"></div>
-        </div>
-        <div class="card-body bg-dark text-white p-3">
-          <h3 class="card-title fs-6 fw-semibold">{{ row.nom }}</h3>
-          <p class="card-text mt-2 text-secondary d-flex align-items-center justify-content-between">
-            <span>
-              Activités :
-              @if (row.id && activiteCount[row.id] === undefined) {
-                <div class="spinner-border spinner-border-sm text-warning ms-2" role="status">
-                  <span class="visually-hidden">Chargement...</span>
+  <!-- Inclusion du template hiérarchique -->
+  @if (viewMode === 'directions') {
+    <!-- Affichage des directions -->
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3 mt-4">
+      <div
+        *ngFor="let direction of directions"
+        (click)="showDirectionServices(direction)"
+        class="col"
+      >
+        <div class="card shadow-sm border-0 cursor-pointer transition-all duration-300 scale-100 hover:scale-105 hover:shadow-lg">
+          <div class="position-relative overflow-hidden rounded-top">
+            @if (getLogoUrl(direction.logo)) {
+              <img [src]="getLogoUrl(direction.logo)"
+                   alt="{{ direction.nom }}"
+                   class="card-img-top w-100"
+                   style="height: 16rem; object-fit: cover;"
+                   (error)="onImageError($event)"
+              />
+            } @else {
+              <div class="w-100 d-flex align-items-center justify-content-center bg-gradient-to-br from-orange-400 to-orange-600"
+                   style="height: 16rem;">
+                <div class="text-center text-white">
+                  <i class="fas fa-building fa-4x mb-3 opacity-90"></i>
+                  <p class="mb-0 fw-semibold">Pas de logo</p>
                 </div>
-              } @else {
-                <span class="ms-2">{{ row.id ? (activiteCount[row.id] || 0) : 'ID non défini' }}</span>
-              }
-            </span>
-          </p>
+              </div>
+            }
+            <div class="position-absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-70"></div>
+          </div>
+          <div class="card-body bg-dark text-white p-3">
+            <h3 class="card-title fs-6 fw-bold text-white mb-2">{{ direction.nom }}</h3>
+            <div class="d-flex align-items-center justify-content-between">
+              <div class="d-flex align-items-center">
+                <i class="fas fa-tasks text-warning me-2"></i>
+                <span class="text-white-50 small">Activités :</span>
+                @if (direction.id && activiteCount[direction.id] === undefined) {
+                  <div class="spinner-border spinner-border-sm text-warning ms-2" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                  </div>
+                } @else {
+                  <span class="ms-2 text-warning fw-bold">{{ direction.id ? (activiteCount[direction.id] || 0) : 'N/A' }}</span>
+                }
+              </div>
+              <div class="text-warning">
+                <i class="fas fa-arrow-right"></i>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-
-    <!-- <ng-template #addRecord let-modal>
-      <div class="modal-header editRowModal">
-        <button type="button" class="close" aria-label="Close" (click)="modal.dismiss()">
-          <span aria-hidden="true"><i class="material-icons">close</i></span>
-        </button>
+  } @else {
+    <!-- Affichage des services de la direction sélectionnée -->
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3 mt-4">
+      <div
+        *ngFor="let service of services"
+        (click)="viewEntiteDetails(service)"
+        class="col"
+      >
+        <div class="card shadow-sm border-0 cursor-pointer transition-all duration-300 scale-100 hover:scale-105 hover:shadow-lg">
+          <div class="position-relative overflow-hidden rounded-top">
+            @if (getLogoUrl(service.logo)) {
+              <img [src]="getLogoUrl(service.logo)"
+                   alt="{{ service.nom }}"
+                   class="card-img-top w-100"
+                   style="height: 16rem; object-fit: cover;"
+                   (error)="onImageError($event)"
+              />
+            } @else {
+              <div class="w-100 d-flex align-items-center justify-content-center bg-gradient-to-br from-orange-400 to-orange-600"
+                   style="height: 16rem;">
+                <div class="text-center text-white">
+                  <i class="fas fa-cogs fa-4x mb-3 opacity-90"></i>
+                  <p class="mb-0 fw-semibold">Pas de logo</p>
+                </div>
+              </div>
+            }
+            <div class="position-absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-70"></div>
+          </div>
+          <div class="card-body bg-dark text-white p-3">
+            <h3 class="card-title fs-6 fw-bold text-white mb-2">{{ service.nom }}</h3>
+            <div class="d-flex align-items-center justify-content-between">
+              <div class="d-flex align-items-center">
+                <i class="fas fa-tasks text-warning me-2"></i>
+                <span class="text-white-50 small">Activités :</span>
+                @if (service.id && activiteCount[service.id] === undefined) {
+                  <div class="spinner-border spinner-border-sm text-warning ms-2" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                  </div>
+                } @else {
+                  <span class="ms-2 text-warning fw-bold">{{ service.id ? (activiteCount[service.id] || 0) : 'N/A' }}</span>
+                }
+              </div>
+              <div class="text-warning">
+                <i class="fas fa-eye"></i>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="modal-body">
-        <form class="register-form" [formGroup]="register" (ngSubmit)="onCreateSave(register)">
-          <div class="row">
-            <div class="col-xl-12 col-lg-6 col-md-12 col-sm-12 mb-2">
-              <label>Nom <span class="text-danger">*</span></label>
-              <input type="text" class="form-control" placeholder="Nom" formControlName="nom"
-                     required>
-              @if (!register.get('nom')?.valid && register.get('nom')?.touched) {
-                <small class="form-text text-danger"> Le nom est obligatoire</small>
-              }
-            </div>
-            <div class="col-xl-12 col-lg-6 col-md-12 col-sm-12 mb-2">
-              <label>Type d'Entité </label>
-              <select class="form-select form-control" formControlName="responsable" >
-                <option value="" [ngValue]="null" disabled>-- Sélectionnez un type  --</option>
-                <option *ngFor="let responsables of users" [ngValue]="responsables.id">{{responsables.nom}} {{responsables.prenom}}</option>
-              </select>
-              @if (!register.get('responsable')?.valid && register.get('responsable')?.touched) {
-                <small class="form-text text-danger"> Responsable est obligatoire</small>
-              }
-            </div>
-            <div class="form-group">
-              <label>Description<span class="text-danger">*</span></label>
-              <textarea type="text" class="form-control" placeholder="description" formControlName="description"></textarea>
-              @if (!register.get('prenom')?.valid && register.get('prenom')?.touched) {
-                <small class="form-text text-danger"> Prenom est obligatoire</small>
-              }
-            </div>
-          </div>
+    </div>
+  }
 
-
-          <div class="row">
-            <div class="section-title">Logo</div>
-            <div class="custom-file">
-              <input type="file" (change)="onFileChange($event)" class="custom-file-input" id="customFile"  formControlName="logo">
-              <label class="custom-file-label" for="customFile">Choisissez une image</label>
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="col-xl-12 col-lg-6 col-md-12 col-sm-12 mb-2">
-              <label>Responsable </label>
-              <select class="form-select form-control" formControlName="responsable" >
-                <option value="" [ngValue]="null" disabled>-- Sélectionnez un utilisateur --</option>
-                <option *ngFor="let responsables of users" [ngValue]="responsables.id">{{responsables.nom}} {{responsables.prenom}}</option>
-              </select>
-              @if (!register.get('responsable')?.valid && register.get('responsable')?.touched) {
-                <small class="form-text text-danger"> Responsable est obligatoire</small>
-              }
-            </div>
-
-            <div class="col-xl-12 col-lg-6 col-md-12 col-sm-12 mb-2">
-              <label>Type Activite</label>
-              <select  class="form-control h-100" multiple="" formControlName="typeActivite">
-                <option value="" [ngValue]="null" disabled>&#45;&#45; Sélectionnez un ou plusieurs TypeActivite &#45;&#45;</option>
-                <option *ngFor="let typeActivite of allTypeActivite" [ngValue]="typeActivite.id">{{typeActivite.type}}</option>
-              </select>
-              @if (!register.get('allTypeActivite')?.valid && register.get('allTypeActivite')?.touched) {
-                <small class="form-text text-danger"> Type Activite est obligatoire</small>
-              }
-              <div class="mt-1 text-gray-500 mt-3 text-sm">Maintenez Ctrl (ou Cmd sur Mac) pour sélectionner plusieurs options.</div>
-            </div>
-          </div>
-
-          <div class="modal-footer mt-3">
-            <button type="submit" class="btn btn-warning text-white" [disabled]="!register.valid || loadingIndicator">
-              <span *ngIf="loadingIndicator" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-              {{ loadingIndicator ? 'Chargement...' : 'Enregistre' }}
-            </button>
-
-            <button type="button" class="btn btn-dark text-white" (click)="modal.close('Close click')">Fermer</button>
-          </div>
-        </form>
-      </div>
-    </ng-template> -->
+  <!-- Template du formulaire d'ajout -->
   <ng-template #addRecord let-modal>
-  <div class="modal-header editRowModal">
-    <button type="button" class="close" aria-label="Close" (click)="modal.dismiss()">
-      <span aria-hidden="true"><i class="material-icons">close</i></span>
-    </button>
-  </div>
-  <div class="modal-body">
-    <form class="register-form" [formGroup]="register" (ngSubmit)="onCreateSave(register)">
-      <div class="row">
-        <div class="col-xl-12 col-lg-6 col-md-12 col-sm-12 mb-2">
-          <label>Nom <span class="text-danger">*</span></label>
-          <input type="text" class="form-control" placeholder="Nom" formControlName="nom" required>
-          @if (!register.get('nom')?.valid && register.get('nom')?.touched) {
-            <small class="form-text text-danger">Le nom est obligatoire</small>
-          }
+    <div class="modal-header editRowModal">
+      <button type="button" class="close" aria-label="Close" (click)="modal.dismiss()">
+        <span aria-hidden="true"><i class="material-icons">close</i></span>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form class="register-form" [formGroup]="register" (ngSubmit)="onCreateSave(register)">
+        <div class="row">
+          <div class="col-xl-12 col-lg-6 col-md-12 col-sm-12 mb-2">
+            <label>Nom <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" placeholder="Nom" formControlName="nom">
+            @if (!register.get('nom')?.valid && register.get('nom')?.touched) {
+              <small class="form-text text-danger">Le nom est obligatoire</small>
+            }
+          </div>
+
+          <!-- Type d'Entité -->
+          <div class="col-xl-12 col-lg-6 col-md-12 col-sm-12 mb-2">
+            <label>Type d'Entité <span class="text-danger">*</span></label>
+            <select class="form-select form-control" formControlName="type" (change)="onTypeEntiteChange($event)">
+              <option value="" [ngValue]="null" disabled>-- Sélectionnez un type d'entité --</option>
+              <option value="DIRECTION">DIRECTION</option>
+              <option value="SERVICE">SERVICE</option>
+            </select>
+            @if (!register.get('type')?.valid && register.get('type')?.touched) {
+              <small class="form-text text-danger">Le type d'entité est obligatoire</small>
+            }
+          </div>
+
+          <!-- Sélection de la direction parente (visible uniquement pour SERVICE) -->
+          <div class="col-xl-12 col-lg-6 col-md-12 col-sm-12 mb-2" *ngIf="showParentDirection">
+            <label>Direction responsable <span class="text-danger">*</span></label>
+            <select class="form-select form-control" formControlName="parentId">
+              <option value="" [ngValue]="null" disabled>-- Sélectionnez une direction --</option>
+              <option *ngFor="let direction of directions" [ngValue]="direction.id">{{direction.nom}}</option>
+            </select>
+            @if (!register.get('parentId')?.valid && register.get('parentId')?.touched) {
+              <small class="form-text text-danger">La direction responsable est obligatoire</small>
+            }
+          </div>
+
+          <div class="col-xl-12 col-lg-6 col-md-12 col-sm-12 mb-2">
+            <label>Description <span class="text-danger">*</span></label>
+            <textarea class="form-control" placeholder="Description" formControlName="description"></textarea>
+            @if (!register.get('description')?.valid && register.get('description')?.touched) {
+              <small class="form-text text-danger">La description est obligatoire</small>
+            }
+          </div>
         </div>
 
-        <!-- Type d'Entité -->
-        <div class="col-xl-12 col-lg-6 col-md-12 col-sm-12 mb-2">
-          <label>Type d'Entité <span class="text-danger">*</span></label>
-          <select class="form-select form-control" formControlName="type" (change)="onTypeEntiteChange($event)">
-            <option value="" [ngValue]="null" disabled>-- Sélectionnez un type d'entité --</option>
-            <option value="DIRECTION">DIRECTION</option>
-            <option value="SERVICE">SERVICE</option>
-          </select>
-          @if (!register.get('type')?.valid && register.get('type')?.touched) {
-            <small class="form-text text-danger">Le type d'entité est obligatoire</small>
-          }
+        <div class="row">
+          <div class="row">
+            <div class="section-title text-dark fw-bold">Logo <span class="text-danger">*</span></div>
+            <div class="mb-3">
+              @if (logoPreview) {
+                <div class="mb-3 p-3 bg-light rounded border border-warning">
+                  <div class="d-flex align-items-center">
+                    <img [src]="logoPreview" alt="Aperçu du logo" class="img-thumbnail me-3" style="max-height: 120px; max-width: 120px;">
+                    <div>
+                      <p class="mb-1 fw-semibold text-dark">Aperçu du logo</p>
+                      <button type="button" class="btn btn-sm btn-outline-danger" (click)="resetLogoPreview()">
+                        <i class="fas fa-trash me-1"></i> Supprimer
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              }
+              <div class="form-group">
+                <label for="customFile" class="form-label text-dark fw-semibold">Sélectionner un logo</label>
+                <input type="file" (change)="onFileChange($event)" class="form-control border-warning" id="customFile" accept="image/*" formControlName="logo">
+                @if (!register.get('logo')?.valid && register.get('logo')?.touched) {
+                  <small class="form-text text-danger">Le logo est obligatoire</small>
+                }
+                <div class="mt-2 text-muted small">
+                  <i class="fas fa-info-circle me-1"></i>
+                  Formats acceptés: JPG, PNG, GIF. Taille maximale: 5MB.
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <!-- Sélection de la direction parente (visible uniquement pour SERVICE) -->
-        <div class="col-xl-12 col-lg-6 col-md-12 col-sm-12 mb-2" *ngIf="showParentDirection">
-          <label>Direction responsable <span class="text-danger">*</span></label>
-          <select class="form-select form-control" formControlName="parentId">
-            <option value="" [ngValue]="null" disabled>-- Sélectionnez une direction --</option>
-            <option *ngFor="let direction of directions" [ngValue]="direction.id">{{direction.nom}}</option>
-          </select>
-          @if (!register.get('parentId')?.valid && register.get('parentId')?.touched && showParentDirection) {
-            <small class="form-text text-danger">La direction responsable est obligatoire</small>
-          }
+        <div class="row">
+          <div class="col-xl-12 col-lg-6 col-md-12 col-sm-12 mb-2">
+            <label>Responsable <span class="text-danger">*</span></label>
+            <select class="form-select form-control" formControlName="responsable">
+              <option value="" [ngValue]="null" disabled>-- Sélectionnez un utilisateur --</option>
+              <option *ngFor="let responsable of users" [ngValue]="responsable.id">{{responsable.nom}} {{responsable.prenom}}</option>
+            </select>
+            @if (!register.get('responsable')?.valid && register.get('responsable')?.touched) {
+              <small class="form-text text-danger">Le responsable est obligatoire</small>
+            }
+          </div>
+
+          <div class="col-xl-12 col-lg-6 col-md-12 col-sm-12 mb-2">
+            <label>Type Activité <span class="text-danger">*</span></label>
+            <select class="form-control h-100" multiple formControlName="typeActivite">
+              <option value="" [ngValue]="null" disabled>-- Sélectionnez un ou plusieurs types d'activité --</option>
+              <option *ngFor="let typeActivite of allTypeActivite" [ngValue]="typeActivite.id">{{typeActivite.type}}</option>
+            </select>
+            @if (!register.get('typeActivite')?.valid && register.get('typeActivite')?.touched) {
+              <small class="form-text text-danger">Le type d'activité est obligatoire</small>
+            }
+            <div class="mt-1 text-gray-500 text-sm">Maintenez Ctrl (ou Cmd sur Mac) pour sélectionner plusieurs options.</div>
+          </div>
         </div>
 
-        <div class="col-xl-12 col-lg-6 col-md-12 col-sm-12 mb-2">
-          <label>Description <span class="text-danger">*</span></label>
-          <textarea type="text" class="form-control" placeholder="description" formControlName="description"></textarea>
-          @if (!register.get('description')?.valid && register.get('description')?.touched) {
-            <small class="form-text text-danger">La description est obligatoire</small>
-          }
+        <div class="modal-footer mt-4 bg-light p-3">
+          <button type="submit" class="btn btn-warning text-dark fw-bold px-4 py-2" [disabled]="!register.valid || loadingIndicator">
+            <span *ngIf="loadingIndicator" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            <i class="fas fa-save me-2"></i>
+            {{ loadingIndicator ? 'Chargement...' : 'Enregistrer' }}
+          </button>
+          <button type="button" class="btn btn-dark text-white fw-bold px-4 py-2" (click)="modal.close('Close click')">
+            <i class="fas fa-times me-2"></i>Fermer
+          </button>
         </div>
-      </div>
-
-      <div class="row">
-        <div class="section-title">Logo</div>
-        <div class="custom-file">
-          <input type="file" (change)="onFileChange($event)" class="custom-file-input" id="customFile" formControlName="logo">
-          <label class="custom-file-label" for="customFile">Choisissez une image</label>
-        </div>
-      </div>
-
-      <div class="row">
-        <div class="col-xl-12 col-lg-6 col-md-12 col-sm-12 mb-2">
-          <label>Responsable <span class="text-danger">*</span></label>
-          <select class="form-select form-control" formControlName="responsable">
-            <option value="" [ngValue]="null" disabled>-- Sélectionnez un utilisateur --</option>
-            <option *ngFor="let responsable of users" [ngValue]="responsable.id">{{responsable.nom}} {{responsable.prenom}}</option>
-          </select>
-          @if (!register.get('responsable')?.valid && register.get('responsable')?.touched) {
-            <small class="form-text text-danger">Le responsable est obligatoire</small>
-          }
-        </div>
-
-        <div class="col-xl-12 col-lg-6 col-md-12 col-sm-12 mb-2">
-          <label>Type Activite <span class="text-danger">*</span></label>
-          <select class="form-control h-100" multiple formControlName="typeActivite">
-            <option value="" [ngValue]="null" disabled>-- Sélectionnez un ou plusieurs TypeActivite --</option>
-            <option *ngFor="let typeActivite of allTypeActivite" [ngValue]="typeActivite.id">{{typeActivite.type}}</option>
-          </select>
-          @if (!register.get('typeActivite')?.valid && register.get('typeActivite')?.touched) {
-            <small class="form-text text-danger">Le type d'activité est obligatoire</small>
-          }
-          <div class="mt-1 text-gray-500 mt-3 text-sm">Maintenez Ctrl (ou Cmd sur Mac) pour sélectionner plusieurs options.</div>
-        </div>
-      </div>
-
-      <div class="modal-footer mt-3">
-        <button type="submit" class="btn btn-warning text-white" [disabled]="!register.valid || loadingIndicator">
-          <span *ngIf="loadingIndicator" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-          {{ loadingIndicator ? 'Chargement...' : 'Enregistrer' }}
-        </button>
-        <button type="button" class="btn btn-dark text-white" (click)="modal.close('Close click')">Fermer</button>
-      </div>
-    </form>
-  </div>
-</ng-template>
-  </div>
-
+      </form>
+    </div>
+  </ng-template>
 </section>
-

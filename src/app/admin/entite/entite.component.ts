@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, Inject, PLATFORM_ID, ChangeDetectorRef } from '@angular/core';
 import {
   FormsModule,
   ReactiveFormsModule,
@@ -13,7 +13,7 @@ import {NgbModal} from "@ng-bootstrap/ng-bootstrap";
 import {ToastrService} from "ngx-toastr";
 import {GlobalService} from "@core/service/global.service";
 import { Utilisateur } from '@core/models/Utilisateur.model';
-import {NgForOf, NgIf} from "@angular/common";
+import {NgForOf, NgIf, NgTemplateOutlet} from "@angular/common";
 import Swal from "sweetalert2";
 import {TypeActivite} from "@core/models/TypeActivite";
 import {EncryptionService} from "@core/service/encryption.service";
@@ -30,15 +30,18 @@ import { co } from '@fullcalendar/core/internal-common';
     NgIf
   ],
   templateUrl: './entite.component.html',
-  styleUrl: './entite.component.scss'
+  styleUrls: ['./entite.component.scss']
 })
 export class EntiteComponent {
   rows = [];
   entite:  Entite[] = [];
   users:  Utilisateur[] = [];
-   directions: Entite[] = []; // Liste des directions uniquement
+  directions: Entite[] = []; // Liste des directions uniquement
+  services: Entite[] = []; // Liste des services de la direction sélectionnée
   selectedFile: File | null = null;
   selectedUtilisateur: Utilisateur | null = null; // Déclaration de la variable pour stocker l'utilisateur sélectionné
+  logoPreview: string | null = null; // Pour l'aperçu du logo
+  backendUrl: string = 'http://localhost:8089'; // URL du backend pour construire les URLs complètes
   allTypeActivite: TypeActivite[] = []; // Pour la liste déroulante des types d'activités
   selectedTypeActivites: number[] = []; // Pour stocker les IDs des types d'activités sélectionnés
   utilisateursPersonnels: any[] = [];
@@ -57,6 +60,10 @@ export class EntiteComponent {
   columns = [
     { prop: 'nom' }
   ];
+
+  // Variables pour la gestion hiérarchique
+  viewMode: 'directions' | 'services' = 'directions'; // Mode d'affichage actuel
+  selectedDirection: Entite | null = null; // Direction sélectionnée pour voir ses services
 
   constructor(
     private fb: UntypedFormBuilder,
@@ -79,7 +86,45 @@ export class EntiteComponent {
   onFileChange(event: any) {
     if (event.target.files.length > 0) {
       this.selectedFile = event.target.files[0];
+
+      // Créer un aperçu de l'image
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.logoPreview = e.target.result;
+      };
+      if (this.selectedFile) {
+        reader.readAsDataURL(this.selectedFile);
+      }
     }
+  }
+
+  // Réinitialiser l'aperçu du logo
+  resetLogoPreview() {
+    this.logoPreview = null;
+    this.selectedFile = null;
+  }
+
+  // Construire l'URL complète du logo
+  getLogoUrl(logoPath: string | null | undefined): string {
+    if (!logoPath) {
+      return '';
+    }
+    // Si le chemin commence déjà par http, le retourner tel quel
+    if (logoPath.startsWith('http')) {
+      return logoPath;
+    }
+    // Nettoyer le chemin (enlever les double slashes)
+    const cleanPath = logoPath.replace(/\/+/g, '/');
+    // S'assurer que le chemin ne commence pas par un slash
+    const normalizedPath = cleanPath.startsWith('/') ? cleanPath.substring(1) : cleanPath;
+    // Construire l'URL complète avec le backend
+    return `${this.backendUrl}/${normalizedPath}`;
+  }
+
+  // Gérer les erreurs de chargement d'images
+  onImageError(event: any) {
+    console.log('Erreur de chargement de l\'image:', event.target.src);
+    // On pourrait afficher une image par défaut ici si nécessaire
   }
 
  /* viewEntiteDetails(entite: Entite): void {
@@ -104,7 +149,7 @@ export class EntiteComponent {
       id: [''],
       nom: ['', [Validators.required]],
       description: ['', [Validators.required]],
-      logo: [''],
+      logo: ['', [Validators.required]], // Logo maintenant obligatoire
       type: [null, [Validators.required]], // Nouveau champ pour le type d'entité
       parentId: [null], // ID de la direction parente pour les services
       responsable: [null], // Permet de ne pas forcer la sélection d'un responsable
@@ -119,28 +164,91 @@ export class EntiteComponent {
   onTypeEntiteChange(event: any) {
     const selectedType = event.target.value;
     this.showParentDirection = selectedType === 'SERVICE';
-    
+
     // Mettre à jour les validateurs
     const parentControl = this.register.get('parentId');
-    
+
     if (this.showParentDirection) {
       parentControl?.setValidators([Validators.required]);
     } else {
       parentControl?.clearValidators();
       parentControl?.setValue(null);
     }
-    
+
     parentControl?.updateValueAndValidity();
   }
 
   // Récupérer uniquement les directions
   getDirections() {
+    console.log('Chargement des directions...');
     this.glogalService.get('entite/directions').subscribe({
       next: (data: Entite[]) => {
+        console.log('Directions reçues:', data);
         this.directions = data;
+        
+        // Initialiser immédiatement les compteurs d'activités à 0
+        this.directions.forEach(direction => {
+          if (direction.id) {
+            this.activiteCount[direction.id] = 0;
+          }
+        });
+        
+        // Charger les activités après l'initialisation
+        this.loadActivitiesForEntities(this.directions);
       },
       error: (err) => {
         console.error('Erreur lors du chargement des directions', err);
+      }
+    });
+  }
+
+  // Afficher les services d'une direction sélectionnée
+  showDirectionServices(direction: Entite) {
+    console.log('Direction sélectionnée:', direction);
+    this.selectedDirection = direction;
+    this.viewMode = 'services';
+    console.log(`Chargement des services pour la direction ${direction.id}...`);
+    this.glogalService.get(`entite/parent/${direction.id}`).subscribe({
+      next: (data: Entite[]) => {
+        console.log('Services reçus:', data);
+        this.services = data;
+        
+        // Initialiser immédiatement les compteurs d'activités à 0 pour les services
+        this.services.forEach(service => {
+          if (service.id) {
+            this.activiteCount[service.id] = 0;
+          }
+        });
+        
+        // Charger les activités pour les services après l'initialisation
+        this.loadActivitiesForEntities(this.services);
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement des services', err);
+      }
+    });
+  }
+
+  // Revenir à la liste des directions
+  backToDirections() {
+    this.viewMode = 'directions';
+    this.selectedDirection = null;
+    this.services = [];
+  }
+
+  // Charger les activités pour des entités spécifiques (optimisé)
+  loadActivitiesForEntities(entities: Entite[]) {
+    this.glogalService.get('activite').subscribe({
+      next: (activites: any[]) => {
+        // Compter les activités pour chaque entité
+        activites.forEach(activite => {
+          if (activite.entite && activite.entite.id && this.activiteCount.hasOwnProperty(activite.entite.id)) {
+            this.activiteCount[activite.entite.id]++;
+          }
+        });
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement des activités', err);
       }
     });
   }
@@ -294,11 +402,38 @@ export class EntiteComponent {
   }
 
   this.glogalService.post('entite',formData).subscribe({
-    next: () => {
+    next: (response) => {
       this.loadingIndicator = false;
       this.modalService.dismissAll();
      this.addRecordSuccess();
-     this.getAllEntite();
+     
+     const createdType = form.value.type;
+     
+     // Rafraîchir les données selon le type d'entité créée
+     if (createdType === 'DIRECTION') {
+       // Nouvelle direction créée : rafraîchir la liste des directions
+       console.log('Création d\'une direction - rafraîchissement des directions...');
+       this.getDirections();
+       // S'assurer qu'on reste en mode directions
+       this.viewMode = 'directions';
+     } else if (createdType === 'SERVICE') {
+       // Nouveau service créé : rafraîchir les services de la direction parente
+       if (this.selectedDirection) {
+         console.log('Création d\'un service - rafraîchissement des services de la direction:', this.selectedDirection.nom);
+         this.showDirectionServices(this.selectedDirection);
+       } else {
+         // Si aucune direction sélectionnée, revenir aux directions
+         console.log('Création d\'un service sans direction sélectionnée - retour aux directions');
+         this.getDirections();
+         this.viewMode = 'directions';
+       }
+     }
+     
+     // Initialiser immédiatement le compteur d'activités pour la nouvelle entité
+     if (response && (response as any).id) {
+       this.activiteCount[(response as any).id] = 0;
+     }
+     
      this.resetForm();
     },
     error: (err) => {
@@ -317,7 +452,18 @@ export class EntiteComponent {
   resetForm() {
     this.register.reset();
     this.showParentDirection = false;
-    this.selectedFile = null;
+    this.resetLogoPreview(); // Ajout de la réinitialisation de l'aperçu
+  }
+
+  // Afficher un message de succès
+  addRecordSuccess() {
+    Swal.fire({
+      icon: 'success',
+      title: 'Succès',
+      text: 'Entité créée avec succès !',
+      timer: 2000,
+      showConfirmButton: false
+    });
   }
 
   // add new record
@@ -330,10 +476,6 @@ export class EntiteComponent {
     //   id: this.getId(10, 100),
     //   img: this.newUserImg,
     // });
-  }
-
-  addRecordSuccess() {
-    this.toastr.success('Adjonction réalisée avec succès.', '');
   }
 
   deleteRecordSuccess(count: number) {
@@ -359,7 +501,7 @@ export class EntiteComponent {
           // console.log("Activiteby entite==========", activite);
           if (activite.entite.id && this.activiteCount.hasOwnProperty(activite.entite.id)) {
             this.activiteCount[activite.entite.id]++;
-            
+
           }
         });
       },
