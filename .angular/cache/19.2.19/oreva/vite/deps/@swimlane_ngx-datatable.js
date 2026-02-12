@@ -6,10 +6,8 @@ import {
   NgIf,
   NgStyle,
   NgTemplateOutlet
-} from "./chunk-O3Y3WDQW.js";
 import {
   DOCUMENT
-} from "./chunk-XZRVADUA.js";
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -79,8 +77,6 @@ import {
   ɵɵtextInterpolate1,
   ɵɵtextInterpolate2,
   ɵɵviewQuery
-} from "./chunk-6K5MVAX3.js";
-import "./chunk-ISM5WLAM.js";
 import {
   fromEvent
 } from "./chunk-IC62NIWK.js";

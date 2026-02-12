@@ -5,18 +5,12 @@ import {
   style,
   transition,
   trigger
-} from "./chunk-674DBFQP.js";
 import {
   DomSanitizer
-} from "./chunk-VJZNLZSU.js";
-import "./chunk-ZLXCBH3P.js";
-import "./chunk-RAGQOC5O.js";
 import {
   NgIf
-} from "./chunk-O3Y3WDQW.js";
 import {
   DOCUMENT
-} from "./chunk-XZRVADUA.js";
 import {
   ANIMATION_MODULE_TYPE,
   ApplicationRef,
@@ -68,8 +62,6 @@ import {
   ɵɵtemplate,
   ɵɵtext,
   ɵɵtextInterpolate1
-} from "./chunk-6K5MVAX3.js";
-import "./chunk-ISM5WLAM.js";
 import "./chunk-IC62NIWK.js";
 import {
   Subject
@@ -1715,7 +1707,6 @@ export {
 
 @angular/animations/fesm2022/animations.mjs:
   (**
-   * @license Angular v19.2.17
    * (c) 2010-2025 Google LLC. https://angular.io/
    * License: MIT
    *)

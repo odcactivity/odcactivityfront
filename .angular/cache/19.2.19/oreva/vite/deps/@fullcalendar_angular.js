@@ -1,7 +1,6 @@
 import {
   Calendar,
   CustomRenderingStore
-} from "./chunk-TEOT34KR.js";
 import {
   CommonModule,
   NgClass,
@@ -9,8 +8,6 @@ import {
   NgIf,
   NgStyle,
   NgTemplateOutlet
-} from "./chunk-O3Y3WDQW.js";
-import "./chunk-XZRVADUA.js";
 import {
   ChangeDetectorRef,
   Component,
@@ -41,8 +38,6 @@ import {
   ɵɵqueryRefresh,
   ɵɵtemplate,
   ɵɵviewQuery
-} from "./chunk-6K5MVAX3.js";
-import "./chunk-ISM5WLAM.js";
 import "./chunk-IC62NIWK.js";
 import "./chunk-ZZ67MR3E.js";
 import {

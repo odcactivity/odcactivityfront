@@ -27,7 +27,9 @@ export class CourriersComponent {
 
   @ViewChild(DatatableComponent, { static: false }) table!: DatatableComponent;
   // 
-  entites:  Entite[] = [];
+  entites: Entite[] = [];          // toutes les entités
+  directions: Entite[] = [];       // Entité de type==="DIRECTION" 
+  services: Entite[] = [];         // Entité de type ==="SERVICE"
   personnel: any = undefined;
   entiteCible: any = undefined;
   Historiques: any[] = [];
@@ -162,19 +164,45 @@ export class CourriersComponent {
 
   getAllSupport(){}
 
+  // Afficher toutes les directions de DCIR
   getAllEntite(){
     this.loadingIndicator = true;
     this.glogalService.get('entite').subscribe({
+      // Parcourrir le liste des entités
       next:(value: Entite[]) =>{
+        // Afficher le nombre d'entité  
+         console.log("DATA BRUTE API:", value);
+         value.forEach(e => {
+        // Afficher tous les noms de entités et leurs types
+        console.log("ENTITE:", e.nom, " | TYPE:", e.type);
+      });
+        
+
+        // Afficher tous entités
         this.entites = value;
-        // this.Direction = value.find(el => el.nom === 'Direction');
+         // les directions
+        this.directions = value.filter(e => e.type === 'DIRECTION');
+          // les services
+        this.services = value.filter(e => e.type === 'SERVICE');
+
+        //Affichage des données pour verification envoyees par API
+        console.log("ALL:", this.entites.map(e=>e.nom));
+        console.log("DIRECTIONS:", this.directions.map(e=>e.nom));
+        console.log("SERVICES:", this.services.map(e=>e.nom));
+
+            this.loadingIndicator = false;
+
+
+       
+
         setTimeout(() =>{
-          this.loadingIndicator = false;
+        this.loadingIndicator = false;
         },500);
       }
     })
   }
 
+  // Afficher la liste des courriers liées à une direction
   idEntite: any
   getCourrierByEntite(){
     // console.log("event -> ", this.idEntite);
@@ -223,6 +251,7 @@ export class CourriersComponent {
     })
   }
 
+// Archiver un courrier par Entite
   archiveCourrier(row: any) {
     this.glogalService.update("api/courriers/archiver", row.id, {}).subscribe({
       next: (resp) => {         
@@ -256,6 +285,8 @@ export class CourriersComponent {
       }
     });
   }
+
+  // Telecharger le fichier joint associé à un courrier
   download(row: any) {
     this.loadingIndicator = true;
     this.supportactivityService.downloadCourrierFile(row.id).subscribe({

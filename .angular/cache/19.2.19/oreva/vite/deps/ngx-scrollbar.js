@@ -1,17 +1,13 @@
 import {
   toSignal
-} from "./chunk-Z7BMQRBV.js";
 import {
   ContentObserver,
   Directionality,
   Platform,
   coerceElement
-} from "./chunk-7G3EM4GV.js";
-import "./chunk-O3Y3WDQW.js";
 import {
   DOCUMENT,
   isPlatformBrowser
-} from "./chunk-XZRVADUA.js";
 import {
   ApplicationRef,
   ChangeDetectionStrategy,
@@ -65,8 +61,6 @@ import {
   ɵɵstyleProp,
   ɵɵtemplate,
   ɵɵviewQuerySignal
-} from "./chunk-6K5MVAX3.js";
-import "./chunk-ISM5WLAM.js";
 import {
   animationFrameScheduler,
   fromEvent,

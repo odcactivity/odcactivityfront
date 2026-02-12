@@ -6,15 +6,11 @@ import {
   sequence,
   style,
   ɵPRE_STYLE
-} from "./chunk-674DBFQP.js";
 import {
   BrowserModule,
   DomRendererFactory2
-} from "./chunk-RAGQOC5O.js";
-import "./chunk-O3Y3WDQW.js";
 import {
   DOCUMENT
-} from "./chunk-XZRVADUA.js";
 import {
   ANIMATION_MODULE_TYPE,
   Inject,
@@ -29,8 +25,6 @@ import {
   ɵɵdefineInjector,
   ɵɵdefineNgModule,
   ɵɵinject
-} from "./chunk-6K5MVAX3.js";
-import "./chunk-ISM5WLAM.js";
 import "./chunk-IC62NIWK.js";
 import "./chunk-ZZ67MR3E.js";
 import {
@@ -4200,7 +4194,6 @@ export {
 @angular/animations/fesm2022/browser.mjs:
 @angular/platform-browser/fesm2022/animations.mjs:
   (**
-   * @license Angular v19.2.17
    * (c) 2010-2025 Google LLC. https://angular.io/
    * License: MIT
    *)

@@ -17,13 +17,10 @@ import {
   getRtlScrollAxisType,
   normalizePassiveListenerOptions,
   supportsScrollBehavior
-} from "./chunk-7G3EM4GV.js";
 import {
   Location
-} from "./chunk-O3Y3WDQW.js";
 import {
   DOCUMENT
-} from "./chunk-XZRVADUA.js";
 import {
   ANIMATION_MODULE_TYPE,
   APP_ID,
@@ -94,8 +91,6 @@ import {
   ɵɵtext,
   ɵɵtextInterpolate1,
   ɵɵviewQuery
-} from "./chunk-6K5MVAX3.js";
-import "./chunk-ISM5WLAM.js";
 import {
   animationFrameScheduler,
   asapScheduler,

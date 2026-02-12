@@ -2,10 +2,8 @@ import {
   AsyncPipe,
   CommonModule,
   NgIf
-} from "./chunk-O3Y3WDQW.js";
 import {
   isPlatformBrowser
-} from "./chunk-XZRVADUA.js";
 import {
   ChangeDetectionStrategy,
   Component,
@@ -40,8 +38,6 @@ import {
   ɵɵproperty,
   ɵɵstyleProp,
   ɵɵtemplate
-} from "./chunk-6K5MVAX3.js";
-import "./chunk-ISM5WLAM.js";
 import "./chunk-IC62NIWK.js";
 import {
   Observable,
