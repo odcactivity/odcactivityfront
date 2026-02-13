@@ -172,6 +172,7 @@ export class CourriersComponent {
   }
 
   idEntite: any;
+  idService: any;
   
   getCourrierByEntite() {
     console.log('=== getCourrierByEntite appelé ===');
@@ -183,6 +184,9 @@ export class CourriersComponent {
       console.log('idEntite est null, retour sans traitement');
       return;
     }
+    
+    // Réinitialiser le service sélectionné quand on change de direction
+    this.idService = null;
     
     const idEntiteNumber = Number(this.idEntite);
     console.log('idEntite converti en nombre:', idEntiteNumber);
@@ -208,6 +212,37 @@ export class CourriersComponent {
         setTimeout(() => {
           this.loadingIndicator = false;
         }, 500);
+      }
+    })
+  }
+
+  getCourrierByService() {
+    console.log('=== getCourrierByService appelé ===');
+    console.log('idService:', this.idService);
+    
+    if (!this.idService) {
+      console.log('idService est null, on retourne aux courriers de la direction');
+      // Si aucun service n'est sélectionné, on affiche les courriers de la direction
+      this.getCourrierByEntite();
+      return;
+    }
+    
+    const selectedService = this.servicesOfDirection.find(service => service.id === Number(this.idService));
+    console.log('Service sélectionné:', selectedService ? selectedService.nom : 'NULL');
+    
+    this.loadingIndicator = true;
+    this.glogalService.get(`api/courriers/${this.typeliste}/service/${this.idService}`).subscribe({
+      next: (value: any[]) => {
+        this.Courriers = value;
+        console.log(`Courriers du service ${selectedService?.nom}:`, value.length, 'courriers');
+        setTimeout(() => {
+          this.loadingIndicator = false;
+        }, 500);
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement des courriers du service:', err);
+        // En cas d'erreur, on retourne aux courriers de la direction
+        this.getCourrierByEntite();
       }
     })
   }

@@ -19,13 +19,13 @@ import {
   ɵɵdirectiveInject,
   ɵɵgetInheritedFactory,
   ɵɵinject
-} from "./chunk-6K5MVAX3.js";
-import "./chunk-ISM5WLAM.js";
+} from "./chunk-SCH26RZW.js";
 import {
   defer,
   forkJoin,
   isObservable
 } from "./chunk-IC62NIWK.js";
+import "./chunk-ISM5WLAM.js";
 import {
   concat,
   concatMap,
@@ -37,7 +37,7 @@ import {
 } from "./chunk-ZZ67MR3E.js";
 import {
   __spreadValues
-} from "./chunk-EIB7IA3J.js";
+} from "./chunk-KBUIKKCC.js";
 
 // node_modules/@ngx-translate/core/fesm2022/ngx-translate-core.mjs
 var TranslateLoader = class {

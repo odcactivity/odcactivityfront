@@ -39,15 +39,24 @@
                                   <i class="material-icons">delete</i>
                                 </button>
                              </div>
-                              <div class="col-sm-12 col-md-8 col-lg-8" style="display: flex;">
+                              <div class="col-sm-12 col-md-8 col-lg-8" style="display: flex; justify-content: flex-end; gap: 15px;">
 
-                                <div class="mt-2" style="display: flex;">
+                                <div class="mt-2" style="display: flex; flex-direction: column; min-width: 200px;">
                                     <label class="mt-2">Entité <span class="text-dangerx">*</span></label>
-                                    <select class="form-select readonly-select customselect" name="idEntite" [(ngModel)]="idEntite" (change)="getCourrierByEntite()">
+                                    <select class="form-select readonly-select customselect" name="idEntite" [(ngModel)]="idEntite" (change)="getCourrierByEntite()" style="min-width: 200px;">
                                         <option value="" [ngValue]="null" disabled>-- Sélectionnez une entité --</option>
                                         <option *ngFor="let dir of directions"  [value]="dir.id">{{dir.nom}}</option>
                                     </select>
                                 </div>
+                                @if(this.idEntite){
+                                    <div class="mt-2" style="display: flex; flex-direction: column; min-width: 200px;">
+                                        <label class="mt-2">Service</label>
+                                        <select class="form-select readonly-select customselect" name="idService" [(ngModel)]="idService" (change)="getCourrierByService()" style="min-width: 200px;">
+                                            <option value="" [ngValue]="null">-- Tous les services --</option>
+                                            <option *ngFor="let service of servicesOfDirection"  [value]="service.id">{{service.nom}}</option>
+                                        </select>
+                                    </div>
+                                }
                                 @if(this.idEntite){
                                     <button [class]="this.typeliste ==='actifs' ? 'btn btn-warning' : 'btn btn shadow-sm btn-dark'" (click)="handleList('actifs')">
                                         <i class="fas fa-file"></i>
