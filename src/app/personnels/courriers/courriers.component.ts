@@ -219,6 +219,7 @@ export class CourriersComponent {
   getCourrierByService() {
     console.log('=== getCourrierByService appelé ===');
     console.log('idService:', this.idService);
+    console.log('servicesOfDirection disponibles:', this.servicesOfDirection.map(s => `${s.id}: ${s.nom}`));
     
     if (!this.idService) {
       console.log('idService est null, on retourne aux courriers de la direction');
@@ -229,18 +230,29 @@ export class CourriersComponent {
     
     const selectedService = this.servicesOfDirection.find(service => service.id === Number(this.idService));
     console.log('Service sélectionné:', selectedService ? selectedService.nom : 'NULL');
+    console.log('Service ID comparé:', Number(this.idService));
+    
+    if (!selectedService) {
+      console.log('Service non trouvé dans servicesOfDirection, on retourne aux courriers de la direction');
+      this.getCourrierByEntite();
+      return;
+    }
     
     this.loadingIndicator = true;
+    console.log(`Appel API: api/courriers/${this.typeliste}/service/${this.idService}`);
+    
     this.glogalService.get(`api/courriers/${this.typeliste}/service/${this.idService}`).subscribe({
       next: (value: any[]) => {
         this.Courriers = value;
-        console.log(`Courriers du service ${selectedService?.nom}:`, value.length, 'courriers');
+        console.log(`Courriers du service ${selectedService.nom}:`, value.length, 'courriers');
+        console.log('Détails des courriers:', value);
         setTimeout(() => {
           this.loadingIndicator = false;
         }, 500);
       },
       error: (err) => {
         console.error('Erreur lors du chargement des courriers du service:', err);
+        console.log('Retour aux courriers de la direction en cas d\'erreur');
         // En cas d'erreur, on retourne aux courriers de la direction
         this.getCourrierByEntite();
       }
