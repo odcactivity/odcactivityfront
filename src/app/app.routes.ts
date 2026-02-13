@@ -21,13 +21,31 @@ export const APP_ROUTE: Route[] = [
       { path: 'role', loadComponent: () => import('./admin/role/role.component').then(c => c.RoleComponent) },
       { path: 'utilisateur', loadComponent: () => import('./admin/utilisateur/utilisateur.component').then(c => c.UtilisateurComponent) },
       { path: 'entite', loadComponent: () => import('./admin/entite/entite.component').then(c => c.EntiteComponent) },
-
+{
+            path: 'entiteDetail',
+            loadComponent: () => import('./admin/entite-detail/entite-detail.component').then(c => c.EntiteDetailComponent)
+          },
       { path: 'dashboard2', loadComponent: () => import('./personnels/dashboard/dashboard.component').then(c => c.DashboardComponent) },
       { path: 'courrier', loadComponent: () => import('./personnels/courriers/courriers.component').then(c => c.CourriersComponent) },
 
       { path: 'dashboardActivite', loadComponent: () => import('./personnels/dash-activite/dash-activite.component').then(c => c.DashActiviteComponent) },
       { path: 'typeActivite', loadComponent: () => import('./personnels/type-activite/type-activite.component').then(c => c.TypeActiviteComponent) },
       { path: 'critere', loadComponent: () => import('./personnels/critere/critere.component').then(c => c.CritereComponent) },
+      { path: 'etape',loadComponent: () => import('./personnels/etape/etape.component').then(c => c.EtapeComponent)},
+      {
+            path: 'listeDebut',
+            loadComponent: () => import('./personnels/etape/liste-debut/liste-debut.component').then(c => c.ListeDebutComponent)
+          },
+
+           {
+            path: 'listeGlobale',
+            loadComponent: () => import('./personnels/etape/liste-affichage/liste-affichage.component').then(c => c.ListeAffichageComponent)
+          },
+
+          {
+            path: 'listeResultat',
+            loadComponent: () => import('./personnels/etape/liste-resultat/liste-resultat.component').then(c => c.ListeResultatComponent)
+          },
       { path: 'activite', loadComponent: () => import('./personnels/activity/activity.component').then(c => c.ActivityComponent) },
       { path: 'salle', loadComponent: () => import('./personnels/salle/salle.component').then(c => c.SalleComponent) },
       { path: 'activityvalidation', loadComponent: () => import('./personnels/activityvalidation/activityvalidation.component').then(c => c.ActivityvalidationComponent) },

@@ -13,7 +13,7 @@ export interface Entite {
 })
 export class EntiteService {
 
-  private baseUrl =environment.apiUrl;
+  private baseUrl ='http://localhost:8089';
    
 
   constructor(private http: HttpClient) {}

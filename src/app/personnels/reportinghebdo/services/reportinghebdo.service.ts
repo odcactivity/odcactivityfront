@@ -2,11 +2,12 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ReportingHebdoActiviteDTO } from '@core/models/reportinghebdo.model';
+import { environment } from 'environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class ReportingHebdoService {
 
-  private apiUrl = 'http://localhost:8089/reportinghebdo/activites';
+  private apiUrl = '${environment.apiUrl}/reportinghebdo/activites';
 
   constructor(private http: HttpClient) {}
 

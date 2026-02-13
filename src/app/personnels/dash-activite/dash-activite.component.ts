@@ -85,6 +85,12 @@ export class DashActiviteComponent implements OnInit {
     this.selectedActivityDescription = clickInfo.event.extendedProps['description'];
     this.modalService.open(this.activityDetailsModal, { ariaLabelledBy: 'modal-basic-title' });
   }
+addDays(date: Date | string, days: number): Date {
+  const d = new Date(date);
+  d.setDate(d.getDate() + days);
+ 
+  return d;
+}
 
   getAllActivite() {
     this.globaleService.get("activite").subscribe({
@@ -121,7 +127,8 @@ export class DashActiviteComponent implements OnInit {
         id: activity.id?.toString(),
         title: activity.nom,
         start: activity.dateDebut ,
-        end: activity.dateFin ,
+        //end: activity.dateFin ,
+        end: this.addDays(activity.dateFin!, 1),
         color: color,
         
         

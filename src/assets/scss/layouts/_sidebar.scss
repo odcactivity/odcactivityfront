@@ -1119,6 +1119,39 @@ $color-primary-light: #efb45f;
   width: 18px !important;
   text-align: center;
   fill: rgba(233, 227, 227, 0.12) !important;
+  /* ===========================
+   FIX SUBMENU ACTIVE ORANGE
+   =========================== */
+
+/* Menu parent actif */
+.sidebar .list > li.active > a.menu-top {
+  background-color: $color-primary-light !important; /* parent reste orange */
+  color: #fff !important;
+}
+
+/* Hover parent actif ne change pas */
+.sidebar .list > li.active > a.menu-top:hover {
+  background-color: $color-primary-light !important;
+}
+
+/* Sous-menu actif */
+.ml-menu li.active > a {
+  background-color: $color-primary-light !important; /* sous-menu reste orange */
+  color: #fff !important;
+  font-weight: 600;
+}
+
+/* Hover sous-menu actif ne change pas */
+.ml-menu li.active > a:hover {
+  background-color: $color-primary-light !important;
+  color: #fff !important;
+}
+
+/* Ouvrir automatiquement le sous-menu du parent actif */
+.sidebar .list > li.active .ml-menu {
+  display: block !important;
+}
+
 }
 .hiddenradio {
   padding: 0px 20px 0px 0px;
@@ -1143,3 +1176,42 @@ $color-primary-light: #efb45f;
 .hiddenradio [type="radio"]:checked + img {
   outline: 2px solid #6777ef;
 }
+
+/* ===============================
+   FIX MENU ACTIF (PARENT + SUB)
+   =============================== */
+
+/* PARENT ACTIF (ex: Activité) */
+.sidebar .list > li.active > a.menu-top {
+  background-color: $color-primary-light !important;
+  color: #fff !important;
+  font-weight: 600;
+}
+
+/* Hover NE DOIT PAS changer */
+.sidebar .list > li.active > a.menu-top:hover {
+  background-color: $color-primary-light !important;
+  color: #fff !important;
+}
+
+/* SOUS-MENU ACTIF (ex: Validation activité) */
+.ml-menu li.active > a {
+  background-color: $color-primary-light !important;
+  color: #fff !important;
+  font-weight: 600;
+}
+
+/* Hover sous-menu actif */
+.ml-menu li.active > a:hover {
+  background-color: $color-primary-light !important;
+  color: #fff !important;
+}
+
+/* OUVRIR AUTOMATIQUEMENT LE SOUS-MENU DU PARENT ACTIF */
+.sidebar .list > li.active .ml-menu {
+  display: block !important;
+}
+
+
+
+

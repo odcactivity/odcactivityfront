@@ -21,7 +21,7 @@ export interface Participant {
   providedIn: 'root'
 })
 export class ReportingService {
-  private baseUrl = environment.apiUrl;
+  private baseUrl = 'http://localhost:8089';
 //  'http://activiteodc-env.eba-qpcww8sx.us-east-1.elasticbeanstalk.com'
 
   constructor(private http: HttpClient) {}

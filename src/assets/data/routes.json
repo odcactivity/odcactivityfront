@@ -88,8 +88,14 @@
           "path": "/critere",
           "title": "Critère",
           "submenu": [],
-          "roles": ["SUPERADMIN"]
+          "roles": ["SUPERADMIN", "PERSONNEL"]
         },
+        {
+      "path": "/etape",
+      "title": "Étape",
+      "submenu": [],
+      "roles": ["PERSONNEL","SUPERADMIN"]
+    },
         {
           "path": "/activite",
           "title": "Liste Activités",

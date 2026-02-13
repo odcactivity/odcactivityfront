@@ -176,6 +176,7 @@ getMapEnvoyeur(): void {
     this.loadingIndicator = true;
     this.glogalService.get('activite').subscribe({
       next:(value: Activity[]) =>{
+        console.log('Activity:', value);
         this.activite = value;
         this.filteredData = [...value];
         setTimeout(() =>{
@@ -264,7 +265,7 @@ async onAddRowSave(form: UntypedFormGroup) {
 
         const fichier: File | undefined = form.value.fichier;
 
-        this.glogalService.createValidation(validation, fichier,'REPONSE').subscribe({
+        this.glogalService.createValidation(validation, fichier,'DESIGNATION').subscribe({
           next: () => {
             this.addRecordSuccess();
             this.modalService.dismissAll();
@@ -447,7 +448,7 @@ onValidate() {
      fichierChiffre:fichierChiffre || undefined
     };
   
-    this.glogalService.createValidation(validation,fichierChiffre!,'REPONSE').subscribe({
+    this.glogalService.createValidation(validation,fichierChiffre!,'DESIGNATION').subscribe({
       next: () => {
         this.modalService.dismissAll();
         this.getActivitesForSuperviseur();
