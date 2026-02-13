@@ -5,41 +5,51 @@ import { AuthService } from '@core';
 import { Activity } from '@core/models/Activity';
 import { ActivitySupports } from '@core/models/ActivitySupports';
 import { Entite } from '@core/models/Entite';
-// import { ActivitySupportsOngletsInterface } from '@core/models/ActivitySupportsOngletsInterface';
 import { Salle } from '@core/models/Salle';
 import { Utilisateur } from '@core/models/Utilisateur.model';
 import { GlobalService } from '@core/service/global.service';
 import { SupportactivityService } from '@core/service/supportactivity.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DatatableComponent, NgxDatatableModule, SelectionType } from '@swimlane/ngx-datatable';
-import { active } from 'd3';
 import { ToastrService } from 'ngx-toastr';
 import Swal from 'sweetalert2';
 
+interface selectActivitySupportInterface {
+  id: number;
+  numero: string;
+  objet: string;
+  expediteur: string;
+  dateReception: Date;
+  dateLimite: Date;
+  url?: string;
+  statut?: string;
+}
 
 @Component({
   selector: 'app-courriers',
-  imports: [NgxDatatableModule, CommonModule,ReactiveFormsModule, FormsModule],
+  imports: [NgxDatatableModule, CommonModule, ReactiveFormsModule, FormsModule],
   templateUrl: './courriers.component.html',
   styleUrl: './courriers.component.scss'
 })
 export class CourriersComponent {
 
   @ViewChild(DatatableComponent, { static: false }) table!: DatatableComponent;
-  // 
-  entites: Entite[] = [];          // toutes les entités
-  directions: Entite[] = [];       // Entité de type==="DIRECTION" 
-  services: Entite[] = [];         // Entité de type ==="SERVICE"
+  
+  entites: Entite[] = [];
+  directions: Entite[] = [];
+  services: Entite[] = [];
+  servicesOfDirection: Entite[] = [];
+  selectedDirection: Entite | null = null;
   personnel: any = undefined;
   entiteCible: any = undefined;
   Historiques: any[] = [];
-  // 
+  
   rows = [];
-  salles:  Salle[] = [];
+  salles: Salle[] = [];
   Activitys: Activity[] = [];
   ActivitySupport: ActivitySupports[] = [];
   Courriers: any[] = [];
-  typeliste: string = "actifs" // archives
+  typeliste: string = "actifs";
   ActivitySupportOnglets: any[] = [];
   Utilisateurs: Utilisateur[] = [];
   selectedFile: File | null = null;
@@ -54,6 +64,8 @@ export class CourriersComponent {
   reorderable = true;
   public selected: number[] = [];
   currenUserData: any;
+  taille: any = "";
+  
   columns = [
     { prop: 'nom' },
     { prop: 'capacite' },
@@ -61,6 +73,7 @@ export class CourriersComponent {
 
   @ViewChild(DatatableComponent, { static: false }) table2!: DatatableComponent;
   selection!: SelectionType;
+  
   constructor(
     private fb: UntypedFormBuilder,
     private modalService: NgbModal,
@@ -74,21 +87,13 @@ export class CourriersComponent {
       statut: new UntypedFormControl(),
       commentaire: new UntypedFormControl(),
       idutilisateur: new UntypedFormControl(),
-
-      // numero:  new UntypedFormControl(),
-      // objet:  new UntypedFormControl(),
-      // expediteur:  new UntypedFormControl(),
-      // directionId:  new UntypedFormControl(),
-      // fichier:  new UntypedFormControl(),
     });
     window.onresize = () => {
       this.scrollBarHorizontal = window.innerWidth < 1200;
     };
     this.selection = SelectionType.checkbox;
   }
-  
 
-  // select record using check box
   onSelect({ selected }: { selected: any }) {
     this.selected.splice(0, this.selected.length);
     this.selected.push(...selected);
@@ -119,147 +124,127 @@ export class CourriersComponent {
     });
   }
 
-  taille:any = "";
   ngOnInit() {
-    // this.getAllSupport(); // TODO: // faire le get selon l'onglet sélection
-    this.getAllEntite()
-    this.getUtilisateur()
+    this.getAllEntite();
+    this.getUtilisateur();
     this.register = this.fb.group({
       entite: ['', [Validators.required]],
       numero: ['', [Validators.required]],
       objet: ['', [Validators.required]],
       expediteur: ['', [Validators.required]],
-      // directionId: [''],
       fichier: [''],
-
-      // description: [''],
-      // fichier: ['', [Validators.required]],
-      // idutilisateur: [0, [Validators.required]],
     });
 
     const userString = localStorage.getItem('currentUser');
     if (userString) {
       const user = JSON.parse(userString);
-      const token = user.bearer; // ou le champ exact où est stocké ton token
+      const token = user.bearer;
       if (token) {
         const decoded = this.authService.getDecodedToken(token);
-        this.currenUserData = decoded
+        this.currenUserData = decoded;
       }
     }
-
   }
-  // fetch data
-  // getAllActivitys(){
-  //   this.loadingIndicator = true;
-  //   this.glogalService.get('activite').subscribe({
-  //     next:(value: Activity[]) =>{
-  //       this.Activitys = value;
-  //       // this.filteredData = [...value];
-  //       setTimeout(() =>{
-  //         this.loadingIndicator = false;
-  //       },500);
-  //     }
-  //   })
-  // }
 
-  getAllSupport(){}
-
-  // Afficher toutes les directions de DCIR
-  getAllEntite(){
+  getAllEntite() {
     this.loadingIndicator = true;
     this.glogalService.get('entite').subscribe({
-      // Parcourrir le liste des entités
-      next:(value: Entite[]) =>{
-        // Afficher le nombre d'entité  
-         console.log("DATA BRUTE API:", value);
-         value.forEach(e => {
-        // Afficher tous les noms de entités et leurs types
-        console.log("ENTITE:", e.nom, " | TYPE:", e.type);
-      });
+      next: (value: Entite[]) => {
+        console.log("DATA BRUTE API:", value);
+        value.forEach(e => {
+          console.log("ENTITE:", e.nom, " | TYPE:", e.type);
+        });
         
-
-        // Afficher tous entités
         this.entites = value;
-         // les directions
         this.directions = value.filter(e => e.type === 'DIRECTION');
-          // les services
         this.services = value.filter(e => e.type === 'SERVICE');
 
-        //Affichage des données pour verification envoyees par API
-        console.log("ALL:", this.entites.map(e=>e.nom));
-        console.log("DIRECTIONS:", this.directions.map(e=>e.nom));
-        console.log("SERVICES:", this.services.map(e=>e.nom));
+        console.log("ALL:", this.entites.map(e => e.nom));
+        console.log("DIRECTIONS:", this.directions.map(e => e.nom));
+        console.log("SERVICES:", this.services.map(e => e.nom));
 
-            this.loadingIndicator = false;
-
-
-       
-
-        setTimeout(() =>{
         this.loadingIndicator = false;
-        },500);
+        setTimeout(() => {
+          this.loadingIndicator = false;
+        }, 500);
       }
     })
   }
 
-  // Afficher la liste des courriers liées à une direction
-  idEntite: any
-  getCourrierByEntite(){
-    // console.log("event -> ", this.idEntite);
-    // const idEntite = event.target.value;
-    // const idEntite = event.target.value;
-    if(!this.idEntite) return;
+  idEntite: any;
+  
+  getCourrierByEntite() {
+    console.log('=== getCourrierByEntite appelé ===');
+    console.log('idEntite:', this.idEntite);
+    console.log('directions disponibles:', this.directions.map(d => `${d.id}: ${d.nom}`));
+    console.log('services disponibles:', this.services.map(s => `${s.id}: ${s.nom} (parentId: ${s.parentId})`));
+    
+    if (!this.idEntite) {
+      console.log('idEntite est null, retour sans traitement');
+      return;
+    }
+    
+    const idEntiteNumber = Number(this.idEntite);
+    console.log('idEntite converti en nombre:', idEntiteNumber);
+    
+    this.selectedDirection = this.directions.find(dir => dir.id === idEntiteNumber);
+    console.log('Direction trouvée:', this.selectedDirection ? this.selectedDirection.nom : 'NULL');
+    
+    if (this.selectedDirection) {
+      this.servicesOfDirection = this.services.filter(service => service.parentId === this.selectedDirection!.id);
+      console.log(`Chargement des courriers - Direction: ${this.selectedDirection.nom}`);
+      console.log('Services de cette direction:', this.servicesOfDirection.map(s => s.nom));
+      console.log('Nombre de services trouvés:', this.servicesOfDirection.length);
+    } else {
+      this.servicesOfDirection = [];
+      console.log('Aucune direction trouvée pour idEntite:', idEntiteNumber);
+    }
     
     this.loadingIndicator = true;
     this.glogalService.get(`api/courriers/${this.typeliste}/${this.idEntite}`).subscribe({
-      next:(value: any[]) => {
+      next: (value: any[]) => {
         this.Courriers = value;
-        // this.filteredData = [...value];
-        setTimeout(() =>{
+        console.log('Courriers chargés:', value.length, 'courriers');
+        setTimeout(() => {
           this.loadingIndicator = false;
-        },500);
+        }, 500);
       }
     })
   }
 
-  getAllOnglet(){
+  getAllOnglet() {
     this.loadingIndicator = true;
     this.glogalService.get('api/stats/fichiers/par-type').subscribe({
-      next:(value: any) =>{
-        this.taille = value
-        // this.ActivitySupportOnglets = value;
-        // this.handleList('1')
-        // this.filteredData = [...value];
-        setTimeout(() =>{
+      next: (value: any) => {
+        this.taille = value;
+        setTimeout(() => {
           this.loadingIndicator = false;
-        },500);
+        }, 500);
       }
     })
   }
 
-  handleList(type: string){
+  handleList(type: string) {
     this.loadingIndicator = true;
     this.glogalService.get(`api/courriers/${type}/${this.idEntite}`).subscribe({
-      next:(value: ActivitySupports[]) =>{
+      next: (value: ActivitySupports[]) => {
         this.Courriers = value;
         this.typeliste = type;
         this.filteredData = [...value];
-        setTimeout(() =>{
+        setTimeout(() => {
           this.loadingIndicator = false;
-        },500);
+        }, 500);
       }
     })
   }
 
-// Archiver un courrier par Entite
   archiveCourrier(row: any) {
     this.glogalService.update("api/courriers/archiver", row.id, {}).subscribe({
-      next: (resp) => {         
-        this.getCourrierByEntite() 
-        setTimeout(() =>{
+      next: (resp) => {
+        this.getCourrierByEntite();
+        setTimeout(() => {
           this.loadingIndicator = false;
-        },500);
-        this.getAllSupport();
+        }, 500);
       },
       error: (err: { status: number; error: any; message?: string }) => {
         console.error('Erreur lors de la mise à jour du support activité:', err);
@@ -286,13 +271,10 @@ export class CourriersComponent {
     });
   }
 
-  // Telecharger le fichier joint associé à un courrier
   download(row: any) {
     this.loadingIndicator = true;
     this.supportactivityService.downloadCourrierFile(row.id).subscribe({
-      next:(value: any) =>{
-        // console.log("value -> ", value);
-
+      next: (value: any) => {
         const blob = value.body!;
         const contentDisposition = value.headers.get('content-disposition');
   
@@ -311,9 +293,9 @@ export class CourriersComponent {
         a.click();
         window.URL.revokeObjectURL(url);
 
-        setTimeout(() =>{
+        setTimeout(() => {
           this.loadingIndicator = false;
-        },500);
+        }, 500);
       },
       error: (err) => {
         console.error('Erreur téléchargement', err);
@@ -321,17 +303,14 @@ export class CourriersComponent {
     })
   }
 
-  getUtilisateur(){
+  getUtilisateur() {
     this.loadingIndicator = true;
     this.glogalService.get('utilisateur').subscribe({
-      next:(value: Utilisateur[]) =>{
+      next: (value: Utilisateur[]) => {
         this.Utilisateurs = value;
-
-        // this.handleList('1')
-        // this.filteredData = [...value];
-        setTimeout(() =>{
+        setTimeout(() => {
           this.loadingIndicator = false;
-        },500);
+        }, 500);
       }
     })
   }
@@ -346,6 +325,25 @@ export class CourriersComponent {
   }
 
   ImputeModal(row: any, rowIndex: number, content: any) {
+    if (!this.selectedDirection && this.idEntite) {
+      const idEntiteNumber = Number(this.idEntite);
+      this.selectedDirection = this.directions.find(dir => dir.id === idEntiteNumber);
+      if (this.selectedDirection) {
+        this.servicesOfDirection = this.services.filter(service => service.parentId === this.selectedDirection!.id);
+        console.log(`Direction récupérée dans ImputeModal: ${this.selectedDirection.nom}`);
+        console.log('Services de cette direction:', this.servicesOfDirection.map(s => s.nom));
+      }
+    }
+    
+    if (this.selectedDirection) {
+      console.log(`Modale d'imputation - Direction: ${this.selectedDirection.nom}`);
+      console.log('Services disponibles:', this.servicesOfDirection.map(s => s.nom));
+    } else {
+      console.log('Aucune direction sélectionnée pour l\'imputation');
+      console.log('idEntite:', this.idEntite);
+      console.log('directions disponibles:', this.directions.map(d => d.nom));
+    }
+    
     this.modalService.open(content, {
       ariaLabelledBy: 'modal-basic-title',
       size: 'meduim',
@@ -353,28 +351,20 @@ export class CourriersComponent {
     this.selectedRowData = row;
   }
 
-
-  imputCourrier(){
-    if(!this.entiteCible) return;
+  imputCourrier() {
+    if (!this.entiteCible) return;
 
     const fd = new FormData();
     fd.append("entiteCibleId", this.entiteCible);
-    if(this.personnel){
+    if (this.personnel) {
       fd.append("utilisateurCible", this.personnel);
     }
     this.supportactivityService.imputerCourrier(this.selectedRowData.id, fd).subscribe({
       next: (response) => {
-
-        // Réinitialiser l'objet salles
-        // form.reset();
         this.entiteCible = null;
         this.selectedFile = null;
-        // Fermer les modales si nécessaire
-        this.getCourrierByEntite()
+        this.getCourrierByEntite();
         this.modalService.dismissAll();
-
-
-        // Afficher un toast de succès
         this.addRecordSuccess();
       },
       error: (err: { status: number; error: any; message?: string }) => {
@@ -408,34 +398,18 @@ export class CourriersComponent {
   onAddRowSave(form: UntypedFormGroup) {
     this.loadingIndicator = true;
     const fd = new FormData();
-    // const direction = !!this.Direction ? this.Direction.id.toString() : null
     fd.append("numero", form.value.numero);
     fd.append("objet", form.value.objet);
     fd.append("expediteur", form.value.expediteur);
     fd.append("directionId", form.value.entite);
     fd.append("fichier", form.value.fichier);
 
-    // fd.append("file", form.value.fichier);
-    // fd.append("description", form.value.description);
-    // fd.append("utilisateurId", form.value.idutilisateur);
-
     this.glogalService.post('api/courriers/reception', fd).subscribe({
       next: (response) => {
-        
-        // Ajouter la nouvelle role reçue à la liste locale
-        // this.ActivitySupport.push(response);
-        // console.log(this.salles)
-        // this.Activitys = [...this.salles];
-
-        // Réinitialiser l'objet salles
         form.reset();
         this.selectedFile = null;
-        // Fermer les modales si nécessaire
         this.modalService.dismissAll();
-        this.getCourrierByEntite()
-
-
-        // Afficher un toast de succès
+        this.getCourrierByEntite();
         this.addRecordSuccess();
       },
       error: (err: { status: number; error: any; message?: string }) => {
@@ -466,21 +440,13 @@ export class CourriersComponent {
     });
   }
 
-
-  // add new record
   addRow(content: any) {
     this.modalService.open(content, {
       ariaLabelledBy: 'modal-basic-title',
       size: 'medium',
     });
-  //            
-
-    // this.register.patchValue({
-    //   id: this.getId(10, 100),
-    //   img: this.newUserImg,
-    // });
   }
-  // edit record
+
   editRow(row: any, rowIndex: number, content: any) {
     this.modalService.open(content, {
       ariaLabelledBy: 'modal-basic-title',
@@ -492,45 +458,29 @@ export class CourriersComponent {
       idutilisateur: "",
       commentaire: "",
     });
-    // this.editForm.value.id = row.id;
-    
     this.selectedRowData = row;
   }
 
   historiqueCourrier(row: any, rowIndex: number, content: any) {
     this.selectedRowData = row;
     this.glogalService.get(`api/historique/courrier/${row.id}`).subscribe({
-      next:(value: Entite[]) =>{
+      next: (value: Entite[]) => {
         this.Historiques = value;
-
         this.modalService.open(content, {
           ariaLabelledBy: 'modal-basic-title',
           size: 'meduim',
         });
-        // this.Direction = value.find(el => el.nom === 'Direction');
-        setTimeout(() =>{
+        setTimeout(() => {
           this.loadingIndicator = false;
-        },500);
+        }, 500);
       }
     })
-
-
-    // this.editForm.setValue({
-    //   id: row.id,
-    //   statut: "",
-    //   idutilisateur: "",
-    //   commentaire: "",
-    // });
-    // this.editForm.value.id = row.id;
-    
-
   }
 
-  displayFile(row: any){
+  displayFile(row: any) {
     window.open(`${row.url}`, "_blank");
   }
 
-  // delete single row
   deleteSingleRow(row: any) {
     Swal.fire({
       title: 'Voulez vous vraiment supprimer?',
@@ -548,15 +498,14 @@ export class CourriersComponent {
 
   deleteRecord(row: any) {
     this.glogalService.delete("api/supports/delete", row.id!).subscribe({
-      next:(response) =>{
+      next: (response) => {
         this.salles = response;
         this.loadingIndicator = true;
-        setTimeout(() =>{
+        setTimeout(() => {
           this.loadingIndicator = false;
-        },500);
-        this.getAllSupport();
-
-      }, error: (err: { status: number; error: any; message?: string }) => {
+        }, 500);
+      },
+      error: (err: { status: number; error: any; message?: string }) => {
         console.error('Erreur reçue:', err);
 
         let message = 'Une erreur est survenue. Veuillez réessayer.';
@@ -578,91 +527,45 @@ export class CourriersComponent {
           },
         });
       }
-    })
+    });
   }
 
+  deleteRecordSuccess(count: number) {
+    this.toastr.success(`${count} Record(s) deleted successfully`, 'Success');
+  }
 
-  onEditSave(form: UntypedFormGroup) {    
-    if (form?.value?.id) {
-      // Préparer l'objet mis à jour (ici l'exemple suppose que `form.value` contient les nouvelles données)
-      const updatedSupport = form.value;
-      const fd = new FormData()
-      fd.append("statut", updatedSupport.statut);
-      fd.append("commentaire", updatedSupport.commentaire);
-      this.glogalService.update("api/supports/update", updatedSupport.id, fd).subscribe({
-        next: (resp) => {          
-          this.modalService.dismissAll(); // Fermer le modal
-          this.editRecordSuccess();       // Appeler callback si défini
-          setTimeout(() =>{
-            this.loadingIndicator = false;
-          },500);
-          this.getAllSupport();
-        },
-        error: (err: { status: number; error: any; message?: string }) => {
-          console.error('Erreur lors de la mise à jour du support activité:', err);
-
-          let message = 'Une erreur est survenue. Veuillez réessayer.';
-          let title = '<span class="text-red-500">Échec</span>';
-
-          if (err.error?.message) {
-            message = err.error.message;
-          } else if (err.message) {
-            message = err.message;
-          }
-
-          Swal.fire({
-            icon: 'error',
-            title: title,
-            text: message,
-            confirmButtonText: 'Ok',
-            customClass: {
-              confirmButton: 'bg-red-500 text-white hover:bg-red-600',
-            },
-          });
-        }
-      });
-    }
+  addRecordSuccess() {
+    this.toastr.success('Record added successfully', 'Success');
   }
 
   filterDatatable(event: any) {
+    if (!event || !event.target) {
+      return;
+    }
+    
+    if (!this.Courriers || this.Courriers.length === 0) {
+      return;
+    }
+    
     const val = event.target.value.toLowerCase();
+    const colsAmount = this.columns.length;
+    const keys = Object.keys(this.Courriers[0]);
 
-    this.ActivitySupport = this.filteredData.filter((item) => {
-      // console.log("Object.values(item) -> ", Object.values(item));
-
-      return Object.values(item).some((field: any) =>
-        field?.toString().toLowerCase().includes(val)
-      );
+    this.Courriers = this.filteredData.filter((item: any) => {
+      for (let i = 0; i < colsAmount; i++) {
+        if (
+          item[keys[i]]
+            .toString()
+            .toLowerCase()
+            .indexOf(val) !== -1 ||
+          !val
+        ) {
+          return true;
+        }
+      }
+      return false;
     });
 
     this.table.offset = 0;
   }
-
-
-
-  addRecordSuccess() {
-    this.toastr.success('Adjonction réalisée avec succès.', '');
-  }
-  editRecordSuccess() {
-    this.toastr.success('Modification opéré', '');
-  }
-  deleteRecordSuccess(count: number) {
-    this.toastr.error(count + 'Eradication diligente pleinement consommée.', '');
-  }
-
-
-}
-
-
-export interface selectActivitySupportInterface {
-  id?: number | undefined
-  nom?: string;
-  activiteNom?: string;
-  type?: string;
-  url?: string;
-  description?: string;
-  commentaire?: string;
-  numero?: string;
-  historiques?: any[];
-  activite?: Activity;
 }

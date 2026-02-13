@@ -6,6 +6,8 @@ export class Entite {
   nom?: string;
   description?: string;
   logo?: string;
+  type?: string; // Ajout de la propriété type manquante
+  parentId?: number; // Ajout de la propriété parentId pour la hiérarchie
   listeDebut?: string;
   listeResultat?: string;
   utilisateur?: Utilisateur;

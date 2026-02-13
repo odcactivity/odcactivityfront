@@ -301,6 +301,7 @@ var applyNumericalStyle = (elem, property, value) => {
     value = parseInt(value);
   }
   if (value || parseInt(`${value}`) === 0) {
+    elem.style.setProperty(property, typeof value === "number" ? `${value}px` : value);
   } else {
     elem.style.removeProperty(property);
   }
@@ -341,8 +342,11 @@ var toggle = (elem, condition, display = "flex") => {
     hide(elem);
   }
 };
+var isVisible$1 = (elem) => !!(elem && (elem.offsetWidth || elem.offsetHeight || elem.getClientRects().length));
 var allButtonsAreHidden = () => !isVisible$1(getConfirmButton()) && !isVisible$1(getDenyButton()) && !isVisible$1(getCancelButton());
+var isScrollable = (elem) => !!(elem.scrollHeight > elem.clientHeight);
 var selfOrParentIsScrollable = (element, stopElement) => {
+  let parent = element;
   while (parent && parent !== stopElement) {
     if (isScrollable(parent)) {
       return true;
@@ -426,6 +430,7 @@ var resetOldContainer = () => {
     return false;
   }
   oldContainer.remove();
+  removeClass([document.documentElement, document.body], [swalClasses["no-backdrop"], swalClasses["toast-shown"], swalClasses["has-column"]]);
   return true;
 };
 var resetValidationMessage$1 = () => {
@@ -454,6 +459,7 @@ var addInputChangeListeners = () => {
     rangeOutput.value = range.value;
   };
 };
+var getTarget = (target) => typeof target === "string" ? document.querySelector(target) : target;
 var setupAccessibility = (params) => {
   const popup = getPopup();
   popup.setAttribute("role", params.toast ? "alert" : "dialog");
@@ -481,6 +487,7 @@ var init = (params) => {
   }
   setInnerHtml(container, sweetHTML);
   container.dataset["swal2Theme"] = params.theme;
+  const targetElement = getTarget(params.target);
   targetElement.appendChild(container);
   if (params.topLayer) {
     container.setAttribute("popover", "");
@@ -500,6 +507,7 @@ var parseHtmlToContainer = (param, target) => {
   }
 };
 var handleObject = (param, target) => {
+  if (param.jquery) {
     handleJqueryElem(target, param);
   } else {
     setInnerHtml(target, param.toString());
@@ -754,45 +762,77 @@ var checkAndSetInputValue = (input, inputValue) => {
 var renderInputType = {};
 renderInputType.text = renderInputType.email = renderInputType.password = renderInputType.number = renderInputType.tel = renderInputType.url = renderInputType.search = renderInputType.date = renderInputType["datetime-local"] = renderInputType.time = renderInputType.week = renderInputType.month = /** @type {(input: Input | HTMLElement, params: SweetAlertOptions) => Input} */
 (input, params) => {
+  checkAndSetInputValue(input, params.inputValue);
+  setInputLabel(input, input, params);
+  setInputPlaceholder(input, params);
+  input.type = params.input;
+  return input;
 };
 renderInputType.file = (input, params) => {
+  setInputLabel(input, input, params);
+  setInputPlaceholder(input, params);
+  return input;
 };
 renderInputType.range = (range, params) => {
+  const rangeInput = range.querySelector("input");
+  const rangeOutput = range.querySelector("output");
   checkAndSetInputValue(rangeInput, params.inputValue);
+  rangeInput.type = params.input;
   checkAndSetInputValue(rangeOutput, params.inputValue);
+  setInputLabel(rangeInput, range, params);
+  return range;
 };
 renderInputType.select = (select, params) => {
+  select.textContent = "";
   if (params.inputPlaceholder) {
     const placeholder = document.createElement("option");
     setInnerHtml(placeholder, params.inputPlaceholder);
     placeholder.value = "";
     placeholder.disabled = true;
     placeholder.selected = true;
+    select.appendChild(placeholder);
   }
+  setInputLabel(select, select, params);
+  return select;
 };
 renderInputType.radio = (radio) => {
+  radio.textContent = "";
+  return radio;
 };
 renderInputType.checkbox = (checkboxContainer, params) => {
+  const checkbox = getInput$1(getPopup(), "checkbox");
   checkbox.value = "1";
   checkbox.checked = Boolean(params.inputValue);
+  const label = checkboxContainer.querySelector("span");
+  setInnerHtml(label, params.inputPlaceholder || params.inputLabel);
   return checkbox;
 };
 renderInputType.textarea = (textarea, params) => {
+  checkAndSetInputValue(textarea, params.inputValue);
+  setInputPlaceholder(textarea, params);
+  setInputLabel(textarea, textarea, params);
   const getMargin = (el) => parseInt(window.getComputedStyle(el).marginLeft) + parseInt(window.getComputedStyle(el).marginRight);
   setTimeout(() => {
     if ("MutationObserver" in window) {
+      const initialPopupWidth = parseInt(window.getComputedStyle(getPopup()).width);
       const textareaResizeHandler = () => {
+        if (!document.body.contains(textarea)) {
           return;
         }
+        const textareaWidth = textarea.offsetWidth + getMargin(textarea);
         if (textareaWidth > initialPopupWidth) {
+          getPopup().style.width = `${textareaWidth}px`;
         } else {
+          applyNumericalStyle(getPopup(), "width", params.width);
         }
       };
+      new MutationObserver(textareaResizeHandler).observe(textarea, {
         attributes: true,
         attributeFilter: ["style"]
       });
     }
   });
+  return textarea;
 };
 var renderContent = (instance, params) => {
   const htmlContainer = getHtmlContainer();
@@ -963,6 +1003,7 @@ var removeDraggableListeners = (popup) => {
 };
 var down = (event) => {
   const popup = getPopup();
+  if (event.target === popup || getIcon().contains(
     /** @type {HTMLElement} */
     event.target
   )) {
@@ -1134,6 +1175,7 @@ var render = (instance, params) => {
   if (typeof params.didRender === "function" && popup) {
     params.didRender(popup);
   }
+  globalState.eventEmitter.emit("didRender", popup);
 };
 var isVisible = () => {
   return isVisible$1(getPopup());
@@ -1158,6 +1200,8 @@ var DismissReason = Object.freeze({
   timer: "timer"
 });
 var removeKeydownHandler = (globalState2) => {
+  if (globalState2.keydownTarget && globalState2.keydownHandlerAdded) {
+    globalState2.keydownTarget.removeEventListener("keydown", globalState2.keydownHandler, {
       capture: globalState2.keydownListenerCapture
     });
     globalState2.keydownHandlerAdded = false;
@@ -1166,7 +1210,10 @@ var removeKeydownHandler = (globalState2) => {
 var addKeydownHandler = (globalState2, innerParams, dismissWith) => {
   removeKeydownHandler(globalState2);
   if (!innerParams.toast) {
+    globalState2.keydownHandler = (e) => keydownHandler(innerParams, e, dismissWith);
+    globalState2.keydownTarget = innerParams.keydownListenerCapture ? window : getPopup();
     globalState2.keydownListenerCapture = innerParams.keydownListenerCapture;
+    globalState2.keydownTarget.addEventListener("keydown", globalState2.keydownHandler, {
       capture: globalState2.keydownListenerCapture
     });
     globalState2.keydownHandlerAdded = true;
@@ -1216,6 +1263,7 @@ var handleEnter = (event, innerParams) => {
   if (!callIfFunction(innerParams.allowEnterKey)) {
     return;
   }
+  const input = getInput$1(getPopup(), innerParams.input);
   if (event.target && input && event.target instanceof HTMLElement && event.target.outerHTML === input.outerHTML) {
     if (["textarea", "file"].includes(innerParams.input)) {
       return;
@@ -1306,6 +1354,7 @@ var unsetAriaHidden = () => {
     }
   });
 };
+var isSafariOrIOS = typeof window !== "undefined" && !!window.GestureEvent;
 var iOSfix = () => {
   if (isSafariOrIOS && !hasClass(document.body, swalClasses.iosfix)) {
     const offset = document.body.scrollTop;
@@ -1353,6 +1402,7 @@ var shouldPreventTouchMove = (event) => {
   return false;
 };
 var isStylus = (event) => {
+  return event.touches && event.touches.length && event.touches[0].touchType === "stylus";
 };
 var isZoom = (event) => {
   return event.touches && event.touches.length > 1;
@@ -1480,6 +1530,10 @@ var handlePopupAnimation = (instance, popup, innerParams) => {
     innerParams.willClose(popup);
   }
   (_globalState$eventEmi = globalState.eventEmitter) === null || _globalState$eventEmi === void 0 || _globalState$eventEmi.emit("willClose", popup);
+  if (animationIsSupported) {
+    animatePopup(instance, popup, container, innerParams.returnFocus, innerParams.didClose);
+  } else {
+    removePopupAndResetState(instance, container, innerParams.returnFocus, innerParams.didClose);
   }
 };
 var animatePopup = (instance, popup, container, returnFocus, didClose) => {
@@ -1692,6 +1746,7 @@ var formatInputOptions = (inputOptions) => {
   return result;
 };
 var isSelected = (optionValue, inputValue) => {
+  return !!inputValue && inputValue.toString() === optionValue.toString();
 };
 var handleConfirmButtonClick = (instance) => {
   const innerParams = privateProps.innerParams.get(instance);
@@ -1751,6 +1806,7 @@ var handleInputValidator = (instance, inputValue, type) => {
   });
 };
 var deny = (instance, value) => {
+  const innerParams = privateProps.innerParams.get(instance || void 0);
   if (innerParams.showLoaderOnDeny) {
     showLoading(getDenyButton());
   }
@@ -1770,6 +1826,7 @@ var deny = (instance, value) => {
           }
         );
       }
+    }).catch((error2) => rejectWith(instance || void 0, error2));
   } else {
     instance.close(
       /** @type SweetAlertResult */
@@ -1793,6 +1850,7 @@ var rejectWith = (instance, error2) => {
   instance.rejectPromise(error2);
 };
 var confirm = (instance, value) => {
+  const innerParams = privateProps.innerParams.get(instance || void 0);
   if (innerParams.showLoaderOnConfirm) {
     showLoading();
   }
@@ -1807,6 +1865,7 @@ var confirm = (instance, value) => {
       } else {
         succeedWith(instance, typeof preConfirmValue === "undefined" ? value : preConfirmValue);
       }
+    }).catch((error2) => rejectWith(instance || void 0, error2));
   } else {
     succeedWith(instance, value);
   }
@@ -1833,7 +1892,9 @@ function hideLoading() {
   domCache.cancelButton.disabled = false;
 }
 var showRelatedButton = (domCache) => {
+  const buttonToReplace = domCache.popup.getElementsByClassName(domCache.loader.getAttribute("data-button-to-replace"));
   if (buttonToReplace.length) {
+    show(buttonToReplace[0], "inline-block");
   } else if (allButtonsAreHidden()) {
     hide(domCache.actions);
   }
@@ -2072,6 +2133,7 @@ var filterValidParams = (params) => {
   const validUpdatableParams = {};
   Object.keys(params).forEach((param) => {
     if (isUpdatableParameter(param)) {
+      validUpdatableParams[param] = params[param];
     } else {
       warn(`Invalid parameter to update: ${param}`);
     }
@@ -2092,6 +2154,7 @@ function _destroy() {
   if (typeof innerParams.didDestroy === "function") {
     innerParams.didDestroy();
   }
+  globalState.eventEmitter.emit("didDestroy");
   disposeSwal(this);
 }
 var disposeSwal = (instance) => {
@@ -2170,6 +2233,7 @@ var handleToastClick = (innerParams, domCache, dismissWith) => {
   };
 };
 var isAnyButtonShown = (innerParams) => {
+  return !!(innerParams.showConfirmButton || innerParams.showDenyButton || innerParams.showCancelButton || innerParams.showCloseButton);
 };
 var ignoreOutsideClick = false;
 var handleModalMousedown = (domCache) => {
@@ -2208,6 +2272,7 @@ var handleModalClick = (innerParams, domCache, dismissWith) => {
     }
   };
 };
+var isJqueryElement = (elem) => typeof elem === "object" && elem.jquery;
 var isElement = (elem) => elem instanceof Element || isJqueryElement(elem);
 var argsToParams = (args) => {
   const params = {};
@@ -2223,6 +2288,7 @@ var argsToParams = (args) => {
       }
     });
   }
+  return params;
 };
 function fire(...args) {
   return new this(...args);
@@ -2263,6 +2329,7 @@ var increaseTimer = (ms) => {
   }
 };
 var isTimerRunning = () => {
+  return !!(globalState.timeout && globalState.timeout.isRunning());
 };
 var bodyClickListenerAdded = false;
 var clickHandlers = {};
@@ -2274,7 +2341,9 @@ function bindClickHandler(attr = "data-swal-template") {
   }
 }
 var bodyClickListener = (event) => {
+  for (let el = event.target; el && el !== document; el = el.parentNode) {
     for (const attr in clickHandlers) {
+      const template = el.getAttribute(attr);
       if (template) {
         clickHandlers[attr].fire({
           template
@@ -2321,6 +2390,7 @@ var EventEmitter = class {
   }
   /**
    * @param {string} eventName
+   * @param {Array} args
    */
   emit(eventName, ...args) {
     this._getHandlersByEventName(eventName).forEach(
@@ -2514,7 +2584,9 @@ var getSwalParams = (templateContent) => {
     if (!paramName || !value) {
       return;
     }
+    if (typeof defaultParams[paramName] === "boolean") {
       result[paramName] = value !== "false";
+    } else if (typeof defaultParams[paramName] === "object") {
       result[paramName] = JSON.parse(value);
     } else {
       result[paramName] = value;
@@ -2550,8 +2622,10 @@ var getSwalButtons = (templateContent) => {
     result[`${type}ButtonText`] = button.innerHTML;
     result[`show${capitalizeFirstLetter(type)}Button`] = true;
     if (button.hasAttribute("color")) {
+      result[`${type}ButtonColor`] = button.getAttribute("color");
     }
     if (button.hasAttribute("aria-label")) {
+      result[`${type}ButtonAriaLabel`] = button.getAttribute("aria-label");
     }
   });
   return result;
@@ -2657,6 +2731,7 @@ var openPopup = (params) => {
   if (typeof params.willOpen === "function") {
     params.willOpen(popup);
   }
+  globalState.eventEmitter.emit("willOpen", popup);
   const bodyStyles = window.getComputedStyle(document.body);
   const initialBodyOverflow = bodyStyles.overflowY;
   addClasses(container, popup, params);
@@ -2664,16 +2739,20 @@ var openPopup = (params) => {
     setScrollingVisibility(container, popup);
   }, SHOW_CLASS_TIMEOUT);
   if (isModal()) {
+    fixScrollContainer(container, params.scrollbarPadding, initialBodyOverflow);
     setAriaHidden();
   }
   if (!isToast() && !globalState.previousActiveElement) {
     globalState.previousActiveElement = document.activeElement;
   }
   if (typeof params.didOpen === "function") {
+    setTimeout(() => params.didOpen(popup));
   }
+  globalState.eventEmitter.emit("didOpen", popup);
 };
 var swalOpenAnimationFinished = (event) => {
   const popup = getPopup();
+  if (event.target !== popup) {
     return;
   }
   const container = getContainer();
@@ -2771,6 +2850,7 @@ var SweetAlert = class {
    * @this {SweetAlert}
    */
   constructor(...args) {
+    _classPrivateFieldInitSpec(this, _promise, void 0);
     if (typeof window === "undefined") {
       return;
     }
@@ -2868,6 +2948,18 @@ var prepareParams = (userParams, mixinParams) => {
   return params;
 };
 var populateDomCache = (instance) => {
+  const domCache = {
+    popup: getPopup(),
+    container: getContainer(),
+    actions: getActions(),
+    confirmButton: getConfirmButton(),
+    denyButton: getDenyButton(),
+    cancelButton: getCancelButton(),
+    loader: getLoader(),
+    closeButton: getCloseButton(),
+    validationMessage: getValidationMessage(),
+    progressSteps: getProgressSteps()
+  };
   privateProps.domCache.set(instance, domCache);
   return domCache;
 };
@@ -2879,10 +2971,12 @@ var setupTimer = (globalState2, innerParams, dismissWith) => {
       dismissWith("timer");
       delete globalState2.timeout;
     }, innerParams.timer);
+    if (innerParams.timerProgressBar) {
       show(timerProgressBar);
       applyCustomClass(timerProgressBar, innerParams, "timerProgressBar");
       setTimeout(() => {
         if (globalState2.timeout && globalState2.timeout.running) {
+          animateTimerProgressBar(innerParams.timer);
         }
       });
     }
@@ -2957,9 +3051,11 @@ Object.keys(instanceMethods).forEach((key) => {
     if (currentInstance && currentInstance[key]) {
       return currentInstance[key](...args);
     }
+    return null;
   };
 });
 SweetAlert.DismissReason = DismissReason;
+SweetAlert.version = "11.26.10";
 var Swal = SweetAlert;
 Swal.default = Swal;
 "undefined" != typeof document && function(e, t) {
@@ -2978,6 +3074,7 @@ export {
 
 sweetalert2/dist/sweetalert2.esm.all.js:
   (*!
+  * sweetalert2 v11.26.10
   * Released under the MIT License.
   *)
 */

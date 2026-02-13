@@ -232,10 +232,22 @@
                       <!-- Choisir le service qui doit va traiter  -->
                         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
                           <label>Entité cible <span class="text-danger">*</span></label>
-                          <select class="form-select form-control readonly-select" name="entiteCible" [(ngModel)]="entiteCible">
-                            <option value="" [ngValue]="null" disabled>-- Sélectionnez une entité --</option>
-                            <option *ngFor="let serv of services"  [value]="serv.id">{{serv.nom}}</option>
-                          </select>
+                          @if (selectedDirection && servicesOfDirection.length > 0) {
+                            <select class="form-select form-control readonly-select" name="entiteCible" [(ngModel)]="entiteCible">
+                              <option value="" [ngValue]="null" disabled>-- Sélectionnez une entité --</option>
+                              <option *ngFor="let serv of servicesOfDirection"  [value]="serv.id">{{serv.nom}}</option>
+                            </select>
+                          } @else if (selectedDirection && servicesOfDirection.length === 0) {
+                            <div class="alert alert-warning">
+                              <i class="fas fa-exclamation-triangle me-2"></i>
+                              Aucun service disponible pour cette direction.
+                            </div>
+                          } @else {
+                            <div class="alert alert-info">
+                              <i class="fas fa-info-circle me-2"></i>
+                              Veuillez d'abord sélectionner une direction pour voir ses services.
+                            </div>
+                          }
                             <small class="form-text text-danger"> L'entité cible est
                               obligatoire
                             </small>

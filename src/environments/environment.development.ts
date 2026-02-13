@@ -4,6 +4,7 @@
 
 export const environment = {
   production: false,
+  uploadUrl: 'http://localhost:8089',
   apiUrl: 'http://localhost:8089',
 };
 
