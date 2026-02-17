@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'environments/environment';
+import { GlobalService } from '../../../core/service/global.service';
 
 export interface Participant {
   id: number;
@@ -21,14 +22,12 @@ export interface Participant {
   providedIn: 'root'
 })
 export class ReportingService {
-  private baseUrl = 'http://localhost:8089';
-//  'http://activiteodc-env.eba-qpcww8sx.us-east-1.elasticbeanstalk.com'
+  private baseUrl = environment.apiUrl;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private globalService: GlobalService) {}
 
   getAllParticipants(): Observable<Participant[]> {
-    const token = localStorage.getItem('token'); 
-    const headers = token ? new HttpHeaders().set('Authorization', `Bearer ${token}`) : undefined;
-    return this.http.get<Participant[]>(`${this.baseUrl}/reporting/participants`, { headers });
+    console.log('📡 Appel API à participant...');
+    return this.globalService.get('participant');
   }
 }

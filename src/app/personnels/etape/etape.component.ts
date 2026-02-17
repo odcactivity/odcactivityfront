@@ -1,6 +1,6 @@
-import {Component, NgZone, ViewChild} from '@angular/core';
-import {DatatableComponent, NgxDatatableModule, SelectionType} from "@swimlane/ngx-datatable";
-import {Etape} from "@core/models/Etape";
+import { Component, NgZone, ViewChild } from '@angular/core';
+import { DatatableComponent, NgxDatatableModule, SelectionType } from "@swimlane/ngx-datatable";
+import { Etape } from "@core/models/Etape";
 import {
   FormArray,
   FormsModule,
@@ -10,20 +10,20 @@ import {
   UntypedFormGroup,
   Validators
 } from "@angular/forms";
-import {NgbModal} from "@ng-bootstrap/ng-bootstrap";
-import {ToastrService} from "ngx-toastr";
-import {GlobalService} from "@core/service/global.service";
+import { NgbModal } from "@ng-bootstrap/ng-bootstrap";
+import { ToastrService } from "ngx-toastr";
+import { GlobalService } from "@core/service/global.service";
 import Swal from "sweetalert2";
-import {Critere} from "@core/models/Critere";
-import {Participant} from "@core/models/Participant";
-import {NgForOf, NgIf} from "@angular/common";
-import {Router, RouterLink} from "@angular/router";
-import {firstValueFrom} from "rxjs";
-import {ListeGlobaleComponent} from "./liste-globale/liste-globale.component";
-import {AuthService} from "@core";
-import { C } from '@angular/cdk/scrolling-module.d-ud2XrbF8';
+import { Critere } from "@core/models/Critere";
+import { Participant } from "@core/models/Participant";
+import { NgForOf, NgIf } from "@angular/common";
+import { Router, RouterLink } from "@angular/router";
+import { firstValueFrom } from "rxjs";
+import { ListeGlobaleComponent } from "./liste-globale/liste-globale.component";
+import { AuthService } from "@core";
+
 import { Liste } from '@core/models/Liste';
-import { A } from '@angular/cdk/activedescendant-key-manager.d-Bjic5obv';
+
 import { Activity } from '@core/models/Activity';
 import { Utilisateur } from '@core/models/Utilisateur.model';
 
@@ -47,8 +47,8 @@ export class EtapeComponent {
   @ViewChild('listeModal') listeModalComponent: ListeGlobaleComponent | undefined; // Référence au composant ListeGlobale
 
   rows = [];
-  etape:  Etape[] = [];
-  critere:  Critere[] = [];
+  etape: Etape[] = [];
+  critere: Critere[] = [];
   activites: Activity[] = [];
   selectedCriteres: number[] = [];
   selectedFile: File[] = [];
@@ -140,21 +140,21 @@ export class EtapeComponent {
       nom: ['', [Validators.required]],
       dateDebut: ['', [Validators.required]],
       dateFin: ['', [Validators.required]],
-      critere:this.fb.array ([], [Validators.required]),
+      critere: this.fb.array([], [Validators.required]),
       activite: [null],
 
     });
   }
   // fetch data
-  getAllCritere(){
+  getAllCritere() {
     this.loadingIndicator = true;
     this.glogalService.get('critere').subscribe({
-      next:(value: Critere[]) =>{
+      next: (value: Critere[]) => {
         this.critere = value;
         this.filteredData = [...value];
-        setTimeout(() =>{
+        setTimeout(() => {
           this.loadingIndicator = false;
-        },500);
+        }, 500);
       }
     })
   }
@@ -171,68 +171,68 @@ export class EtapeComponent {
     }
   }
 
-  getAllEtape(){
+  getAllEtape() {
     this.loadingIndicator = true;
-    this.glogalService.getByActivite('etape','sansactivite').subscribe({
-      next:(value: Etape[]) =>{        
+    this.glogalService.getByActivite('etape', 'sansactivite').subscribe({
+      next: (value: Etape[]) => {
         this.etape = value;
-        console.log("etape========CONTENU",this.etape)
+        console.log("etape========CONTENU", this.etape)
         this.filteredData = [...value];
-        setTimeout(() =>{
+        setTimeout(() => {
           this.loadingIndicator = false;
-        },500);
+        }, 500);
       }
     })
   }
 
-   getAllActivite(){
+  getAllActivite() {
     this.loadingIndicator = true;
     this.glogalService.get('activite').subscribe({
-      next:(value: Activity[]) =>{        
-         this.activites = value.filter(a => a.createdBy?.id === this.currentUserId);
+      next: (value: Activity[]) => {
+        this.activites = value.filter(a => a.createdBy?.id === this.currentUserId);
         this.filteredData = [...value];
-        setTimeout(() =>{
+        setTimeout(() => {
           this.loadingIndicator = false;
-        },500);
+        }, 500);
       }
     })
   }
 
-  getAllActiviteAll(){
+  getAllActiviteAll() {
     this.loadingIndicator = true;
     this.glogalService.get('activite').subscribe({
-      next:(value: Activity[]) =>{        
+      next: (value: Activity[]) => {
         this.activites = value;
         this.filteredData = [...value];
-        setTimeout(() =>{
+        setTimeout(() => {
           this.loadingIndicator = false;
-        },500);
+        }, 500);
       }
     })
   }
   getCurrentUserId(): number | null {
-  const raw = localStorage.getItem('bearerid');
-  // console.log('Raw currentUser from localStorage:', raw);
-  if (!raw) return null;
-  try {
-    const parsed = JSON.parse(raw);
-    // si le stockage est juste un id string, parsed sera une string
-    if (typeof parsed === 'number') return parsed;
-    if (typeof parsed === 'string') return parseInt(parsed, 10);
-    // sinon on cherche parsed.id
-    if (parsed) return Number(parsed);
-    return null;
-  } catch {
-    // raw n'était pas JSON (peut être un id en string)
-    const val = parseInt(raw, 10);
-    return isNaN(val) ? null : val;
+    const raw = localStorage.getItem('bearerid');
+    // console.log('Raw currentUser from localStorage:', raw);
+    if (!raw) return null;
+    try {
+      const parsed = JSON.parse(raw);
+      // si le stockage est juste un id string, parsed sera une string
+      if (typeof parsed === 'number') return parsed;
+      if (typeof parsed === 'string') return parseInt(parsed, 10);
+      // sinon on cherche parsed.id
+      if (parsed) return Number(parsed);
+      return null;
+    } catch {
+      // raw n'était pas JSON (peut être un id en string)
+      const val = parseInt(raw, 10);
+      return isNaN(val) ? null : val;
+    }
   }
-}
 
   onAddRowSave(form: UntypedFormGroup) {
     this.loadingIndicator = true;
-  //  console.log("etaape ajout==========",form.value.created_by);
-    this.glogalService.postId('etape',this.currentUserId!, form.value).subscribe({
+    //  console.log("etaape ajout==========",form.value.created_by);
+    this.glogalService.postId('etape', this.currentUserId!, form.value).subscribe({
       next: (response) => {
         // Ajouter la nouvelle role reçue à la liste locale
         // Si votre backend renvoie un tableau d'un seul élément (la nouvelle étape),
@@ -369,12 +369,12 @@ export class EtapeComponent {
 
   deleteRecord(row: any) {
     this.glogalService.delete("etape", row.id!).subscribe({
-      next:(response) =>{
+      next: (response) => {
         this.etape = response;
         this.loadingIndicator = true;
-        setTimeout(() =>{
+        setTimeout(() => {
           this.loadingIndicator = false;
-        },500);
+        }, 500);
         this.getAllEtape();
 
       }, error: (err: { status: number; error: any; message?: string }) => {
@@ -412,13 +412,13 @@ export class EtapeComponent {
       };
       console.log('Objet updatedEtape envoyé au backend:', updatedEtape);
       // Préparer l'objet mis à jour (ici l'exemple suppose que `form.value` contient les nouvelles données)
-      this.glogalService.updateId("etape", updatedEtape.id,this.currentUserId!, updatedEtape).subscribe({
+      this.glogalService.updateId("etape", updatedEtape.id, this.currentUserId!, updatedEtape).subscribe({
         next: () => {
           this.modalService.dismissAll(); // Fermer le modal
           this.editRecordSuccess();       // Appeler callback si défini
-          setTimeout(() =>{
+          setTimeout(() => {
             this.loadingIndicator = false;
-          },500);
+          }, 500);
           this.getAllEtape();
         },
         error: (err: { status: number; error: any; message?: string }) => {
@@ -469,7 +469,7 @@ export class EtapeComponent {
     this.toastr.success(count + 'Suppression fait avec succès', '');
   }
 
-  fileUploadSuccess(){
+  fileUploadSuccess() {
     this.toastr.success("Fichier importer avec succès")
   }
 
@@ -554,40 +554,40 @@ export class EtapeComponent {
       const uploadPromises = this.selectedFile.map((file) =>
         firstValueFrom(this.glogalService.uploadParticipants(this.selectedEtapeId!, file, toListeDebut))
       );
-Promise.all(uploadPromises).then((responses) => {
+      Promise.all(uploadPromises).then((responses) => {
 
-    // Si tu veux prendre uniquement la première réponse :
-    const res = responses[0] as any;
-Swal.fire({
-            icon: 'success',
-            title: 'Succès',
-            text: res.message || 'Tous les fichiers ont été téléchargés avec succès.'
-          });
-    // Traiter les autres réponses si nécessaire
-    this.modalService.dismissAll();
-          this.selectedFile = [];
-          this.loadingIndicator = false;
-}).catch((error) => {
-          this.loadingIndicator = false;
-          // Maintenant l'erreur est déjà formatée par le service
-          const errorMessage = error.message || 'Une erreur est survenue lors du téléchargement des fichiers.';
-          let iconType: 'error' | 'warning' = 'error';
-          if (error.status === 403) {
-            iconType = 'warning'; // Pour les étapes terminées, utiliser un warning plutôt qu'une erreur
-          }
-
-          Swal.fire({
-            icon: iconType,
-            title: error.status === 403 ? 'Action interdite' : 'Échec',
-            text: errorMessage,
-            confirmButtonText: 'Ok',
-            customClass: {
-              confirmButton: error.status === 403
-                ? 'bg-orange-500 text-white hover:bg-orange-600'
-                : 'bg-red-500 text-white hover:bg-red-600'
-            }
-          });
+        // Si tu veux prendre uniquement la première réponse :
+        const res = responses[0] as any;
+        Swal.fire({
+          icon: 'success',
+          title: 'Succès',
+          text: res.message || 'Tous les fichiers ont été téléchargés avec succès.'
         });
+        // Traiter les autres réponses si nécessaire
+        this.modalService.dismissAll();
+        this.selectedFile = [];
+        this.loadingIndicator = false;
+      }).catch((error) => {
+        this.loadingIndicator = false;
+        // Maintenant l'erreur est déjà formatée par le service
+        const errorMessage = error.message || 'Une erreur est survenue lors du téléchargement des fichiers.';
+        let iconType: 'error' | 'warning' = 'error';
+        if (error.status === 403) {
+          iconType = 'warning'; // Pour les étapes terminées, utiliser un warning plutôt qu'une erreur
+        }
+
+        Swal.fire({
+          icon: iconType,
+          title: error.status === 403 ? 'Action interdite' : 'Échec',
+          text: errorMessage,
+          confirmButtonText: 'Ok',
+          customClass: {
+            confirmButton: error.status === 403
+              ? 'bg-orange-500 text-white hover:bg-orange-600'
+              : 'bg-red-500 text-white hover:bg-red-600'
+          }
+        });
+      });
     } else {
       Swal.fire({
         icon: 'info',
@@ -601,86 +601,87 @@ Swal.fire({
 
   liste(): void { // Modifier la méthode 'liste' pour ouvrir le modal de ListeGlobale
     this.modalService.open(ListeGlobaleComponent,
-      {ariaLabelledBy: 'modal-basic-title',
+      {
+        ariaLabelledBy: 'modal-basic-title',
         size: 'md'
       });
   }
-   filterByDebut(row:any){ 
+  filterByDebut(row: any) {
     console.log("Navigating to listeGlobale with debut filter ID", row);
-    this.router.navigate(['/listeGlobale'],{ queryParams: { filter: 'debut' } } );
-     this.modalService.dismissAll();
-    // this.activeModal.close('Filtre début appliqué');
-  }
-
-  filterByResultat(row:any){
-    this.router.navigate(['/listeGlobale'],{ queryParams: { filter: 'resultat' } } );
+    this.router.navigate(['/listeGlobale'], { queryParams: { filter: 'debut' } });
     this.modalService.dismissAll();
     // this.activeModal.close('Filtre début appliqué');
   }
 
-// openListeDebut(row: any) {
-//   console.log("Ouverture de la liste de début pour l'étape:", row.listeDebut[0].liste.id);
-//     sessionStorage.setItem('listeDebut', JSON.stringify(row.listeDebut[0].liste));
-//     this.router.navigate(['/listeDebut']);
-//   }
-
-openListeDebut(row: any) {
-  // Trouver la liste qui a listeDebut = true
-  const listeDebut = row.listes?.find((l: any) => l.listeDebut === true);
-
-  if (!listeDebut) {
-    console.error("Aucune liste de début trouvée !");
-    return;
+  filterByResultat(row: any) {
+    this.router.navigate(['/listeGlobale'], { queryParams: { filter: 'resultat' } });
+    this.modalService.dismissAll();
+    // this.activeModal.close('Filtre début appliqué');
   }
 
-  console.log("Ouverture de la liste de début, ID:", listeDebut.id);
+  // openListeDebut(row: any) {
+  //   console.log("Ouverture de la liste de début pour l'étape:", row.listeDebut[0].liste.id);
+  //     sessionStorage.setItem('listeDebut', JSON.stringify(row.listeDebut[0].liste));
+  //     this.router.navigate(['/listeDebut']);
+  //   }
 
-  // Enregistrer dans sessionStorage
-  sessionStorage.setItem('listeDebut', JSON.stringify(listeDebut));
+  openListeDebut(row: any) {
+    // Trouver la liste qui a listeDebut = true
+    const listeDebut = row.listes?.find((l: any) => l.listeDebut === true);
 
-  // Redirection vers la page
-  this.router.navigate(['/listeDebut']);
-}
+    if (!listeDebut) {
+      console.error("Aucune liste de début trouvée !");
+      return;
+    }
+
+    console.log("Ouverture de la liste de début, ID:", listeDebut.id);
+
+    // Enregistrer dans sessionStorage
+    sessionStorage.setItem('listeDebut', JSON.stringify(listeDebut));
+
+    // Redirection vers la page
+    this.router.navigate(['/listeDebut']);
+  }
 
   openListeResultat(row: Liste) {
     sessionStorage.setItem('listeResultat', JSON.stringify(row));
     this.router.navigate(['/listeResultat']);
   }
 
-onDateDebutChange() {
-  const dateDebutValue = this.register.get('dateDebut')?.value;
-  if (dateDebutValue) {
-    this.minDateFin = dateDebutValue;    
-    // Si dateFin est avant dateDebut, on la réinitialise
-    const dateFinValue = this.register.get('dateFin')?.value;
-    if (dateFinValue && dateFinValue < dateDebutValue) {
-      this.register.get('dateFin')?.setValue('');
+  onDateDebutChange() {
+    const dateDebutValue = this.register.get('dateDebut')?.value;
+    if (dateDebutValue) {
+      this.minDateFin = dateDebutValue;
+      // Si dateFin est avant dateDebut, on la réinitialise
+      const dateFinValue = this.register.get('dateFin')?.value;
+      if (dateFinValue && dateFinValue < dateDebutValue) {
+        this.register.get('dateFin')?.setValue('');
+      }
+    } else {
+      this.minDateFin = null;
     }
-  } else {
-    this.minDateFin = null;
   }
-}
 
   // filterByDebut(row:any): void {
   //    console.log("Filtrage par liste de début pour l'étape ID :", row.id);
-   
+
   //     this.listeModalComponent?.filterByDebut();
-   
+
   // }
 
   // filterByResultat(row:any): void {
-   
+
   //     this.listeModalComponent?.filterByDebut();
-    
+
   // } 
 
   hasListeDebut(row: any): boolean {
-  return row.listes?.some((l: any) => l.listeDebut) ?? false;
-}
+    return row.listes?.some((l: any) => l.listeDebut) ?? false;
+  }
 
-hasListeResultat(row: any): boolean {
-  return row.listes?.some((l: any) => l.listeResultat) ?? false;
-}
+  hasListeResultat(row: any): boolean {
+    return row.listes?.some((l: any) => l.listeResultat) ?? false;
+  }
 }
 
 export interface selectEtapeInterface {
@@ -692,5 +693,5 @@ export interface selectEtapeInterface {
   // listeResultat?: Participant[]; // Doit être un tableau
   critere: Critere;
   activite: Activity;
-  created_by:Utilisateur;
+  created_by: Utilisateur;
 }

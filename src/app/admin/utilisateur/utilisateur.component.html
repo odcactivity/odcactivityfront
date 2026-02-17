@@ -77,6 +77,10 @@
           <!-- Add Record Modal Window -->
           <ng-template #addRecord let-modal>
             <div class="modal-header editRowModal">
+              <div class="modal-title-container">
+                <h5 class="modal-title fw-bold">Formulaire d'ajout d'un utilisateur</h5>
+                <small class="modal-subtitle text-warning">Créer un nouvel utilisateur</small>
+              </div>
               <button type="button" class="close" aria-label="Close" (click)="modal.dismiss()">
                 <span aria-hidden="true"><i class="material-icons">close</i></span>
               </button>
@@ -162,15 +166,10 @@
 
           <ng-template #editRecord let-modal>
             <div class="modal-header editRowModal">
-              <h4 class="modal-title" id="modal-basic-title">
-                <div class="table-modal-header">
-                  <div class="modal-about">
-                    <div class="fw-bold p-t-10 font-17">
-                      {{selectedRowData!.nom}}
-                    </div>
-                  </div>
-                </div>
-              </h4>
+              <div class="modal-title-container">
+                <h5 class="modal-title fw-bold">Modifier un utilisateur</h5>
+                <small class="modal-subtitle text-warning">Formulaire de modification d'un utilisateur existant</small>
+              </div>
               <button type="button" class="close" aria-label="Close" (click)="modal.dismiss('Cross click')">
                 <span aria-hidden="true"><i class="material-icons">close</i></span>
               </button>

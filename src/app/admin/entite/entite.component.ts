@@ -381,9 +381,12 @@ export class EntiteComponent {
     description: form.value.description,
     type: form.value.type, // Ajout du type d'entité
     parentId: form.value.parentId || null,
-    responsableId: form.value.responsable?.id || null,
+    responsable: form.value.responsable || null, // Envoyer l'objet responsable complet
     typeActiviteIds: form.value.typeActivite || [],
   };
+
+  // Debug log pour voir l'objet envoyé
+  console.log('🔍 Objet newEntite envoyé:', JSON.stringify(newEntite, null, 2));
 
   // Ajouter parentId seulement si c'est un SERVICE
     if (form.value.type === 'SERVICE' && form.value.parentId) {
@@ -517,10 +520,112 @@ export class EntiteComponent {
     });
   }
 
+  // edit record
+  editRow(row: any, content: any) {
+    this.modalService.open(content, {
+      ariaLabelledBy: 'modal-basic-title',
+      size: 'lg',
+    });
+    this.selectedRowData = row;
+    // Pré-remplir le formulaire avec les données de l'entité
+    this.register.patchValue({
+      nom: row.nom,
+      description: row.description,
+      type: row.type,
+      parentId: row.parentId,
+      responsable: row.responsable || null // Ajouter le responsable
+    });
+  }
+
+  // update record
+  onUpdateSave(form: UntypedFormGroup) {
+    this.loadingIndicator = true;
+    
+    const formData = new FormData();
+    formData.append('nom', form.value.nom);
+    formData.append('description', form.value.description);
+    formData.append('type', form.value.type);
+    
+    if (form.value.parentId) {
+      formData.append('parentId', form.value.parentId.toString());
+    }
+    
+    if (this.selectedFile) {
+      formData.append('fichier', this.selectedFile, this.selectedFile.name);
+    }
+
+    const selectedActivityIds: number[] = form.value.typeActivite || [];
+    selectedActivityIds.forEach(typeId => {
+      formData.append('typeActiviteIds', typeId.toString());
+    });
+
+    // Gérer le responsable correctement
+    if (form.value.responsable) {
+      if (typeof form.value.responsable === 'object' && form.value.responsable.id) {
+        formData.append('utilisateurId', form.value.responsable.id.toString());
+      } else if (typeof form.value.responsable === 'number') {
+        formData.append('utilisateurId', form.value.responsable.toString());
+      }
+    }
+
+    this.glogalService.updateEntity('entite', this.selectedRowData.id!, formData).subscribe({
+      next: (response) => {
+        this.loadingIndicator = false;
+        this.modalService.dismissAll();
+        this.toastr.success('Entité mise à jour avec succès!');
+        
+        // Rafraîchir les données selon le mode actuel
+        if (this.viewMode === 'directions') {
+          this.getDirections();
+        } else {
+          this.showDirectionServices(this.selectedDirection!);
+        }
+        
+        this.resetForm();
+      },
+      error: (err) => {
+        this.loadingIndicator = false;
+        this.toastr.error('Erreur lors de la mise à jour');
+        console.error('Erreur mise à jour:', err);
+      }
+    });
+  }
+
+  // delete single row
+  deleteSingleRow(row: any) {
+    Swal.fire({
+      title: 'Voulez vous vraiment supprimer cette entité?',
+      text: row.nom,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Oui, supprimer!'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.glogalService.delete('entite', row.id).subscribe({
+          next: () => {
+            this.toastr.success('Entité supprimée avec succès');
+            // Rafraîchir les données selon le mode actuel
+            if (this.viewMode === 'directions') {
+              this.getDirections();
+            } else {
+              this.showDirectionServices(this.selectedDirection!);
+            }
+          },
+          error: (err) => {
+            this.toastr.error('Erreur lors de la suppression');
+            console.error('Erreur suppression:', err);
+          }
+        });
+      }
+    });
+  }
 
 }
 
 export interface selectEntiteInterface {
+  id?: number;
   nom: string;
   description: string;
   logo: string;

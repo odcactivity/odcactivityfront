@@ -18,8 +18,7 @@ import {EncryptionService} from "@core/service/encryption.service";
 import Swal from "sweetalert2";
 import {selectEntiteInterface} from "../entite/entite.component";
 import {TypeActivite} from "@core/models/TypeActivite";
-import { co } from '@fullcalendar/core/internal-common';
-import { C } from '@angular/cdk/scrolling-module.d-ud2XrbF8';
+
 
 @Component({
   selector: 'app-entite-detail',
@@ -87,27 +86,50 @@ export class EntiteDetailComponent {
     this.router.navigate(['/entite']);
   }
 getEntiteById(){
-    const state = history.state;
-    const id = state?.entiteId;
-    if (id) {
-      this.glogalService.getById('entite', id).subscribe({
-        next: (data: Entite) => {
-          this.entite = data;
-          const respon= data.responsable;
-          this.selectedUtilisateurId =  data.responsable as unknown as Number;
-          // console.log("Responsable ID===", this.selectedUtilisateurId);
-          this.getResponsableByEntite(respon!);
-          this.getAllUtilisateur();
-        },
-        error: (err) => {
-          console.error('Erreur lors du chargement de l’entité :', err);
+    // Essayer de récupérer l'ID depuis les paramètres de route d'abord
+    this.route.paramMap.subscribe(params => {
+      const id = params.get('id');
+      if (id) {
+        // Si l'ID est crypté, le décrypter
+        try {
+          const decryptedId = this.encryptionService.decrypt(id);
+          this.loadEntiteData(parseInt(decryptedId));
+        } catch (error) {
+          console.error('Erreur de décryptage de l\'ID:', error);
+          // Essayer avec l'ID directement si ce n'est pas crypté
+          this.loadEntiteData(parseInt(id));
         }
-      });
-    } else {
-      console.error("Aucun ID d'entité trouvé dans l'état de navigation.");
-      this.back(); // redirection ou message
-    }
-}
+      } else {
+        // Fallback: essayer de récupérer depuis history.state
+        const state = history.state;
+        const stateId = state?.entiteId;
+        if (stateId) {
+          this.loadEntiteData(stateId);
+        } else {
+          console.error('Aucun ID d\'entité trouvé dans les paramètres ou l\'état');
+          this.toastr.error('Impossible de charger les détails de l\'entité');
+          this.back();
+        }
+      }
+    });
+  }
+
+  private loadEntiteData(id: number) {
+    this.glogalService.getById('entite', id.toString()).subscribe({
+      next: (data: Entite) => {
+        this.entite = data;
+        const respon= data.responsable;
+        this.selectedUtilisateurId =  data.responsable as unknown as Number;
+        // console.log("Responsable ID===", this.selectedUtilisateurId);
+        this.getResponsableByEntite(respon!);
+        this.getAllUtilisateur();
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement de l’entité :', err);
+        this.toastr.error('Erreur lors du chargement des détails');
+      }
+    });
+  }
 
 getResponsableByEntite( respon:any): void {
   this.glogalService.get('utilisateur').subscribe({
@@ -195,8 +217,11 @@ getResponsableByEntite( respon:any): void {
     nom: form.value.nom,
     description: form.value.description,
     responsable: form.value.responsable || null,
-    typeActivitesIds: form.value.typeActivite || []
+    typeActiviteIds: form.value.typeActivite || []
   };
+
+  // Debug log pour voir l'objet envoyé
+  console.log('🔍 Objet updatedEntite envoyé:', JSON.stringify(updatedEntite, null, 2));
   //  Création du FormData
   const formData = new FormData();
 
@@ -307,6 +332,14 @@ getResponsableByEntite( respon:any): void {
 
   deleteRecordSuccess(count: number) {
     this.toastr.success('Eradication diligente pleinement consommée.', '');
+  }
+
+  getParentDirectionName(): string {
+    if (this.entite?.type === 'SERVICE' && this.entite.parentId) {
+      const parentDirection = this.entites.find(e => e.id === this.entite.parentId);
+      return parentDirection ? parentDirection.nom : 'Direction non trouvée';
+    }
+    return '';
   }
 
 

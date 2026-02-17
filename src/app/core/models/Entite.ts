@@ -12,4 +12,5 @@ export class Entite {
   listeResultat?: string;
   utilisateur?: Utilisateur;
   responsable?: Utilisateur;
+  typeActiviteIds?: number[]; // Corrigé pour correspondre au backend (sans 's' final)
 }

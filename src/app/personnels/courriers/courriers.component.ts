@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, TemplateRef } from '@angular/core';
 import { ReactiveFormsModule, FormsModule, UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { AuthService } from '@core';
 import { Activity } from '@core/models/Activity';
@@ -34,6 +34,20 @@ interface selectActivitySupportInterface {
 export class CourriersComponent {
 
   @ViewChild(DatatableComponent, { static: false }) table!: DatatableComponent;
+
+selectedCourrier: any;
+
+reponse = {
+  emailExpediteur: '',
+  objet: '',
+  message: '',
+  fichier: null,
+  attachments: []
+};
+
+loading = false;
+
+@ViewChild('repondreCourrierModal') repondreCourrierModal!: TemplateRef<any>;
   
   entites: Entite[] = [];
   directions: Entite[] = [];
@@ -63,6 +77,9 @@ export class CourriersComponent {
   isRowSelected = false;
   reorderable = true;
   public selected: number[] = [];
+  
+  // 🔥 Solution temporaire : suivre les courriers répondus localement
+  courriersRepondusLocalement: number[] = [];
   currenUserData: any;
   taille: any = "";
   
@@ -93,6 +110,8 @@ export class CourriersComponent {
     };
     this.selection = SelectionType.checkbox;
   }
+
+  
 
   onSelect({ selected }: { selected: any }) {
     this.selected.splice(0, this.selected.length);
@@ -204,8 +223,24 @@ export class CourriersComponent {
       console.log('Aucune direction trouvée pour idEntite:', idEntiteNumber);
     }
     
+    // Conversion du typeliste vers la constante backend
+    let backendType: string;
+    switch(this.typeliste) {
+      case 'actifs':
+        backendType = 'ENVOYER';
+        break;
+      case 'archives':
+        backendType = 'ARCHIVER';
+        break;
+      case 'envoyes':
+        backendType = 'REPONDU';
+        break;
+      default:
+        backendType = 'ENVOYER';
+    }
+    
     this.loadingIndicator = true;
-    this.glogalService.get(`api/courriers/${this.typeliste}/${this.idEntite}`).subscribe({
+    this.glogalService.get(`api/courriers/${backendType}/${this.idEntite}`).subscribe({
       next: (value: any[]) => {
         this.Courriers = value;
         console.log('Courriers chargés:', value.length, 'courriers');
@@ -238,10 +273,27 @@ export class CourriersComponent {
       return;
     }
     
-    this.loadingIndicator = true;
-    console.log(`Appel API: api/courriers/${this.typeliste}/service/${this.idService}`);
+    // Conversion du typeliste vers la constante backend
+    let backendType: string;
+    switch(this.typeliste) {
+      case 'actifs':
+        backendType = 'ENVOYER';
+        break;
+      case 'archives':
+        backendType = 'ARCHIVER';
+        break;
+      case 'envoyes':
+        backendType = 'REPONDU';
+        break;
+      default:
+        backendType = 'ENVOYER';
+    }
     
-    this.glogalService.get(`api/courriers/${this.typeliste}/service/${this.idService}`).subscribe({
+    this.loadingIndicator = true;
+    console.log(`Appel API: api/courriers/${backendType}/${this.idService}`);
+    
+    // Utilise le même endpoint que pour les directions
+    this.glogalService.get(`api/courriers/${backendType}/${this.idService}`).subscribe({
       next: (value: any[]) => {
         this.Courriers = value;
         console.log(`Courriers du service ${selectedService.nom}:`, value.length, 'courriers');
@@ -273,16 +325,74 @@ export class CourriersComponent {
 
   handleList(type: string) {
     this.loadingIndicator = true;
-    this.glogalService.get(`api/courriers/${type}/${this.idEntite}`).subscribe({
+    
+    // Conversion des types frontend vers les constantes backend
+    let backendType: string;
+    switch(type) {
+      case 'actifs':
+        backendType = 'ENVOYER';  // Utilise ENVOYER au lieu de RECU
+        break;
+      case 'archives':
+        backendType = 'ARCHIVER';
+        break;
+      case 'envoyes':
+        backendType = 'REPONDU';
+        break;
+      default:
+        backendType = 'ENVOYER';
+    }
+    
+    console.log(`🔄 handleList: ${type} -> ${backendType}`);
+    
+    this.glogalService.get(`api/courriers/${backendType}/${this.idEntite}`).subscribe({
       next: (value: ActivitySupports[]) => {
-        this.Courriers = value;
-        this.typeliste = type;
-        this.filteredData = [...value];
-        setTimeout(() => {
-          this.loadingIndicator = false;
-        }, 500);
+        // 🔥 Solution temporaire : si on demande les REPONDUS et que le backend retourne 0,
+        // on ajoute les courriers qui ont été répondus localement
+        if (type === 'envoyes' && value.length === 0) {
+          console.log('🔍 Backend retourne 0 REPONDUS, recherche des courriers répondus localement...');
+          
+          // Récupérer tous les courriers ENVOYER et filtrer ceux qui ont été répondus localement
+          this.glogalService.get(`api/courriers/ENVOYER/${this.idEntite}`).subscribe({
+            next: (envoyers: ActivitySupports[]) => {
+              const repondusLocalement = envoyers.filter(courrier => 
+                // Filtrer les courriers qui ont été marqués comme répondus dans le frontend
+                this.courriersRepondusLocalement?.includes(courrier.id)
+              );
+              
+              console.log(`📊 Courriers répondus localement: ${repondusLocalement.length}`);
+              this.Courriers = repondusLocalement;
+              this.typeliste = type;
+              this.filteredData = [...repondusLocalement];
+              setTimeout(() => {
+                this.loadingIndicator = false;
+              }, 500);
+            },
+            error: (err) => {
+              console.error('❌ Erreur lors de la recherche des courriers répondus localement:', err);
+              this.Courriers = value;
+              this.typeliste = type;
+              this.filteredData = [...value];
+              setTimeout(() => {
+                this.loadingIndicator = false;
+              }, 500);
+            }
+          });
+        } else {
+          this.Courriers = value;
+          this.typeliste = type;
+          this.filteredData = [...value];
+          console.log(`✅ Courriers chargés pour ${backendType}:`, value.length, 'courriers');
+          setTimeout(() => {
+            this.loadingIndicator = false;
+          }, 500);
+        }
+      },
+      error: (err) => {
+        console.error(`❌ Erreur lors du chargement des courriers ${backendType}:`, err);
+        this.loadingIndicator = false;
+        this.toastr.error(`Erreur lors du chargement des courriers: ${err.message || 'Erreur serveur'}`);
       }
-    })
+    });
   }
 
   archiveCourrier(row: any) {
@@ -369,9 +479,44 @@ export class CourriersComponent {
       this.register.patchValue({ fichier: file });
       this.register.get('fichier')?.updateValueAndValidity();
     }
+    
+    // Si c'est pour la réponse au courrier
+    if (this.reponse) {
+      const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+      
+      if (!allowedTypes.includes(file.type)) {
+        this.toastr.error('Format non autorisé. Veuillez utiliser PDF, DOC ou DOCX');
+        return;
+      }
+      
+      if (file.size > 10 * 1024 * 1024) {
+        this.toastr.error('Fichier trop volumineux (max 10MB)');
+        return;
+      }
+      
+      this.reponse.fichier = file;
+    }
   }
 
   ImputeModal(row: any, rowIndex: number, content: any) {
+    // Si c'est pour répondre au courrier, ouvrir la modal de réponse
+    if (content === 'repondre') {
+      this.selectedCourrier = row;
+      this.reponse = {
+        emailExpediteur: row.expediteurEmail || '',
+        objet: `Re: ${row.objet || ''}`,
+        message: '',
+        fichier: null,
+        attachments: []
+      };
+      this.modalService.open(this.repondreCourrierModal, { 
+        ariaLabelledBy: 'repondreCourrierModal',
+        size: 'lg'
+      });
+      return;
+    }
+
+    // Logique existante pour l'imputation normale
     if (!this.selectedDirection && this.idEntite) {
       const idEntiteNumber = Number(this.idEntite);
       this.selectedDirection = this.directions.find(dir => dir.id === idEntiteNumber);
@@ -543,8 +688,109 @@ export class CourriersComponent {
     });
   }
 
+  onAttachmentsSelected(event: any) {
+    const files = Array.from(event.target.files);
+    const maxSize = 5 * 1024 * 1024; // 5MB max par fichier
+    const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/png'];
+    
+    const validFiles = files.filter((file: any) => {
+      if (!allowedTypes.includes(file.type)) {
+        this.toastr.warning(`Le fichier ${file.name} n'a pas un format autorisé`);
+        return false;
+      }
+      
+      if (file.size > maxSize) {
+        this.toastr.warning(`Le fichier ${file.name} est trop volumineux (max 5MB)`);
+        return false;
+      }
+      
+      return true;
+    });
+    
+    this.reponse.attachments = [...this.reponse.attachments, ...validFiles];
+    
+    if (validFiles.length < files.length) {
+      this.toastr.warning('Certains fichiers n\'ont pas été ajoutés en raison de leur format ou taille');
+    }
+  }
+
+envoyerReponse(modal: any) {
+  // Validation des champs requis
+  if (!this.reponse.emailExpediteur || !this.reponse.objet || !this.reponse.message) {
+    this.toastr.error('Veuillez remplir tous les champs obligatoires');
+    return;
+  }
+
+  // Validation de l'email
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(this.reponse.emailExpediteur)) {
+    this.toastr.error('Veuillez entrer une adresse email valide');
+    return;
+  }
+
+  this.loading = true;
+
+  const formData = new FormData();
+  formData.append('courrierId', this.selectedCourrier.id);
+  formData.append('email', this.reponse.emailExpediteur);
+  formData.append('objet', this.reponse.objet);
+  formData.append('message', this.reponse.message);
+
+  if (this.reponse.fichier) {
+    formData.append('file', this.reponse.fichier);
+  }
+
+  // Ajouter les pièces jointes
+  this.reponse.attachments.forEach((file: any, index: number) => {
+    formData.append(`attachment${index}`, file);
+  });
+
+  this.glogalService.post('api/courriers/reponse', formData).subscribe({
+    next: (response) => {
+      this.loading = false;
+      modal.close();
+      this.toastr.success('Réponse envoyée avec succès');
+      
+      console.log('📝 Réponse backend:', response);
+      
+      // 🔥 Ajouter le courrier à la liste des répondus localement
+      if (this.selectedCourrier?.id && !this.courriersRepondusLocalement.includes(this.selectedCourrier.id)) {
+        this.courriersRepondusLocalement.push(this.selectedCourrier.id);
+        console.log('📋 Courriers répondus localement:', this.courriersRepondusLocalement);
+      }
+      
+      // Mettre à jour le statut du courrier en local avec la bonne constante
+      this.selectedCourrier.statut = 'REPONDU';
+      
+      // Réinitialiser le formulaire de réponse
+      this.reponse = {
+        emailExpediteur: '',
+        objet: '',
+        message: '',
+        fichier: null,
+        attachments: []
+      };
+      
+      // Forcer le basculement vers la vue "envoyes" et recharger les données
+      console.log('🔄 Basculement vers la vue RÉPONDUS...');
+      this.typeliste = 'envoyes';
+      
+      // Forcer le rechargement depuis le backend pour voir si le statut a été mis à jour
+      setTimeout(() => {
+        this.handleList('envoyes');
+      }, 500);
+    },
+    error: (err) => {
+      this.loading = false;
+      console.error('Erreur lors de l\'envoi de la réponse:', err);
+      const errorMessage = err?.error?.message || 'Erreur lors de l\'envoi de la réponse';
+      this.toastr.error(errorMessage);
+    }
+  });
+}
+
   deleteRecord(row: any) {
-    this.glogalService.delete("api/supports/delete", row.id!).subscribe({
+    this.glogalService.delete("api/courriers/delete", row.id!).subscribe({
       next: (response) => {
         this.salles = response;
         this.loadingIndicator = true;

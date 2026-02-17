@@ -1,114 +1,115 @@
 <section class="main-content">
-    <ul class="breadcrumb breadcrumb-style ">
-      <li class="breadcrumb-item">
-        <h5 class="page-title m-b-0">Table</h5>
-      </li>
-      <li class="breadcrumb-item bcrumb-1">
-        <a routerLink="/dashboardActivite">
-          <i class="fas fa-paper-plane"></i></a>
-      </li>
-      <li class="breadcrumb-item"> Gestion Des Courriers</li>
-    </ul>
-    <div class="section-body">
-      <div class="row clearfix">
-        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
-          <div class="card">
-            <div class="p-10">
-              <div class="row">
-                <div class="col-lg-12">
-                  <div class="row m-0">
-                   
-                    <div class="col-lg-12 p-0">
-                      <div class="ngxTableHeader">
-                        <div class="table-search-area">
-                          <div>
-                            <label for="search-input"><i class="material-icons search-icon">search</i></label>
-                            <input placeholder="Recherche" type="text" class="browser-default search-field"
-                                   (keyup)='filterDatatable($event)' aria-label="Search box">
-                          </div>
-                        </div>
-                        <div class="header-buttons-left" style="width: 100%;">
-                          <div class="tbl-btn-style" style="width: 100%;">
-                            <div class="row">
-                              <div class="col-sm-12 col-md-4 col-lg-4 pt-2">
-                                <button class="btn btn-icon icon-left bg-warning text-white rounded-button" (click)='addRow(addRecord)'>
-                                  <i class="material-icons">add</i>
-                                </button>
-                                <button [hidden]=!isRowSelected class="btn btn-icon icon-left btn-danger rounded-button"
-                                        (click)='deleteSelected()'>
-                                  <i class="material-icons">delete</i>
-                                </button>
-                             </div>
-                              <div class="col-sm-12 col-md-8 col-lg-8" style="display: flex;">
+  <!-- Breadcrumb -->
+  <ul class="breadcrumb breadcrumb-style mb-4">
+    <li class="breadcrumb-item">
+      <h5 class="page-title m-b-0">Table</h5>
+    </li>
+    <li class="breadcrumb-item bcrumb-1">
+      <a routerLink="/dashboardActivite">
+        <i class="fas fa-paper-plane"></i>
+      </a>
+    </li>
+    <li class="breadcrumb-item">Gestion Des Courriers</li>
+  </ul>
 
-                                <div class="mt-2" style="display: flex;">
-                                    <label class="mt-2">Entité <span class="text-dangerx">*</span></label>
-                                    <select class="form-select readonly-select customselect" name="idEntite" [(ngModel)]="idEntite" (change)="getCourrierByEntite()">
-                                        <option value="" [ngValue]="null" disabled>-- Sélectionnez une entité --</option>
-                                        <option *ngFor="let dir of directions"  [value]="dir.id">{{dir.nom}}</option>
-                                    </select>
-                                </div>
-                                @if(this.idEntite){
-                                    <div class="mt-2" style="display: flex;">
-                                        <label class="mt-2">Service</label>
-                                        <select class="form-select readonly-select customselect" name="idService" [(ngModel)]="idService" (change)="getCourrierByService()">
-                                            <option [ngValue]="null">-- Tous les services --</option>
-                                            <option *ngFor="let service of servicesOfDirection"  [ngValue]="service.id">{{service.nom}}</option>
-                                        </select>
-                                    </div>
-                                }
-                                @if(this.idEntite){
-                                    <button [class]="this.typeliste ==='actifs' ? 'btn btn-warning' : 'btn btn shadow-sm btn-dark'" (click)="handleList('actifs')">
-                                        <i class="fas fa-file"></i>
-                                            ACTIFS
-                                            <!-- @if(this.taille && !!this.taille){
-                                            <div style="font-size: 10px;">
-                                                total: {{taille ? taille.tailleRapport+ ' B': '0 B'}}
-                                            </div>
-                                            } -->
-                                        </button>
-        
-                                        <button [class]="this.typeliste ==='archives' ? 'btn btn-warning' : 'btn btn shadow-sm btn-dark'" (click)="handleList('archives')">
-                                        <i class="fas fa-file"></i>
-                                            ARCHIVES
-                                            <!-- @if(this.taille && !!this.taille){
-                                            <div style="font-size: 10px;">
-                                                total: {{taille ? taille.tailleImage+ ' B': '0 B'}}
-                                            </div>
-                                            } -->
-                                        </button>
-                                }
-                                <!-- <button [class]="listType === '1' ? 'btn btn-warning' : 'btn btn shadow-sm'"  (click)="handleList('1')"> -->
-
-
-                                <!-- <button [class]="listType === '2' ? 'btn btn-warning' : 'btn btn shadow-sm'" (click)="handleList('2')">
-                                  <i class="fas fa-calendar"></i>
-                                    Média Planning
-                                    <div style="font-size: 10px;">
-                                      total: 230
-                                    </div>
-                                </button> -->
-                                <!-- <button [class]="listType === '2' ? 'btn btn-warning' : 'btn shadow-sm'" (click)="handleList('2')"> -->
-                            
-                                    <!-- <button class="btn btn-warning">
-                                  <i class="fas fa-play"></i>
-                                    Média vidéo/image
-                                      <div style="font-size: 10px;">
-                                        total: 0
-                                      </div>                                    
-                                </button> -->
-                              </div>
-                            </div>
-
-
-
-                          </div>
-                        </div>
+  <div class="section-body">
+    <div class="row clearfix">
+      <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <div class="card">
+          <div class="p-4">
+            <!-- En-tête avec recherche et boutons d'action -->
+            <div class="row mb-4">
+              <div class="col-lg-12">
+                <div class="ngxTableHeader">
+                  <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                    <!-- Zone de recherche (gardée exactement comme avant) -->
+                    <div class="table-search-area">
+                      <div>
+                        <label for="search-input"><i class="material-icons search-icon">search</i></label>
+                        <input placeholder="Recherche" type="text" class="browser-default search-field"
+                               (keyup)='filterDatatable($event)' aria-label="Search box">
                       </div>
+                    </div>
+
+                    <!-- Boutons d'action principaux (gardés exactement comme avant) -->
+                    <div class="d-flex gap-2">
+                      <button class="btn btn-icon icon-left bg-warning text-white rounded-button" 
+                              (click)='addRow(addRecord)' title="Ajouter un nouveau courrier">
+                        <i class="material-icons">add</i>
+                      </button>
+                      <button [hidden]=!isRowSelected class="btn btn-icon icon-left btn-danger rounded-button"
+                              (click)='deleteSelected()' title="Supprimer les courriers sélectionnés">
+                        <i class="material-icons">delete</i>
+                      </button>
                     </div>
                   </div>
                 </div>
               </div>
+            </div>
+
+            <!-- Section Filtres (Entité et Service) -->
+            <div class="row mb-4">
+              <div class="col-12">
+                <div class="d-flex flex-wrap gap-3 align-items-start">
+                  <!-- Champs de sélection -->
+                  <div class="d-flex flex-wrap gap-3 align-items-center flex-grow-1">
+                    <!-- Champ Entité -->
+                    <div class="d-flex flex-column">
+                      <label class="mb-1 fw-semibold">Entité <span class="text-danger">*</span></label>
+                      <select class="form-select readonly-select customselect" name="idEntite" 
+                              [(ngModel)]="idEntite" (change)="getCourrierByEntite()" style="min-width: 200px;">
+                        <option value="" [ngValue]="null" disabled>-- Sélectionnez une entité --</option>
+                        <option *ngFor="let dir of directions" [value]="dir.id">{{dir.nom}}</option>
+                      </select>
+                    </div>
+
+                    <!-- Champ Service (conditionnel) -->
+                    @if(idEntite) {
+                      <div class="d-flex flex-column">
+                        <label class="mb-1 fw-semibold">Service</label>
+                        <select class="form-select readonly-select customselect" name="idService" 
+                                [(ngModel)]="idService" (change)="getCourrierByService()" style="min-width: 180px;">
+                          <option [ngValue]="null">-- Tous les services --</option>
+                          <option *ngFor="let service of servicesOfDirection" [value]="service.id">{{service.nom}}</option>
+                        </select>
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Section Boutons de filtre (Actifs/Archives/Envoyés) -->
+            @if(idEntite) {
+              <div class="row mb-4">
+                <div class="col-12">
+                  <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <span class="me-2 fw-semibold text-muted">Affichage :</span>
+                    
+                    <button [class]="typeliste ==='actifs' ? 'btn btn-warning' : 'btn btn shadow-sm btn-dark'" 
+                            (click)="handleList('actifs')" style="min-width: 100px;">
+                      <i class="fas fa-file me-1"></i>
+                      ACTIFS
+                    </button>
+        
+                    <button [class]="typeliste ==='archives' ? 'btn btn-warning' : 'btn btn shadow-sm btn-dark'" 
+                            (click)="handleList('archives')" style="min-width: 100px;">
+                      <i class="fas fa-archive me-1"></i>
+                      ARCHIVES
+                    </button>
+
+                    <button [class]="typeliste ==='envoyes' ? 'btn btn-warning' : 'btn btn shadow-sm btn-dark'" 
+                            (click)="handleList('envoyes')" style="min-width: 100px;">
+                      <i class="fas fa-paper-plane me-1"></i>
+                      REPONDUS
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+
+            <!-- Tableau des courriers -->
+            <div class="mt-4">
               <ngx-datatable #table class="material" [rows]="Courriers" [loadingIndicator]="loadingIndicator"
                              columnMode="force" [headerHeight]="60" [footerHeight]="80" rowHeight="auto" [limit]="10"
                              [scrollbarH]="scrollBarHorizontal" [reorderable]="reorderable" [selected]="selected"
@@ -137,37 +138,6 @@
                     </div>
                   </ng-template>
                 </ngx-datatable-column>
-
-                <!-- <ngx-datatable-column [width]="200" name="Statut">
-                  <ng-template let-row="row" let-value="value" let-i="index" ngx-datatable-cell-template>
-                    <div class="name-col-style">
-                      @if (row.statut === 'En_ATTENTE') {
-                        <div class="badge-outline col-indigo">{{row.statut}}
-                        </div>
-                      }
-                      @if (row.statut === 'VALIDER') {
-                        <div class="badge-outline col-green">{{row.statut}}
-                        </div>
-                      }
-                      @if (row.statut === 'A_CORRIGER') {
-                        <div class="badge-outline col-orange">{{row.statut}}
-                        </div>
-                      }
-                      @if (row.statut === 'REFUSER') {
-                        <div class="badge-outline col-red">{{row.statut}}
-                        </div>
-                      }
-                    </div>
-                  </ng-template>
-                </ngx-datatable-column> -->
-
-                <!-- <ngx-datatable-column [width]="200" name="Type">
-                  <ng-template let-row="row" let-value="value" let-i="index" ngx-datatable-cell-template>
-                    <div class="name-col-style">
-                      <div>{{row.type}}</div>
-                    </div>
-                  </ng-template>
-                </ngx-datatable-column> -->
                 <ngx-datatable-column [width]="200" name="Date reception">
                   <ng-template let-row="row" let-value="value" let-i="index" ngx-datatable-cell-template>
                     <div class="name-col-style">
@@ -175,311 +145,336 @@
                     </div>
                   </ng-template>
                 </ngx-datatable-column>
-                <ngx-datatable-column [width]="200" name="Date imite">
+                <ngx-datatable-column [width]="200" name="Date limite">
                   <ng-template let-row="row" let-value="value" let-i="index" ngx-datatable-cell-template>
                     <div class="name-col-style">
                       <div>{{row.dateLimite | date: 'dd/MM/yyyy'}}</div>
                     </div>
                   </ng-template>
                 </ngx-datatable-column>
+                <ngx-datatable-column [width]="120" name="Statut">
+                  <ng-template let-row="row" let-value="value" let-i="index" ngx-datatable-cell-template>
+                    <div class="name-col-style">
+                      @if(row.statut === 'REPONDU') {
+                        <span class="badge bg-success">
+                          <i class="fas fa-check me-1"></i>Répondu
+                        </span>
+                      } @else if(row.statut === 'ARCHIVER') {
+                        <span class="badge bg-secondary">
+                          <i class="fas fa-archive me-1"></i>Archivé
+                        </span>
+                      } @else if(row.statut === 'ENVOYER') {
+                        <span class="badge bg-warning">
+                          <i class="fas fa-clock me-1"></i>En attente
+                        </span>
+                      } @else if(row.statut === 'IMPUTER') {
+                        <span class="badge bg-info">
+                          <i class="fas fa-share me-1"></i>Imputé
+                        </span>
+                      } @else if(row.statut === 'EN_COURS') {
+                        <span class="badge bg-primary">
+                          <i class="fas fa-spinner me-1"></i>En cours
+                        </span>
+                      } @else {
+                        <span class="badge bg-info">
+                          <i class="fas fa-question me-1"></i>{{row.statut}}
+                        </span>
+                      }
+                    </div>
+                  </ng-template>
+                </ngx-datatable-column>
                 <ngx-datatable-column name="Actions" [sortable]="false">
                   <ng-template let-value="value" let-row="row" let-rowIndex="rowIndex" ngx-datatable-cell-template>
                     <span>
-                      @if(row.statut !== 'ARCHIVER'){
-                          <button class="btn btn-tbl-edit h-auto" (click)='ImputeModal(row, rowIndex, entiteCibleModal)'>
-                              <i class="fas fa-edit"></i>
-                          </button>
-
-                          <button class="btn btn-tbl-edit h-auto" (click)='download(row)'>
-                            <i class="fas fa-download"></i>
-                          </button>
-                          <button class="btn btn-tbl-edit h-auto" (click)='archiveCourrier(row)'>
-                            <i class="fas fa-archive"></i>
-                          </button>
+                      @if(row.statut !== 'ARCHIVER' && row.statut !== 'REPONDU') {
+                        <button class="btn btn-tbl-edit h-auto" (click)='ImputeModal(row, rowIndex, "repondre")' title="répondre ce courrier">
+                          <i class="fas fa-reply me-1"></i>
+                        </button>
+                        <button class="btn btn-tbl-edit h-auto" (click)='ImputeModal(row, rowIndex, entiteCibleModal)' title="Imputer le courrier">
+                          <i class="fas fa-edit"></i>
+                        </button>
                       }
-
-                      <button class="btn btn-tbl-edit h-auto" (click)='historiqueCourrier(row, rowIndex, history)'>
+                      @if(row.statut !== 'ARCHIVER') {
+                        <button class="btn btn-tbl-edit h-auto" (click)='download(row)' title="Télécharger le courrier">
+                          <i class="fas fa-download"></i>
+                        </button>
+                      }
+                      @if(row.statut !== 'ARCHIVER' && row.statut !== 'REPONDU') {
+                        <button class="btn btn-tbl-edit h-auto" (click)='archiveCourrier(row)' title="Archiver le courrier">
+                          <i class="fas fa-archive"></i>
+                        </button>
+                      }
+                      <button class="btn btn-tbl-edit h-auto" (click)='historiqueCourrier(row, rowIndex, history)' title="Voir l'historique du courrier">
                         <i class="fas fa-history"></i>
                       </button>
-
-
-                      <!-- <button class="btn btn-tbl-edit h-auto" (click)='displayFile(row)'>
-                        <i class="fas fa-eye"></i>
-                      </button> -->
-
-                      <!-- @if(this.currenUserData && row.emailutilisateurAutorise === this.currenUserData.email){
-                        <button class="btn btn-tbl-edit h-auto" (click)='download(row)'>
-                            <i class="fas fa-download"></i>
-                          </button>
-                        <button class="btn btn-tbl-edit h-auto" (click)='editRow(row, rowIndex, history)'>
-                            <i class="fas fa-pen"></i>
-                          </button>
-                        <button class="btn btn-tbl-delete h-auto" (click)='deleteSingleRow(row)'>
-                            <i class="far fa-trash-alt"></i>
-                        </button>
-                      } -->
-
                     </span>
                   </ng-template>
                 </ngx-datatable-column>
               </ngx-datatable>
-  
-            <!-- Imput courrier Modal Window -->
-            <ng-template #entiteCibleModal let-modal>
-                <div class="modal-header entiteCibleModal">
-                  <div class="modal-title-container">
-                    <h5 class="modal-title fw-bold"> Assigner un courrier</h5>
-                    <small class="modal-subtitle">Formulaire d'envoi des courrier</small>
-                  </div>
-                    <button type="button" class="close" aria-label="Close" (click)="modal.dismiss()">
-                    <span aria-hidden="true"><i class="material-icons">close</i></span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class="row">
-
-                      <!-- Choisir le service qui doit va traiter  -->
-                        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
-                          <label>Entité cible <span class="text-danger">*</span></label>
-                          @if (selectedDirection && servicesOfDirection.length > 0) {
-                            <select class="form-select form-control readonly-select" name="entiteCible" [(ngModel)]="entiteCible">
-                              <option value="" [ngValue]="null" disabled>-- Sélectionnez une entité --</option>
-                              <option *ngFor="let serv of servicesOfDirection"  [value]="serv.id">{{serv.nom}}</option>
-                            </select>
-                          } @else if (selectedDirection && servicesOfDirection.length === 0) {
-                            <div class="alert alert-warning">
-                              <i class="fas fa-exclamation-triangle me-2"></i>
-                              Aucun service disponible pour cette direction.
-                            </div>
-                          } @else {
-                            <div class="alert alert-info">
-                              <i class="fas fa-info-circle me-2"></i>
-                              Veuillez d'abord sélectionner une direction pour voir ses services.
-                            </div>
-                          }
-                            <small class="form-text text-danger"> L'entité cible est
-                              obligatoire
-                            </small>
-                        </div>
-
-                        <!-- Choisir la personne qui doit traiter le courrier -->
-                        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
-                          <label>Personnel <span class="text-danger"></span></label>
-                          <select class="form-select form-control readonly-select" name="personnel" [(ngModel)]="personnel">
-                            <option value="" [ngValue]="null" disabled>-- Sélectionnez un personnel --</option>
-                            <option *ngFor="let perso of Utilisateurs"  [value]="perso.id">{{perso.prenom}} {{perso.nom}}</option>
-                          </select>
-                            <!-- <small class="form-text text-danger"> L'entité cible est
-                              obligatoire
-                            </small> -->
-                         </div>
-
-                      </div>
-  
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-warning" [disabled]="!this.entiteCible" (click)="imputCourrier()">
-                          <span *ngIf="loadingIndicator" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-                          {{ loadingIndicator ? 'Chargement...' : 'Imputer' }}
-                        </button>
-    
-                        <button type="button" class="btn btn-dark text-white" (click)="modal.close('Close click')">Fermer</button>
-                      </div>
-                </div>
-
-            </ng-template>
-  
-              <!-- Add Record Modal Window -->
-              <ng-template #addRecord let-modal>
-                <div class="modal-header editRowModal">
-                  <div class="modal-title-container">
-                    <h5 class="modal-title fw-bold">Nouveau courrier</h5>
-                    <small class="modal-subtitle">Formulaire d'enregistrement d'un nouveau courrier</small>
-                  </div>
-                    <button type="button" class="close" aria-label="Close" (click)="modal.dismiss()">
-                     <span aria-hidden="true"><i class="material-icons">close</i></span>
-                    </button>
-                  </div>
-
-                <!-- Demande d'enregistrement d'un nouveau courrier -->
-                <div class="modal-body">
-                  <form class="register-form" [formGroup]="register" (ngSubmit)="onAddRowSave(register)">
-                    <div class="row">
-                      <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
-                        <label for="expediteur">Expéditeur <span class="text-danger">*</span>:</label>
-                        <input 
-                          type="text"
-                          id="expediteur"
-                          formControlName="expediteur"
-                          class="form-control" required
-                        />
-                        @if (!editForm.get('expediteur')?.valid && editForm.get('expediteur')?.touched) {
-                            <small class="form-text text-danger"> L'expediteur est
-                            obligatoire</small>
-                        }
-                    </div>
-
-                      <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
-                          <label for="objet">Objet <span class="text-danger">*</span>:</label>
-                          <input 
-                            type="text"
-                            id="objet"
-                            formControlName="objet"
-                            class="form-control" required
-                          />
-                          @if (!editForm.get('objet')?.valid && editForm.get('objet')?.touched) {
-                              <small class="form-text text-danger"> L'objet est
-                              obligatoire</small>
-                          }
-                      </div>
-
-
-                      <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
-                        <label for="numero">Numéro <span class="text-danger">*</span>:</label>
-                        <input 
-                          type="text"
-                          id="numero"
-                          formControlName="numero"
-                          class="form-control" required
-                        />
-                        @if (!editForm.get('numero')?.valid && editForm.get('numero')?.touched) {
-                            <small class="form-text text-danger"> Le numero est
-                            obligatoire</small>
-                        }
-                    </div>
-
-
-                      <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
-                        <label>Entité <span class="text-danger">*</span></label>
-                        <select class="form-select form-control readonly-select" formControlName="entite" readonly>
-                          <option value="" [ngValue]="null" disabled>-- Sélectionnez une activitée --</option>
-                          <option *ngFor="let dir of directions"  [value]="dir.id">{{dir.nom}}</option>
-                        </select>
-                        @if (!editForm.get('entite')?.valid && editForm.get('entite')?.touched) {
-
-                          <small class="form-text text-danger"> L'entité est
-                            obligatoire</small>
-                        }
-                        
-                      </div>
-                      
-                      <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
-                        <label for="fichier">Fichier joint <span class="text-danger"></span>:</label>
-                        <input 
-                          type="file"
-                          id="fichier"
-                          (change)="onFileSelected($event)" 
-                          accept=".pdf,.png,.jpg,.jpeg,.docx,.mp4,.csv,.xlsx,.xlsx"
-                          class="form-control" required
-                        />
-                        <!-- @if (!this.selectedFile) {
-                          <small class="form-text text-danger"> Le fichier est
-                            obligatoire</small>
-                        } -->
-                      </div>  
-                      <!--  -->
-
-
-
-                    </div>
-                     <div class="modal-footer">
-                      <button type="submit" class="btn btn-warning" [disabled]="!register.valid || loadingIndicator">
-                        <span *ngIf="loadingIndicator" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-                        {{ loadingIndicator ? 'Chargement...' : 'Enregistre' }}
-                      </button>
-  
-                      <button type="button" class="btn btn-dark text-white" (click)="modal.close('Close click')">Fermer</button>
-                    </div>
-                  </form>
-                </div>
-              </ng-template>
-
-              <!-- Edit Record Modal Window -->
-              <!-- Afficher l'historique des courriers -->
-              <ng-template #history let-modal>
-                <div class="modal-header editRowModal">
-                  <h4 class="modal-title" id="modal-basic-title">
-                    <div class="table-modal-header">
-                      <div class="modal-about">
-                        <div class="fw-bold p-t-10 font-17">
-                          <!-- {{selectedRowData!.activiteNom}} -->
-                        </div>
-                      </div>
-                    </div>
-                  </h4>
-                  <button type="button" class="close" aria-label="Close" (click)="modal.dismiss('Cross click')">
-                    <span aria-hidden="true"><i class="material-icons">close</i></span>
-                  </button>
-                </div>
-                <div class="modal-body">
-                  <h6> historique du courrier {{this.selectedRowData ? this.selectedRowData.numero : '-'}} </h6>
-                  <div>
-                    @if(this.Historiques.length > 0){
-                      @for (item of this.Historiques; track item) {
-                        <div class="shadow-sm mb-3" style="border-left: 1.5px solid orange; border-radius: 5px; padding-left: 5px;">
-                            <div style="font-size: 12px;">{{item.dateAction | date: 'dd/MM/yyyy'}}</div>
-                            <span style="font-size: 12px;"> <i class="text-warning fa fa-squard" ></i> {{item.statut}}</span>
-                            <div class="text-warning" style="font-size: 12px;">Entité: {{item.entite}}</div>
-                            <div class="text-warning" style="font-size: 12px;"> <i class="fa fa-user"></i> {{item.utilisateur}}</div>
-                            <p>{{item.commentaire}}</p>
-                        </div>
-                      }
-                    }
-                  </div>
-                  
-                  <!-- @if (this.selectedRowData && this.selectedRowData.historiques && this.selectedRowData.historiques!.length > 0) {
-                    @for (item of this.selectedRowData.historiques; track item) {
-                      <div class="shadow-sm mb-3" style="border-left: 1.5px solid orange; border-radius: 5px; padding-left: 5px;">
-                          <div style="font-size: 12px;">{{item.dateModification | date: 'dd/MM/yyyy'}}</div>
-                          <span style="font-size: 12px;"> <i class="text-warning fa fa-squard" ></i> {{item.statut}}</span>
-                          <div class="text-warning" style="font-size: 12px;">{{item.supportNom}}</div>
-                          <p>{{item.commentaire}}</p>
-                      </div>
-                    }
-                    <hr>
-                  } -->
-                  <!-- <form [formGroup]="editForm" (ngSubmit)="onEditSave(editForm)">
-                    <div class="input-field col s12 d-none">
-                      <input formControlName="id" class="form-control" type="hidden">
-                    </div>
-                      <div class="row">
-                        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
-                          <label>Statut du support<span class="text-danger">*</span></label>
-                          <select class="form-select form-control readonly-select" formControlName="statut" readonly>
-                            <option value="" [ngValue]="null" disabled>-- Sélectionnez le statut --</option>
-                            <option  [value]="'VALIDER'">VALIDER</option>
-                            <option  [value]="'A_CORRIGER'">A CORRIGER</option>
-                            <option  [value]="'REFUSER'">REFUSER</option>
-                          </select>
-                          @if (!editForm.get('statut')?.valid && editForm.get('statut')?.touched) {
-                            <small class="form-text text-danger"> Le statut est
-                              obligatoire</small>
-                          }
-                          
-                        </div>
-                          @if (this.editForm.value.statut ==='A_CORRIGER') {
-                            <div class="col-xl-12 col-lg-6 col-md-12 col-sm-12 mb-2">
-                              <label>Commentaire <span class="text-danger">*</span></label>
-                              <textarea class="form-control" placeholder="Commentaire ..." formControlName="commentaire">
-
-                              </textarea>
-                              @if (!editForm.get('commentaire')?.valid && editForm.get('commentaire')?.touched) {
-                                <small class="form-text text-danger"> Le commentaire est
-                                  obligatoire</small>
-                              }
-                            </div>
-                          }
-                      </div>
-                    <div class="modal-footer">
-                      <button type="submit" class="btn btn-warning" [disabled]="!editForm.valid">Enregistre</button>
-                      <button type="button" class="btn btn-dark text-white" (click)="modal.close()">Fermer</button>
-                    </div>
-                  </form> -->
-                </div>
-              </ng-template>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </section>
-  
+  </div>
+
+
+  <!-- Modal Réponse Courrier -->
+<ng-template #repondreCourrierModal let-modal>
+  <div class="modal-header">
+    <div>
+      <h5 class="modal-title fw-bold">
+        <i class="fas fa-reply me-2"></i> Répondre au courrier
+      </h5>
+      <small class="text-muted">Formulaire de réponse</small>
+    </div>
+    <button type="button" class="btn-close" (click)="modal.dismiss()"></button>
+  </div>
+
+  <div class="modal-body">
+
+    <!-- Infos courrier sélectionné -->
+    <div class="card border mb-3">
+      <div class="card-body p-2">
+        <div><b>Référence :</b> {{ selectedCourrier?.reference }}</div>
+        <div><b>Objet :</b> {{ selectedCourrier?.objet }}</div>
+        <div><b>Expéditeur :</b> {{ selectedCourrier?.expediteur }}</div>
+        <div><b>Date :</b> {{ selectedCourrier?.dateReception | date:'dd/MM/yyyy' }}</div>
+      </div>
+    </div>
+
+    <div class="row">
+
+      <!-- Email expéditeur -->
+      <div class="col-md-12 mb-3">
+        <label>Email expéditeur <span class="text-danger">*</span></label>
+        <input
+          type="email"
+          class="form-control"
+          [(ngModel)]="reponse.emailExpediteur"
+          placeholder="exemple@mail.com"
+        />
+      </div>
+
+      <!-- Objet réponse -->
+      <div class="col-md-12 mb-3">
+        <label>Objet de la réponse <span class="text-danger">*</span></label>
+        <input
+          type="text"
+          class="form-control"
+          [(ngModel)]="reponse.objet"
+          placeholder="Objet de la réponse"
+        />
+      </div>
+
+      <!-- Message / commentaire -->
+      <div class="col-md-12 mb-3">
+        <label>Message / commentaires</label>
+        <textarea
+          rows="4"
+          class="form-control"
+          [(ngModel)]="reponse.message"
+          placeholder="Rédiger la réponse..."
+        ></textarea>
+      </div>
+
+      <!-- Fichier réponse -->
+      <div class="col-md-12 mb-3">
+        <label>Fichier de réponse (PDF, DOCX)</label>
+        <input
+          type="file"
+          class="form-control"
+          (change)="onFileSelected($event)"
+          accept=".pdf,.doc,.docx"
+        />
+        <small class="text-muted">
+          Taille max : 10 MB – Formats autorisés : PDF, DOC, DOCX
+        </small>
+      </div>
+
+      <!-- Pièces jointes optionnelles -->
+      <div class="col-md-12 mb-2">
+        <label>Pièces jointes (optionnel)</label>
+        <input
+          type="file"
+          class="form-control"
+          (change)="onAttachmentsSelected($event)"
+          multiple
+        />
+      </div>
+
+    </div>
+  </div>
+
+  <div class="modal-footer">
+    <button
+      class="btn btn-primary"
+      [disabled]="!reponse.emailExpediteur || !reponse.objet"
+      (click)="envoyerReponse(modal)"
+    >
+      <span *ngIf="loading" class="spinner-border spinner-border-sm me-1"></span>
+      {{ loading ? 'Envoi...' : 'Envoyer la réponse' }}
+    </button>
+
+    <button class="btn btn-secondary" (click)="modal.dismiss()">
+      Annuler
+    </button>
+  </div>
+</ng-template>
+
+
+  <!-- Imputation Modal Window -->
+  <ng-template #entiteCibleModal let-modal>
+    <div class="modal-header entiteCibleModal">
+      <div class="modal-title-container">
+        <h5 class="modal-title fw-bold">Assigner un courrier</h5>
+        <small class="modal-subtitle">Formulaire d'envoi des courrier</small>
+      </div>
+      <button type="button" class="close" aria-label="Close" (click)="modal.dismiss()">
+        <span aria-hidden="true"><i class="material-icons">close</i></span>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="row">
+        <!-- Choisir le service qui doit traiter -->
+        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
+          <label>Entité cible <span class="text-danger">*</span></label>
+          @if (selectedDirection && servicesOfDirection.length > 0) {
+            <select class="form-select form-control readonly-select" name="entiteCible" [(ngModel)]="entiteCible">
+              <option value="" [ngValue]="null" disabled>-- Sélectionnez une entité --</option>
+              <option *ngFor="let serv of servicesOfDirection" [value]="serv.id">{{serv.nom}}</option>
+            </select>
+          } @else if (selectedDirection && servicesOfDirection.length === 0) {
+            <div class="alert alert-warning">
+              <i class="fas fa-exclamation-triangle me-2"></i>
+              Aucun service disponible pour cette direction.
+            </div>
+          } @else {
+            <div class="alert alert-info">
+              <i class="fas fa-info-circle me-2"></i>
+              Veuillez d'abord sélectionner une direction pour voir ses services.
+            </div>
+          }
+          <small class="form-text text-danger">L'entité cible est obligatoire</small>
+        </div>
+
+        <!-- Choisir la personne qui doit traiter le courrier -->
+        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
+          <label>Personnel <span class="text-danger"></span></label>
+          <select class="form-select form-control readonly-select" name="personnel" [(ngModel)]="personnel">
+            <option value="" [ngValue]="null" disabled>-- Sélectionnez un personnel --</option>
+            <option *ngFor="let perso of Utilisateurs" [value]="perso.id">{{perso.prenom}} {{perso.nom}}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-warning" [disabled]="!entiteCible" (click)="imputCourrier()">
+          <span *ngIf="loadingIndicator" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+          {{ loadingIndicator ? 'Chargement...' : 'Imputer' }}
+        </button>
+        <button type="button" class="btn btn-dark text-white" (click)="modal.close('Close click')">Fermer</button>
+      </div>
+    </div>
+  </ng-template>
+
+  <!-- Add Record Modal Window -->
+  <ng-template #addRecord let-modal>
+    <div class="modal-header editRowModal">
+      <div class="modal-title-container">
+        <h5 class="modal-title fw-bold">Nouveau courrier</h5>
+        <small class="modal-subtitle">Formulaire d'enregistrement d'un nouveau courrier</small>
+      </div>
+      <button type="button" class="close" aria-label="Close" (click)="modal.dismiss()">
+        <span aria-hidden="true"><i class="material-icons">close</i></span>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <form class="register-form" [formGroup]="register" (ngSubmit)="onAddRowSave(register)">
+        <div class="row">
+          <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
+            <label for="expediteur">Nom de l'expéditeur <span class="text-danger">*</span>:</label>
+            <input type="text" id="expediteur" formControlName="expediteur" class="form-control" required />
+            @if (!register.get('expediteur')?.valid && register.get('expediteur')?.touched) {
+              <small class="form-text text-danger">Le nom de l'expéditeur est obligatoire</small>
+            }
+          </div>
+
+          <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
+            <label for="objet">Objet <span class="text-danger">*</span>:</label>
+            <input type="text" id="objet" formControlName="objet" class="form-control" required />
+            @if (!register.get('objet')?.valid && register.get('objet')?.touched) {
+              <small class="form-text text-danger">L'objet est obligatoire</small>
+            }
+          </div>
+
+          <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
+            <label for="numero">Numéro <span class="text-danger">*</span>:</label>
+            <input type="text" id="numero" formControlName="numero" class="form-control" required />
+            @if (!register.get('numero')?.valid && register.get('numero')?.touched) {
+              <small class="form-text text-danger">Le numéro est obligatoire</small>
+            }
+          </div>
+
+          <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
+            <label>Entité <span class="text-danger">*</span></label>
+            <select class="form-select form-control readonly-select" formControlName="entite">
+              <option value="" [ngValue]="null" disabled>-- Sélectionnez une entité --</option>
+              <option *ngFor="let dir of directions" [value]="dir.id">{{dir.nom}}</option>
+            </select>
+            @if (!register.get('entite')?.valid && register.get('entite')?.touched) {
+              <small class="form-text text-danger">L'entité est obligatoire</small>
+            }
+          </div>
+          
+          <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
+            <label for="fichier">Fichier joint <span class="text-danger"></span>:</label>
+            <input type="file" id="fichier" (change)="onFileSelected($event)" 
+                   accept=".pdf,.png,.jpg,.jpeg,.docx,.mp4,.csv,.xlsx,.xlsx" class="form-control" />
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-warning" [disabled]="!register.valid || loadingIndicator">
+            <span *ngIf="loadingIndicator" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+            {{ loadingIndicator ? 'Chargement...' : 'Enregistre' }}
+          </button>
+          <button type="button" class="btn btn-dark text-white" (click)="modal.close('Close click')">Fermer</button>
+        </div>
+      </form>
+    </div>
+  </ng-template>
+
+  <!-- History Modal -->
+  <ng-template #history let-modal>
+    <div class="modal-header editRowModal">
+      <h4 class="modal-title" id="modal-basic-title">
+        <div class="table-modal-header">
+          <div class="modal-about">
+            <div class="fw-bold p-t-10 font-17"></div>
+          </div>
+        </div>
+      </h4>
+      <button type="button" class="close" aria-label="Close" (click)="modal.dismiss('Cross click')">
+        <span aria-hidden="true"><i class="material-icons">close</i></span>
+      </button>
+    </div>
+    <div class="modal-body">
+      <h6>historique du courrier {{selectedRowData ? selectedRowData.numero : '-'}}</h6>
+      <div>
+        @if(Historiques.length > 0) {
+          @for (item of Historiques; track item) {
+            <div class="shadow-sm mb-3" style="border-left: 1.5px solid orange; border-radius: 5px; padding-left: 5px;">
+              <div style="font-size: 12px;">{{item.dateAction | date: 'dd/MM/yyyy'}}</div>
+              <span style="font-size: 12px;"><i class="text-warning fa fa-square"></i> {{item.statut}}</span>
+              <div class="text-warning" style="font-size: 12px;">Entité: {{item.entite}}</div>
+              <div class="text-warning" style="font-size: 12px;"><i class="fa fa-user"></i> {{item.utilisateur}}</div>
+              <p>{{item.commentaire}}</p>
+            </div>
+          }
+        }
+      </div>
+    </div>
+  </ng-template>
+</section>

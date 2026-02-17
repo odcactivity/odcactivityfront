@@ -1,12 +1,11 @@
-import { D } from '@angular/cdk/bidi-module.d-D-fEBKdS';
-import { O } from '@angular/cdk/overlay-module.d-B3qEQtts';
-import {HttpClient, HttpErrorResponse, HttpParams, HttpResponse} from '@angular/common/http';
+
+import { HttpClient, HttpErrorResponse, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { ActivityValidation } from '@core/models/ActivityValidation';
-import { co } from '@fullcalendar/core/internal-common';
-import { environment } from 'environments/environment.development';
+
+import { environment } from 'environments/environment';
 import { Observable, throwError } from 'rxjs';
-import {catchError} from "rxjs/operators";
+import { catchError } from "rxjs/operators";
 
 
 @Injectable({
@@ -15,8 +14,8 @@ import {catchError} from "rxjs/operators";
 export class GlobalService {
 
   public baseUrl = environment.apiUrl;
-a:any;
-  constructor(private http: HttpClient) {}
+  a: any;
+  constructor(private http: HttpClient) { }
 
   /**
    * Récupère des données à partir d'un point de terminaison spécifié.
@@ -25,19 +24,21 @@ a:any;
    * @return {Observable<any>} Un observable qui émet les données récupérées.
    */
   get(name: string): Observable<any> {
-      return this.http.get(`${this.baseUrl}/${name}`).pipe(
+    const fullUrl = `${this.baseUrl}/${name}`;
+    console.log('🌐 Appel GET à l\'URL complète:', fullUrl);
+    return this.http.get(fullUrl).pipe(
       catchError(this.handleError.bind(this))
     );
-    
-  }
-  getParticipantByCritere(endpoint: string,dateDebut:string,dateFin:string,activiteId:number,entiteId:number): Observable<any> {
-    console.log('Appel GET à l\'endpoint :', `${this.baseUrl}/${endpoint}/${dateDebut}/${dateFin}/${activiteId}/${entiteId}`);
-  return this.http.get<any>(`${this.baseUrl}/${endpoint}`).pipe(
-    catchError(this.handleError.bind(this))
-  );
-}
 
-  getId(name: string, id:number): Observable<any> {
+  }
+  getParticipantByCritere(endpoint: string, dateDebut: string, dateFin: string, activiteId: number, entiteId: number): Observable<any> {
+    console.log('Appel GET à l\'endpoint :', `${this.baseUrl}/${endpoint}/${dateDebut}/${dateFin}/${activiteId}/${entiteId}`);
+    return this.http.get<any>(`${this.baseUrl}/${endpoint}`).pipe(
+      catchError(this.handleError.bind(this))
+    );
+  }
+
+  getId(name: string, id: number): Observable<any> {
     console.log('Appel GET à l\'endpoint :', `${this.baseUrl}/${name}/${id}`);
     return this.http.get(`${this.baseUrl}/${name}/${id}`).pipe(
       catchError(this.handleError.bind(this))
@@ -49,12 +50,12 @@ a:any;
       catchError(this.handleError.bind(this))
     );
   }
-    getByActivite(name: string, id: string): Observable<any> {
+  getByActivite(name: string, id: string): Observable<any> {
     return this.http.get(`${this.baseUrl}/${name}/${id}`).pipe(
       catchError(this.handleError.bind(this))
     );
   }
-  
+
 
   /**
    * Envoie une requête POST à l'endpoint spécifié pour créer une nouvelle ressource.
@@ -69,16 +70,16 @@ a:any;
       catchError(this.handleError.bind(this))
     );
   }
-/**
-   * Met à jour un objet dans la collection spécifiée.
-   *
-   * @param {string} name - Le nom de l'endpoint.
-   * @param {number} iduser - L'ID de DU USER createur.
-   * @param {Object} object - L'objet mis à jour.
-   * @return {Observable<Object>} Un observable qui émet l'objet mis à jour.
-   */
+  /**
+     * Met à jour un objet dans la collection spécifiée.
+     *
+     * @param {string} name - Le nom de l'endpoint.
+     * @param {number} iduser - L'ID de DU USER createur.
+     * @param {Object} object - L'objet mis à jour.
+     * @return {Observable<Object>} Un observable qui émet l'objet mis à jour.
+     */
 
-   postId(name: string,iduser:number, object: Object): Observable<Object> {
+  postId(name: string, iduser: number, object: Object): Observable<Object> {
     console.log('Appel POST à l\'endpoint :', Object);
     return this.http.post(`${this.baseUrl}/${name}/${iduser}`, object).pipe(
       catchError(this.handleError.bind(this))
@@ -93,12 +94,12 @@ a:any;
    * @param {Object} object - L'objet mis à jour.
    * @return {Observable<Object>} Un observable qui émet l'objet mis à jour.
    */
-  update(name: string,id: number, object: Object): Observable<Object> {
+  update(name: string, id: number, object: Object): Observable<Object> {
     return this.http.patch(`${this.baseUrl}/${name}/${id}`, object).pipe(
       catchError(this.handleError.bind(this))
     );
   }
-  updateP(name: string,id: number,listes:Object, object: Object): Observable<Object> {
+  updateP(name: string, id: number, listes: Object, object: Object): Observable<Object> {
     return this.http.put(`${this.baseUrl}/${name}/${id}/${listes}`, object).pipe(
       catchError(this.handleError.bind(this))
     );
@@ -113,12 +114,12 @@ a:any;
    * @param {Object} object - L'objet mis à jour.
    * @return {Observable<Object>} Un observable qui émet l'objet mis à jour.
    */
-  updateId(name: string,id: number,iduser: number, object: Object): Observable<Object> {
+  updateId(name: string, id: number, iduser: number, object: Object): Observable<Object> {
     return this.http.patch(`${this.baseUrl}/${name}/${id}/${iduser}`, object).pipe(
       catchError(this.handleError.bind(this))
     );
   }
-   updateEntity(name: string, id: number, object: Object): Observable<Object> {
+  updateEntity(name: string, id: number, object: Object): Observable<Object> {
     return this.http.put(`${this.baseUrl}/${name}/${id}`, object);
   }
 
@@ -129,7 +130,7 @@ a:any;
    * @param {number} id - L'ID de l'objet à supprimer.
    * @return {Observable<any>} Un observable qui émet la réponse du serveur.
    */
-  delete(name: string,id: number): Observable<any> {
+  delete(name: string, id: number): Observable<any> {
     return this.http.delete(`${this.baseUrl}/${name}/${id}`).pipe(
       catchError(this.handleError.bind(this))
     );
@@ -178,8 +179,8 @@ a:any;
             case 404:
               errorMessage = 'Ressource non trouvée';
               break;
-              case 409:
-              errorMessage = 'Ce nom existe déjà. Veuillez en choisir un autre.' ;
+            case 409:
+              errorMessage = 'Ce nom existe déjà. Veuillez en choisir un autre.';
               break;
             case 500:
               errorMessage = 'Erreur interne du serveur';
@@ -248,56 +249,56 @@ a:any;
     return message;
   }
 
-  createValidation(validation: ActivityValidation, fichier?: File,createOrreponse?:String): Observable<ActivityValidation> {
+  createValidation(validation: ActivityValidation, fichier?: File, createOrreponse?: String): Observable<ActivityValidation> {
     const formData = new FormData();
     if (fichier) {
-       console.log('Appel GET à l\'endpoint :', `${this.baseUrl}/activitevalidation/create/${createOrreponse}`);
-        // console.log('Fichier à envoyer:', fichier, ) ;    
-          formData.append('fichier', fichier);
+      console.log('Appel GET à l\'endpoint :', `${this.baseUrl}/activitevalidation/create/${createOrreponse}`);
+      // console.log('Fichier à envoyer:', fichier, ) ;    
+      formData.append('fichier', fichier);
     }
-    formData.append('validation', new Blob([JSON.stringify(validation)], {type: 'application/json' }));
+    formData.append('validation', new Blob([JSON.stringify(validation)], { type: 'application/json' }));
 
     return this.http.post<ActivityValidation>(`${this.baseUrl}/activitevalidation/create/${createOrreponse}`, formData);
 
   }
   getActivitesBySuperviseur(superviseurId: number): Observable<any[]> {
-  return this.http.get<any[]>(`${this.baseUrl}/activite/superviseur/${superviseurId}`);
-}
-getActivitesEnAttenteBySuperviseur(superviseurId: number): Observable<any[]> {
-  return this.http.get<any[]>(`${this.baseUrl}/activite/superviseur/${superviseurId}/attente`);
-}
-getFichierUrl(id: number): Observable<any[]> {
-  return this.http.get<any[]>(`${this.baseUrl}/activitevalidation/{id}/fichier`);
+    return this.http.get<any[]>(`${this.baseUrl}/activite/superviseur/${superviseurId}`);
+  }
+  getActivitesEnAttenteBySuperviseur(superviseurId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/activite/superviseur/${superviseurId}/attente`);
+  }
+  getFichierUrl(id: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/activitevalidation/{id}/fichier`);
 
-}
- getValidationFileResponse(validationId: number): Observable<HttpResponse<Blob>> {
+  }
+  getValidationFileResponse(validationId: number): Observable<HttpResponse<Blob>> {
     return this.http.get(`${this.baseUrl}/activitevalidation/${validationId}/fichier`, {
       observe: 'response',
       responseType: 'blob'
     });
   }
-  getStatsFiltres(dateDebut: Date, dateFin: Date, activiteId: number, entiteId: number,etapeId: number): Observable<any> {
-   this.a={
+  getStatsFiltres(dateDebut: Date, dateFin: Date, activiteId: number, entiteId: number, etapeId: number): Observable<any> {
+    this.a = {
       dateDebut: dateDebut,
       dateFin: dateFin,
       activiteId: activiteId,
       entiteId: entiteId,
-      etapeId:etapeId 
-   }
-   let params = new HttpParams();
+      etapeId: etapeId
+    }
+    let params = new HttpParams();
 
-  if (dateDebut!=null){
-params = params.set('dateDebut', dateDebut.toString());
-  } 
-  if (dateFin!=null) params = params.set('dateFin', dateFin.toString());
-  if (activiteId) params = params.set('activiteId', activiteId);
-  if (entiteId) params = params.set('entiteId', entiteId);
-   if (etapeId) params = params.set('etapeId', etapeId);
-    return this.http.get(`${this.baseUrl}/participant/critere`, {params}).pipe(
+    if (dateDebut != null) {
+      params = params.set('dateDebut', dateDebut.toString());
+    }
+    if (dateFin != null) params = params.set('dateFin', dateFin.toString());
+    if (activiteId) params = params.set('activiteId', activiteId);
+    if (entiteId) params = params.set('entiteId', entiteId);
+    if (etapeId) params = params.set('etapeId', etapeId);
+    return this.http.get(`${this.baseUrl}/participant/critere`, { params }).pipe(
       catchError(this.handleError.bind(this))
     );
   }
-    
+
   //   let url = `${this.baseUrl}/participant/${id}${dateDebut}/${dateFin}`;
   //   if (activiteId) {
   //     url += `/${activiteId}`;

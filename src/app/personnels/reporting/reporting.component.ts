@@ -1,14 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClientModule } from '@angular/common/http';
 import { ReportingService, Participant } from './services/reporting.service';
 import * as XLSX from 'xlsx';
 
 @Component({
   selector: 'app-reporting',
   standalone: true,
-  imports: [CommonModule, FormsModule, HttpClientModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './reporting.component.html',
   styleUrls: ['./reporting.component.scss']
 })
@@ -31,15 +30,21 @@ export class ReportingComponent implements OnInit {
   constructor(private reportingService: ReportingService) {}
 
   ngOnInit(): void {
+    console.log('🔄 Initialisation du reporting component...');
     this.loading = true;
+    console.log('📡 Appel à getAllParticipants...');
     this.reportingService.getAllParticipants().subscribe({
       next: (data: Participant[]) => {
+        console.log('✅ Données reçues:', data);
         this.participants = data;
         this.filteredParticipants = [...data];
 
         // Remplir les entités et activités uniques
         this.entites = Array.from(new Set(data.map(p => p.entiteNom).filter(n => n)));
         this.activites = Array.from(new Set(data.map(p => p.activiteNom).filter(n => n)));
+        
+        console.log('📊 Entités extraites:', this.entites);
+        console.log('🏃 Activités extraites:', this.activites);
 
         // Remplir les années disponibles
        const allDates = data
@@ -48,10 +53,12 @@ export class ReportingComponent implements OnInit {
   .map(d => new Date(d).getFullYear());
 
         this.years = Array.from(new Set(allDates)).sort((a, b) => b - a);
+        console.log('📅 Années extraites:', this.years);
 
         this.loading = false;
       },
       error: (err) => {
+        console.error('❌ Erreur lors du chargement des participants:', err);
         this.errorMessage = err?.message || 'Erreur lors du chargement des participants';
         this.loading = false;
       }
