@@ -472,29 +472,36 @@ loading = false;
     })
   }
 
-  onFileSelected(event: any): void {
+  // Méthode pour le fichier de création de courrier
+  onFileSelectedCreation(event: any): void {
     const file = event.target.files[0];
     if (file) {
       this.selectedFile = file;
       this.register.patchValue({ fichier: file });
       this.register.get('fichier')?.updateValueAndValidity();
     }
-    
+  }
+
+  // Méthode pour le fichier de réponse (gardée séparément)
+  onFileSelected(event: any): void {
     // Si c'est pour la réponse au courrier
     if (this.reponse) {
-      const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-      
-      if (!allowedTypes.includes(file.type)) {
-        this.toastr.error('Format non autorisé. Veuillez utiliser PDF, DOC ou DOCX');
-        return;
+      const file = event.target.files[0];
+      if (file) {
+        const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+        
+        if (!allowedTypes.includes(file.type)) {
+          this.toastr.error('Format non autorisé. Veuillez utiliser PDF, DOC ou DOCX');
+          return;
+        }
+        
+        if (file.size > 10 * 1024 * 1024) {
+          this.toastr.error('Fichier trop volumineux (max 10MB)');
+          return;
+        }
+        
+        this.reponse.fichier = file;
       }
-      
-      if (file.size > 10 * 1024 * 1024) {
-        this.toastr.error('Fichier trop volumineux (max 10MB)');
-        return;
-      }
-      
-      this.reponse.fichier = file;
     }
   }
 
@@ -598,14 +605,35 @@ loading = false;
 
     this.glogalService.post('api/courriers/reception', fd).subscribe({
       next: (response) => {
+        console.log('✅ Courrier créé avec succès:', response);
+        
+        // Réinitialiser le formulaire complètement
         form.reset();
         this.selectedFile = null;
+        
+        // Réinitialiser manuellement le champ fichier
+        const fileInput = document.getElementById('fichier') as HTMLInputElement;
+        if (fileInput) {
+          fileInput.value = '';
+        }
+        
+        // Fermer la modal
         this.modalService.dismissAll();
-        this.getCourrierByEntite();
+        
+        // Arrêter le chargement
+        this.loadingIndicator = false;
+        
+        // Afficher le succès
         this.addRecordSuccess();
+        
+        // Recharger la liste des courriers
+        this.getCourrierByEntite();
       },
       error: (err: { status: number; error: any; message?: string }) => {
-        console.error('Erreur reçue:', err);
+        console.error('Erreur lors de la création du courrier:', err);
+        
+        // Arrêter le chargement même en cas d'erreur
+        this.loadingIndicator = false;
 
         let message = 'Une erreur est survenue. Veuillez réessayer.';
         let title = '<span class="text-red-500">Échec</span>';
@@ -625,9 +653,6 @@ loading = false;
             confirmButton: 'bg-red-500 text-white hover:bg-red-600',
           },
         });
-      },
-      complete: () => {
-        this.loadingIndicator = false;
       }
     });
   }

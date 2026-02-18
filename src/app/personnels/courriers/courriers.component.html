@@ -145,13 +145,6 @@
                     </div>
                   </ng-template>
                 </ngx-datatable-column>
-                <ngx-datatable-column [width]="200" name="Date limite">
-                  <ng-template let-row="row" let-value="value" let-i="index" ngx-datatable-cell-template>
-                    <div class="name-col-style">
-                      <div>{{row.dateLimite | date: 'dd/MM/yyyy'}}</div>
-                    </div>
-                  </ng-template>
-                </ngx-datatable-column>
                 <ngx-datatable-column [width]="120" name="Statut">
                   <ng-template let-row="row" let-value="value" let-i="index" ngx-datatable-cell-template>
                     <div class="name-col-style">
@@ -430,7 +423,7 @@
           
           <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
             <label for="fichier">Fichier joint <span class="text-danger"></span>:</label>
-            <input type="file" id="fichier" (change)="onFileSelected($event)" 
+            <input type="file" id="fichier" (change)="onFileSelectedCreation($event)" 
                    accept=".pdf,.png,.jpg,.jpeg,.docx,.mp4,.csv,.xlsx,.xlsx" class="form-control" />
           </div>
         </div>
