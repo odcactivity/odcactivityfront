@@ -1,72 +1,85 @@
-import {Component, ViewChild} from '@angular/core';
-import {DatatableComponent, NgxDatatableModule, SelectionType} from "@swimlane/ngx-datatable";
-import {TypeActivite} from "@core/models/TypeActivite";
-import {
-  FormsModule,
-  ReactiveFormsModule,
-  UntypedFormBuilder,
-  UntypedFormControl,
-  UntypedFormGroup,
-  Validators
-} from "@angular/forms";
-import {NgbModal} from "@ng-bootstrap/ng-bootstrap";
-import {ToastrService} from "ngx-toastr";
-import {GlobalService} from "@core/service/global.service";
-import Swal from "sweetalert2";
-import {Participant} from "@core/models/Participant";
-import {Activity} from "@core/models/Activity";
-import {NgClass, NgIf} from "@angular/common";
-import {RouterLink} from "@angular/router";
-import { Liste } from '@core/models/Liste';
+import { Component, ViewChild, OnInit } from '@angular/core';
+import { CommonModule, NgClass } from "@angular/common";
+import { DatatableComponent, NgxDatatableModule, SelectionType } from "@swimlane/ngx-datatable";
+import { FormsModule, ReactiveFormsModule, UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators } from "@angular/forms";
+import { NgbModal } from "@ng-bootstrap/ng-bootstrap";
+import { ToastrService } from "ngx-toastr";
+import { RouterLink } from "@angular/router";
+
+import { GlobalService } from "@core/service/global.service";
+import { Participant } from "@core/models/Participant";
+import { Activity } from "@core/models/Activity";
 
 @Component({
   selector: 'app-participant',
+  standalone: true,
   imports: [
+    CommonModule,         
     FormsModule,
-    NgxDatatableModule,
     ReactiveFormsModule,
+    NgxDatatableModule,
     RouterLink,
     NgClass
   ],
   templateUrl: './participant.component.html',
-  styleUrl: './participant.component.scss'
+  styleUrls: ['./participant.component.scss']
 })
-export class ParticipantComponent {
+export class ParticipantComponent implements OnInit {
 
   @ViewChild(DatatableComponent, { static: false }) table!: DatatableComponent;
-  rows = [];
-  participants:  Participant[] = [];
+
+  participants: Participant[] = [];
+  filteredData: Participant[] = [];
   filteredParticipants: Participant[] = [];
-  activity:  Activity[] = [];
-  scrollBarHorizontal = window.innerWidth < 1200;
-  selectedRowData!: selectParticipantInterface;
-  filteredData: any[] = [];
+
   blacklistedEmails: string[] = [];
   blacklistedPhones: string[] = [];
-  editForm: UntypedFormGroup;
-  register!: UntypedFormGroup;
+
   loadingIndicator = true;
-  isRowSelected = false;
+  scrollBarHorizontal = window.innerWidth < 1200;
   reorderable = true;
-  public selected: number[] = [];
-  columns = [
-    { prop: 'nom' },
-    { prop: 'prenom' },
-    { prop: 'email' },
-    { prop: 'phone' },
-    { prop: 'genre' },
-  ];
+  isRowSelected = false;
 
-  genre: string[] = ['Homme', 'Femme'];
-
-  @ViewChild(DatatableComponent, { static: false }) table2!: DatatableComponent;
+  public selected: any[] = [];
   selection!: SelectionType;
+
+  register!: UntypedFormGroup;
+  editForm!: UntypedFormGroup;
+
+  //  Typage propre
+  createurActivite?: CreateurActivite;
+
   constructor(
     private fb: UntypedFormBuilder,
     private modalService: NgbModal,
     private toastr: ToastrService,
-    private glogalService: GlobalService
+    private globalService: GlobalService
   ) {
+    this.selection = SelectionType.checkbox;
+
+    window.onresize = () => {
+      this.scrollBarHorizontal = window.innerWidth < 1200;
+    };
+  }
+
+  ngOnInit(): void {
+    this.initForms();
+    this.loadData();
+  }
+
+  // =============================
+  // INITIALISATION DES FORMULAIRES
+  // =============================
+  initForms() {
+    this.register = this.fb.group({
+      id: [''],
+      nom: ['', Validators.required],
+      prenom: ['', Validators.required],
+      email: ['', Validators.required],
+      phone: ['', Validators.required],
+      genre: ['', Validators.required],
+    });
+
     this.editForm = this.fb.group({
       id: new UntypedFormControl(),
       nom: new UntypedFormControl(),
@@ -75,97 +88,119 @@ export class ParticipantComponent {
       phone: new UntypedFormControl(),
       genre: new UntypedFormControl(),
     });
-    window.onresize = () => {
-      this.scrollBarHorizontal = window.innerWidth < 1200;
-    };
-    this.selection = SelectionType.checkbox;
   }
 
-  // select record using check box
-  onSelect({ selected }: { selected: any }) {
-    this.selected.splice(0, this.selected.length);
-    this.selected.push(...selected);
-
-    if (this.selected.length === 0) {
-      this.isRowSelected = false;
-    } else {
-      this.isRowSelected = true;
-    }
-  }
-
-  ngOnInit() {
-    this.getAllParticipant();
-    this.fetchBlacklistedParticipants();
-
-    this.register = this.fb.group({
-      id: [''],
-      nom: ['', [Validators.required]],
-      prenom: ['', [Validators.required]],
-      email: ['', [Validators.required]],
-      phone: ['', [Validators.required]],
-      genre: ['', [Validators.required]],
-    });
-  }
-  // fetch data
-  getAllParticipant(){
+  // =============================
+  // CHARGEMENT GLOBAL
+  // =============================
+  loadData() {
     this.loadingIndicator = true;
-    this.glogalService.get('participant').subscribe({
-      next:(value: TypeActivite[]) =>{
-        console.log("Participants chargés:", value);
-        this.participants = value;
-        this.filteredData = [...value];
-        setTimeout(() =>{
-          this.loadingIndicator = false;
-        },500);
+
+    // Charger d'abord les blacklistés
+    this.globalService.get('blacklist').subscribe({
+      next: (blacklist: any[]) => {
+        this.blacklistedEmails = blacklist.map(item => item.email?.toLowerCase());
+        this.blacklistedPhones = blacklist.map(item => item.phone);
+
+        // Ensuite charger les participants
+        this.getAllParticipant();
+      },
+      error: () => {
+        this.toastr.error('Erreur lors du chargement de la blacklist.');
+        this.loadingIndicator = false;
       }
-    })
-  }
-
-  filterDatatable(event: any) {
-    const val = event.target.value.toLowerCase();
-    this.participants = this.filteredData.filter((item) => {
-      return Object.values(item).some((field: any) =>
-        field?.toString().toLowerCase().includes(val)
-      );
     });
-
-    this.table.offset = 0;
   }
 
-  getRowClass = (row: any) => {
-    return {
-      'blacklisted-row': row.isBlacklisted === true
-    };
-  };
+  // =============================
+  // RÉCUPÉRATION PARTICIPANTS
+  // =============================
+  getAllParticipant() {
+    this.globalService.get('participant').subscribe({
+      next: (value: Participant[]) => {
 
-  fetchBlacklistedParticipants(): void {
-    this.glogalService.get('blacklist').subscribe({
-      next: (data) => {
-        this.blacklistedEmails = data.map((item: { email: any }) => item.email.toLowerCase());
-        this.blacklistedPhones = data.map((item: { phone: any }) => item.phone);
-        // Après avoir récupéré la blacklist, mettre à jour les participants
-        this.participants = this.participants.map((participant) => ({
+        this.participants = value.map(participant => ({
           ...participant,
           isBlacklisted: this.checkIfBlacklisted(participant)
         }));
 
-        // Mettre à jour les participants filtrés
-        this.filteredParticipants = [...this.participants];
+        this.filteredData = [...this.participants];
+
+        //  Récupérer le créateur
+        if (this.participants.length > 0 && this.participants[0].activite?.createdBy) {
+          this.createurActivite = {
+            nom: this.participants[0].activite.createdBy.nom,
+            prenom: this.participants[0].activite.createdBy.prenom
+          };
+        }
+
+        this.loadingIndicator = false;
       },
-      error: (err) => {
-        this.toastr.error('Erreur lors de la récupération des participants blacklistés.', '');
+      error: () => {
+        this.toastr.error('Erreur lors de la récupération des participants.');
+        this.loadingIndicator = false;
       }
     });
   }
 
-  checkIfBlacklisted(participant: Participant): boolean {
-    const isEmailBlacklisted = participant.email ? this.blacklistedEmails.includes(participant.email.toLowerCase()) : false;
-    const isPhoneBlacklisted = participant.phone ? this.blacklistedPhones.includes(participant.phone) : false;
-    return isEmailBlacklisted || isPhoneBlacklisted;
+  // =============================
+  // FILTRE RECHERCHE
+  // =============================
+  filterDatatable(event: any) {
+    const val = event.target.value.toLowerCase();
+
+    this.participants = this.filteredData.filter(item =>
+      Object.values(item).some((field: any) =>
+        field?.toString().toLowerCase().includes(val)
+      )
+    );
+
+    if (this.table) this.table.offset = 0;
   }
 
+  // =============================
+  // SÉLECTION TABLEAU
+  // =============================
+  onSelect({ selected }: { selected: any[] }) {
+    this.selected = [...selected];
+    this.isRowSelected = this.selected.length > 0;
+  }
+
+  // =============================
+  // STYLE LIGNE BLACKLISTÉE
+  // =============================
+  getRowClass = (row: any) => ({
+    'blacklisted-row': row.isBlacklisted === true
+  });
+
+  // =============================
+  // CHECK BLACKLIST
+  // =============================
+  checkIfBlacklisted(participant: Participant): boolean {
+    const emailBlacklisted =
+      participant.email &&
+      this.blacklistedEmails.includes(participant.email.toLowerCase());
+
+    const phoneBlacklisted =
+      participant.phone &&
+      this.blacklistedPhones.includes(participant.phone);
+
+    return !!emailBlacklisted || !!phoneBlacklisted;
+  }
 }
 
+
+// =============================
+// INTERFACE CREATEUR
+// =============================
+interface CreateurActivite {
+  nom?: string;
+  prenom?: string;
+}
+
+// =============================
+// INTERFACE SELECT
+// =============================
 export interface selectParticipantInterface {
   nom?: string;
   prenom?: string;
@@ -173,7 +208,6 @@ export interface selectParticipantInterface {
   phone?: string;
   genre?: string;
   isBlacklisted?: boolean;
-  activite?: Activity;// Permettre que ce soit null
-  
-
+  activite?: Activity;
 }
+

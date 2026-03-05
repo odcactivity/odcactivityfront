@@ -3,9 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 
+import { EntiteService, Entite } from '@core/service/entite.service';
 import { ReportingHebdoService } from './services/reportinghebdo.service';
 import { ReportingHebdoActiviteDTO } from '@core/models/reportinghebdo.model';
-import { EntiteService, Entite } from '@core/service/entite.service';
 
 @Component({
   selector: 'app-reportinghebdo',
@@ -18,23 +18,22 @@ export class ReportinghebdoComponent implements OnInit {
 
   entites: Entite[] = [];
   selectedEntite: number | null = null;
-
   dateDebut!: string;
   dateFin!: string;
-
   activites: ReportingHebdoActiviteDTO[] = [];
-
   hasSearched = false;
 
   constructor(
-    private reportingService: ReportingHebdoService,
-    private entiteService: EntiteService
+    private entiteService: EntiteService,
+    private reportingService: ReportingHebdoService
   ) {}
 
   ngOnInit(): void {
+    console.log("azazakzaazlklazkaz")
     this.entiteService.getAllEntites().subscribe({
-      next: data => this.entites = data,
-      error: err => console.error(err)
+      next: (data: Entite[]) => {this.entites = data;
+      },
+      error: (err) => console.error('Erreur récupération entités :', err)
     });
   }
 
@@ -43,17 +42,16 @@ export class ReportinghebdoComponent implements OnInit {
       return;
     }
 
-    this.hasSearched = true;
-
-    this.reportingService
-      .getActivites(this.selectedEntite, this.dateDebut, this.dateFin)
+    this.reportingService.getActivites(this.selectedEntite, this.dateDebut, this.dateFin)
       .subscribe({
-        next: (data: any) => {
-          this.activites = data.content ?? data;
+        next: (data: ReportingHebdoActiviteDTO[]) => {
+          this.activites = data;
+          this.hasSearched = true;
         },
-        error: err => {
+        error: (err) => {
           console.error('Erreur backend :', err);
           this.activites = [];
+          this.hasSearched = true;
         }
       });
   }

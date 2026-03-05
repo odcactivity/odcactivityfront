@@ -454,15 +454,21 @@ export class ActivityvalidationComponent {
 
     this.glogalService.createValidation(validation, fichierChiffre!, 'DESIGNATION').subscribe({
       next: () => {
-        this.modalService.dismissAll();
-        this.getActivitesForSuperviseur();
-        this.updateDeleteRights(this.selectedActivite);
-        this.editSuccessMessage(3000);
-      },
+
+  // Fermer le modal
+  this.modalService.dismissAll();
+  //  Supprimer l'activité validée de la liste locale
+  this.activiteval = this.activiteval.filter(
+    act => act.id !== this.selectedActivite?.id
+  );
+  //  Rafraîchir l'affichage
+  this.activiteval = [...this.activiteval];
+  //  Message succès
+  this.editSuccessMessage(3000);
+},
       error: (err) => console.error('Erreur validation :', err),
     });
   }
-
 
   onEditSave(form: UntypedFormGroup) {
     // console.log("modification", form.value);

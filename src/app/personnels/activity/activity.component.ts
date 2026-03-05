@@ -28,7 +28,6 @@ import { ActivityValidation } from '@core/models/ActivityValidation';
 import { Utilisateur } from '@core/models/Utilisateur.model';
 
 
-
 @Component({
   selector: 'app-activity',
   imports: [

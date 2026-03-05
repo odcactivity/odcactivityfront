@@ -8,7 +8,7 @@
         <i class="fas fa-home font-17"></i>
       </a>
     </li>
-    <li class="breadcrumb-item">Entité ODC</li>
+    <li class="breadcrumb-item">Entité DCIRE</li>
   </ul>
 
   <div class="d-flex align-items-center gap-3 fs-5 fw-bold">
@@ -28,14 +28,14 @@
 
   <div class="fs-5 fw-bold text-dark mt-3 d-flex justify-content-between align-items-center">
     @if (viewMode === 'directions') {
-      <span class="text-warning">Directions</span>
+      <span class="text-warning">Divisions</span>
     } @else {
       <span class="text-warning">Services de : {{ selectedDirection?.nom }}</span>
       <button class="btn btn-sm bg-warning text-white border-0 px-3 py-1 rounded-pill shadow-sm d-flex align-items-center gap-2" 
         (click)="backToDirections()"
         style="transition: all 0.2s ease;">
   <i class="fas fa-arrow-left"></i>
-  <span>Retour aux directions</span>
+  <span>Retour aux divisions</span>
 </button>
     }
   </div>
@@ -157,7 +157,7 @@
     <div class="modal-header editRowModal">
       <div class="modal-title-container">
         <h5 class="modal-title fw-bold">Formulaire d'ajout d'une entité</h5>
-        <small class="modal-subtitle text-warning">Créer une nouvelle direction ou service</small>
+        <small class="modal-subtitle text-warning">Créer une nouvelle division ou service</small>
       </div>
       <button type="button" class="close" aria-label="Close" (click)="modal.dismiss()">
         <span aria-hidden="true"><i class="material-icons">close</i></span>
@@ -179,7 +179,7 @@
             <label>Type d'Entité <span class="text-danger">*</span></label>
             <select class="form-select form-control" formControlName="type" (change)="onTypeEntiteChange($event)">
               <option value="" [ngValue]="null" disabled>-- Sélectionnez un type d'entité --</option>
-              <option value="DIRECTION">DIRECTION</option>
+              <option value="DIRECTION">DIVISION</option>
               <option value="SERVICE">SERVICE</option>
             </select>
             @if (!register.get('type')?.valid && register.get('type')?.touched) {
@@ -195,7 +195,7 @@
               <option *ngFor="let direction of directions" [ngValue]="direction.id">{{direction.nom}}</option>
             </select>
             @if (!register.get('parentId')?.valid && register.get('parentId')?.touched) {
-              <small class="form-text text-danger">La direction responsable est obligatoire</small>
+              <small class="form-text text-danger">La division responsable est obligatoire</small>
             }
           </div>
 
@@ -316,7 +316,7 @@
 
           <!-- Sélection de la direction parente (visible uniquement pour SERVICE) -->
           <div class="col-xl-12 col-lg-6 col-md-12 col-sm-12 mb-2" *ngIf="showParentDirection">
-            <label>Direction responsable <span class="text-danger">*</span></label>
+            <label>Division responsable <span class="text-danger">*</span></label>
             <select class="form-select form-control" formControlName="parentId">
               <option value="" [ngValue]="null" disabled>-- Sélectionnez une direction --</option>
               <option *ngFor="let direction of directions" [ngValue]="direction.id">{{direction.nom}}</option>

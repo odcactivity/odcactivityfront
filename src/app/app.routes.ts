@@ -28,7 +28,7 @@ export const APP_ROUTE: Route[] = [
       { path: 'dashboard2', loadComponent: () => import('./personnels/dashboard/dashboard.component').then(c => c.DashboardComponent) },
       { path: 'courrier', loadComponent: () => import('./personnels/courriers/courriers.component').then(c => c.CourriersComponent) },
 
-      { path: 'dashboardActivite', loadComponent: () => import('./personnels/dash-activite/dash-activite-temp.component').then(c => c.DashActiviteTempComponent) },
+      { path: 'dashboardActivite', loadComponent: () => import('./personnels/dash-activite/dash-activite.component').then(c => c.DashActiviteComponent) },
       { path: 'typeActivite', loadComponent: () => import('./personnels/type-activite/type-activite.component').then(c => c.TypeActiviteComponent) },
       { path: 'critere', loadComponent: () => import('./personnels/critere/critere.component').then(c => c.CritereComponent) },
       { path: 'etape',loadComponent: () => import('./personnels/etape/etape.component').then(c => c.EtapeComponent)},

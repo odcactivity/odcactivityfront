@@ -18,6 +18,7 @@ import Swal from "sweetalert2";
 import {TypeActivite} from "@core/models/TypeActivite";
 import {EncryptionService} from "@core/service/encryption.service";
 import { co } from '@fullcalendar/core/internal-common';
+import { environment } from 'environments/environment';
 
 @Component({
   selector: 'app-entite',
@@ -118,7 +119,7 @@ export class EntiteComponent {
     // S'assurer que le chemin ne commence pas par un slash
     const normalizedPath = cleanPath.startsWith('/') ? cleanPath.substring(1) : cleanPath;
     // Construire l'URL complète avec le backend
-    return `${this.backendUrl}/${normalizedPath}`;
+    return environment.apiUrl+`/${normalizedPath}`;
   }
 
   // Gérer les erreurs de chargement d'images

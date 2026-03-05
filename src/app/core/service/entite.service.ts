@@ -13,8 +13,8 @@ export interface Entite {
 })
 export class EntiteService {
 
-  private baseUrl ='http://localhost:8089';
-   
+  // Correction : pas de guillemets autour de environment.apiUrl
+  private baseUrl = environment.apiUrl + "/entite";
 
   constructor(private http: HttpClient) {}
 

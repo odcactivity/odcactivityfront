@@ -1,3 +1,5 @@
+
+// reportinghebdo.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -7,18 +9,15 @@ import { environment } from 'environments/environment';
 @Injectable({ providedIn: 'root' })
 export class ReportingHebdoService {
 
-  private apiUrl = '${environment.apiUrl}/reportinghebdo/activites';
+  private apiUrl = `${environment.apiUrl}/reportinghebdo/activites`;
 
   constructor(private http: HttpClient) {}
 
-  getActivites(
-    entiteId: number,
-    dateDebut: string,
-    dateFin: string
-  ) {
+  getActivites(entiteId: number, dateDebut: string, dateFin: string): Observable<ReportingHebdoActiviteDTO[]> {
     return this.http.get<ReportingHebdoActiviteDTO[]>(
       `${this.apiUrl}?entiteId=${entiteId}&dateDebut=${dateDebut}&dateFin=${dateFin}`
     );
   }
 }
+
 

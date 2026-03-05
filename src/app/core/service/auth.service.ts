@@ -5,7 +5,6 @@ import {catchError, map} from "rxjs/operators";
 import { Router } from '@angular/router';
 import {jwtDecode} from "jwt-decode";
 import { environment } from 'environments/environment';
-
 import { Utilisateur} from '@core/models/Utilisateur.model';
 
 
@@ -14,8 +13,8 @@ import { Utilisateur} from '@core/models/Utilisateur.model';
   providedIn: 'root',
 })
 export class AuthService {
-  private BASE_URL = 'http://localhost:8089';
-  //private BASE_URL = environment.apiUrl;
+  //private BASE_URL = 'http://localhost:8089';
+  private BASE_URL = environment.apiUrl;
   //private BASE_URL =  'https://odc-api.onrender.com' ;
   currentUserSubject: BehaviorSubject<Utilisateur & { roles: string[] }>;
   public currentUser: Observable<Utilisateur & { roles: string[] }>;
@@ -150,8 +149,5 @@ export class AuthService {
     // Si vous avez un appel backend, retournez le résultat de cet appel:
     // return this.http.post<{ success: boolean }>(`${this.BASE_URL}/auth/logout`, {});
   }
-
-
-
 
 }

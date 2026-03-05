@@ -78,7 +78,7 @@ loading = false;
   reorderable = true;
   public selected: number[] = [];
   
-  // 🔥 Solution temporaire : suivre les courriers répondus localement
+  // Solution temporaire : suivre les courriers répondus localement
   courriersRepondusLocalement: number[] = [];
   currenUserData: any;
   taille: any = "";
