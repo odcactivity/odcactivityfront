@@ -1,9 +1,113 @@
+/* Avatar utilisateur – style carte ODL */
 .user-img {
-    border-radius: 10px;
-    // max-width: 112px;
-    width: 120px;
-    height: 120px;
-    margin-top: -70px;
-    box-shadow: 0px 10px 25px 0px rgba(0, 0, 0, 0.3);
-    margin-bottom: 20px;
+  width: 120px;
+  height: 120px;
+  margin-top: -70px;
+  margin-bottom: 20px;
+  border-radius: 9999px;
+  object-fit: cover;
+  box-shadow: 0 18px 30px rgba(0, 0, 0, 0.35);
+  border: 3px solid #ffffff;
+}
+
+/* Carte utilisateur type ODL */
+:host ::ng-deep .card.border-apply {
+  border-radius: 1.25rem;
+  border: 1px solid rgba(255, 161, 23, 0.25);
+  box-shadow:
+    0 18px 45px rgba(15, 23, 42, 0.25),
+    0 0 0 1px rgba(15, 23, 42, 0.02);
+  overflow: hidden;
+  background: radial-gradient(circle at top left, rgba(255, 161, 23, 0.12), #0b1120);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+:host ::ng-deep .card.border-apply:hover {
+  transform: translateY(-6px) scale(1.01);
+  border-color: rgba(255, 161, 23, 0.5);
+  box-shadow:
+    0 22px 55px rgba(15, 23, 42, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+/* Bandeau supérieur ODL (nom + prénom) */
+:host ::ng-deep .contact-grid .profile-header.l-bg-orange {
+  background: linear-gradient(135deg, #f97316, #facc15);
+  padding-top: 1.75rem;
+  padding-bottom: 3.25rem;
+  border-bottom-left-radius: 2.5rem;
+  border-bottom-right-radius: 2.5rem;
+  box-shadow: inset 0 -6px 24px rgba(0, 0, 0, 0.22);
+}
+
+:host ::ng-deep .contact-grid .profile-header .user-name {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+:host ::ng-deep .contact-grid .profile-header .name-center {
+  font-size: 0.95rem;
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+/* Texte du corps de carte */
+:host ::ng-deep .contact-grid p {
+  font-size: 0.875rem;
+  color: rgba(226, 232, 240, 0.9);
+  margin-bottom: 0.35rem;
+}
+
+/* Ligne téléphone */
+:host ::ng-deep .contact-grid .phone {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: rgba(148, 163, 184, 0.95);
+}
+
+/* Boutons d’action (éditer / supprimer) dans le style ODL */
+:host ::ng-deep .contact-grid .btn-tbl-edit,
+:host ::ng-deep .contact-grid .btn-tbl-delete {
+  border-radius: 9999px;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+:host ::ng-deep .contact-grid .btn-tbl-edit {
+  background-color: rgba(34, 197, 94, 0.12);
+  color: #22c55e;
+}
+
+:host ::ng-deep .contact-grid .btn-tbl-delete {
+  background-color: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
+
+:host ::ng-deep .contact-grid .btn-tbl-edit:hover {
+  background-color: rgba(34, 197, 94, 0.25);
+  box-shadow: 0 10px 24px rgba(34, 197, 94, 0.35);
+  transform: translateY(-1px);
+}
+
+:host ::ng-deep .contact-grid .btn-tbl-delete:hover {
+  background-color: rgba(239, 68, 68, 0.25);
+  box-shadow: 0 10px 24px rgba(239, 68, 68, 0.35);
+  transform: translateY(-1px);
+}
+
+/* Badge rôle / email (texte mieux espacé) */
+:host ::ng-deep .contact-grid p br + span,
+:host ::ng-deep .contact-grid p br + strong {
+  display: inline-block;
+  margin-top: 0.25rem;
 }
