@@ -79,7 +79,6 @@ export class MainComponent implements OnInit {
     this.getNombreActiviteEncours();
     this.getNombreActiviteEnAttente();
     this.getNombreActiviteTerminer();
-    this.fetchGenreData();
     this.getActivites();
     this.getEntites(); 
     this.getEtapes(); 
@@ -164,16 +163,6 @@ export class MainComponent implements OnInit {
     this.globalService.get("activite/nombreActivitesTerminer").subscribe({
       next: (count) => this.nombreActiviteTerminer = count,
       error: err => console.log(err),
-    });
-  }
-
-  fetchGenreData() {
-    this.globalService.get("reporting/participants-par-genre").subscribe({
-      next: (data) => {
-        this.nombreGenre = data;
-        this.chart2();
-      },
-      error: (err) => console.error("Erreur lors de la récupération des données de genre :", err),
     });
   }
 
