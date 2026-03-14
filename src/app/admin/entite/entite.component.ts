@@ -107,19 +107,32 @@ export class EntiteComponent {
 
   // Construire l'URL complète du logo
   getLogoUrl(logoPath: string | null | undefined): string {
-    if (!logoPath) {
-      return '';
+    // 1. Rien ou lien Drive sans id → image par défaut
+    if (
+      !logoPath ||
+      logoPath.trim() === '' ||
+      logoPath === 'https://drive.google.com/thumbnail?id='
+    ) {
+      return 'assets/images/default-entite.png'
     }
-    // Si le chemin commence déjà par http, le retourner tel quel
-    if (logoPath.startsWith('http')) {
-      return logoPath;
+
+    // 2. Lien Drive AVEC id → on garde (ça marche déjà dans l'appli existante)
+    if (logoPath.startsWith('https://drive.google.com/thumbnail?id=')) {
+      return logoPath
     }
-    // Nettoyer le chemin (enlever les double slashes)
-    const cleanPath = logoPath.replace(/\/+/g, '/');
-    // S'assurer que le chemin ne commence pas par un slash
-    const normalizedPath = cleanPath.startsWith('/') ? cleanPath.substring(1) : cleanPath;
-    // Construire l'URL complète avec le backend
-    return environment.apiUrl+`/${normalizedPath}`;
+
+    // 3. Chemin backend (images/personnels/...)
+    if (!logoPath.startsWith('http')) {
+      // Nettoyer le chemin (enlever les doubles slashes et les backslashes)
+      const cleanPath = logoPath.replace(/\\/g, '/').replace(/\/+/g, '/')
+      // S'assurer que le chemin ne commence pas par un slash
+      const normalizedPath = cleanPath.startsWith('/') ? cleanPath.substring(1) : cleanPath
+      // Construire l'URL complète avec le backend
+      return environment.apiUrl + `/${normalizedPath}`
+    }
+
+    // 4. Toute autre URL http(s)
+    return logoPath
   }
 
   // Gérer les erreurs de chargement d'images
