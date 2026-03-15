@@ -19,8 +19,11 @@
     0 0 0 1px rgba(255, 255, 255, 0.02);
 }
 
+/* Bordure uniquement sur les images des cartes (logo Divisions / DCIRE) */
 .card-img-top {
   transition: transform 0.4s ease;
+  border: 1px solid #E5E5E5;
+  border-radius: 4px;
 }
 
 .card-hover:hover .card-img-top {

@@ -23,13 +23,20 @@
   --odl-font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
-/* Fond global blanc comme ODL + éviter débordement */
+/* Fond global blanc comme ODL + éviter débordement horizontal */
+html {
+  overflow-x: hidden;
+  width: 100%;
+}
 body {
   background-color: var(--odl-background) !important;
   color: var(--odl-foreground);
   font-family: var(--odl-font-sans);
   overflow-x: hidden;
   box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 0;
 }
 *,
 *::before,
@@ -174,7 +181,7 @@ a.text-primary,
 }
 
 /* ========== Dashboard & pages (style ODL) ========== */
-/* Éviter débordement: largeur explicite pour ne pas dépasser l'écran (sidebar 260px) */
+/* Responsive: contenu toujours visible, avec ou sans sidebar réduite – pas de débordement */
 .main-content {
   background-color: #fafafa;
   padding: 1.5rem;
@@ -182,20 +189,23 @@ a.text-primary,
   min-height: calc(100vh - 60px);
   overflow-x: hidden;
   box-sizing: border-box;
+  position: relative;
 }
-/* Sidebar ouverte (par défaut): contenu à droite du sidebar, sans débordement horizontal */
+/* Sidebar ouverte (par défaut): largeur = reste de l'écran pour voir tout le contenu */
 body:not(.side-closed):not(.sidebar-gone) .main-content {
   margin-left: var(--odl-sidebar-width) !important;
   width: calc(100vw - var(--odl-sidebar-width)) !important;
   max-width: calc(100vw - var(--odl-sidebar-width)) !important;
   padding-left: 1.5rem !important;
+  padding-right: 1.5rem !important;
 }
-/* Sidebar réduite (3 traits): sidebar 60px */
+/* Sidebar réduite (3 traits): plus de place pour le contenu */
 body.side-closed .main-content {
   margin-left: 60px !important;
   width: calc(100vw - 60px) !important;
   max-width: calc(100vw - 60px) !important;
   padding-left: 1.5rem !important;
+  padding-right: 1.5rem !important;
 }
 /* Sidebar masquée (mobile) */
 body.sidebar-gone .main-content {
@@ -203,6 +213,21 @@ body.sidebar-gone .main-content {
   width: 100% !important;
   max-width: 100% !important;
   padding-left: 1.5rem !important;
+  padding-right: 1.5rem !important;
+}
+/* Enfants du contenu ne doivent pas faire déborder (responsif) */
+.main-content .section-body,
+.main-content .row,
+.main-content .container,
+.main-content .card {
+  max-width: 100% !important;
+}
+.main-content .row {
+  margin-left: 0;
+  margin-right: 0;
+}
+.main-content .section-body {
+  overflow-x: auto;
 }
 
 /* Breadcrumb ODL */
@@ -365,18 +390,11 @@ button.bg-warning.rounded-pill,
   color: var(--odl-foreground);
 }
 
-/* Bordures pour images (comme ODL) */
-img,
-.user-img-circle,
-.user-img-radious-style img,
-.card-body img,
-.ngx-datatable .datatable-body-cell img {
+/* Bordures uniquement sur les images des cartes entités (Divisions / DCIRE) – pas ailleurs */
+app-entite .card-img-top,
+.main-content app-entite .card .card-img-top {
   border: 1px solid var(--odl-border);
   border-radius: 4px;
-}
-.img-circle,
-.user-img-circle {
-  border-radius: 50%;
 }
 
 /* Texte gris sur toute la plateforme (lisibilité, cohérence ODL) */
