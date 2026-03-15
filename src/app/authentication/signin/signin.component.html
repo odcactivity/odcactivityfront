@@ -1,81 +1,57 @@
-<main class="d-flex align-items-center min-vh-100 py-3 py-md-0">
-  <div class="container">
-    <div class="card login-card mb-0">
-      <div class="row no-gutters">
-        <div class="col-md-5">
-          <img src="assets/images/logo9.png" alt="login" class="login-card-img">
+<main class="signin-odl">
+  <div class="signin-odl__bg"></div>
+  <div class="signin-odl__card-wrapper">
+    <div class="signin-odl__card">
+      <div class="signin-odl__header">
+        <img src="assets/images/logo9.png" alt="ODC" class="signin-odl__logo">
+        <div class="signin-odl__brand">Activité ODC</div>
+        <h1 class="signin-odl__title">Connexion</h1>
+        <p class="signin-odl__subtitle">Connectez-vous pour accéder à votre espace</p>
+      </div>
+      <form class="signin-odl__form" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+        <div class="signin-odl__field">
+          <label for="email">Adresse email</label>
+          <div class="signin-odl__input-wrap">
+            <i-feather name="mail" class="signin-odl__icon"></i-feather>
+            <input id="email" type="email" class="signin-odl__input" formControlName="username"
+                   placeholder="ex: utilisateur@exemple.com" autocomplete="email">
           </div>
-          <div class="col-md-7">
-            <div class="login-body">
-              <div class="text-center">
-                <div class="brand-wrapper">
-                  <!-- <img src="assets/images/logo odcactivity.png" alt="logo" class="logo"> -->
-                  <span class="logo-name">Connectez-vous!!!</span>
-                </div>
-              </div>
-              <form class="validate-form" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
-                <div class="row">
-                  <div class="col-lg-12">
-                    <div class="form-group position-relative">
-                      <label>Votre Email <span class="text-danger">*</span></label>
-                      <i-feather name="user" class="login-icons"></i-feather>
-                      <input type="email" class="form-control psl-5" formControlName="username" placeholder="Email">
-                      </div>
-                    <div *ngIf="loginForm.get('username')?.touched && loginForm.get('username')?.invalid">
-                      <small class="text-danger" *ngIf="loginForm.get('username')?.errors?.['required']">
-                        L'email est requis.
-                      </small>
-                      <small class="text-danger" *ngIf="loginForm.get('username')?.errors?.['email']">
-                        Format d'email invalide.
-                      </small>
-                    </div>
-                  </div>
-                    <div class="col-lg-12">
-                      <div class="form-group position-relative">
-                        <label>Mot de Passe <span class="text-danger">*</span></label>
-                        <i-feather name="key" class="login-icons"></i-feather>
-                        <input type="password" class="form-control psl-5" formControlName="password"
-                          placeholder="Password">
-                        </div>
-                      <div *ngIf="loginForm.get('password')?.touched && loginForm.get('password')?.invalid">
-                        <small class="text-danger" *ngIf="loginForm.get('password')?.errors?.['required']">
-                          Le mot de passe est requis.
-                        </small>
-                        <small class="text-danger" *ngIf="loginForm.get('password')?.errors?.['minlength']">
-                          Minimum 6 caractères.
-                        </small>
-                      </div>
-                      </div>
-                      <div class="col-lg-12">
-                        <div class="d-flex justify-content-between">
-                          <div class="form-group">
-                            <div class="form-check">
-                              <input class="form-check-input" type="checkbox" id="customCheck1" formControlName="remember">
-                                <label class="form-check-label" for="customCheck1">
-                                  Remember me
-                                </label>
-                              </div>
-                            </div>
-                            <p class="forgot-pass mb-0"><a routerLink="/authentication/forgot"
-                            class="text-dark fw-bold">Mot De Passe oublié ?</a></p>
-                          </div>
-                        </div>
-                        @if (error) {
-                          <div class="alert alert-danger mb-3 msl-3">{{error}}</div>
-                        }
-                        <div class="col-lg-12 mb-0">
-                          <button class="btn btn-warning auth-form-btn"
-                                  [disabled]="loginForm.invalid"
-                          >
-                            Se connecter
-                          </button>
-                        </div>
-                    </div>
-              </form>
-                </div>
-              </div>
-            </div>
-          </div>
+          <ng-container *ngIf="loginForm.get('username')?.touched && loginForm.get('username')?.invalid">
+            <small class="signin-odl__error" *ngIf="loginForm.get('username')?.errors?.['required']">L'email est requis.</small>
+            <small class="signin-odl__error" *ngIf="loginForm.get('username')?.errors?.['email']">Format d'email invalide.</small>
+          </ng-container>
         </div>
+        <div class="signin-odl__field">
+          <label for="password">Mot de passe</label>
+          <div class="signin-odl__input-wrap">
+            <i-feather name="lock" class="signin-odl__icon"></i-feather>
+            <input id="password" [type]="showPassword ? 'text' : 'password'" class="signin-odl__input" formControlName="password"
+                   placeholder="••••••••" autocomplete="current-password">
+            <button type="button" class="signin-odl__eye" (click)="showPassword = !showPassword" aria-label="Afficher mot de passe">
+              <i-feather [name]="showPassword ? 'eye-off' : 'eye'"></i-feather>
+            </button>
+          </div>
+          <ng-container *ngIf="loginForm.get('password')?.touched && loginForm.get('password')?.invalid">
+            <small class="signin-odl__error" *ngIf="loginForm.get('password')?.errors?.['required']">Le mot de passe est requis.</small>
+            <small class="signin-odl__error" *ngIf="loginForm.get('password')?.errors?.['minlength']">Minimum 6 caractères.</small>
+          </ng-container>
+        </div>
+        <div class="signin-odl__options">
+          <label class="signin-odl__remember">
+            <input type="checkbox" formControlName="remember">
+            <span>Se souvenir de moi</span>
+          </label>
+          <a routerLink="/authentication/forgot" class="signin-odl__forgot">Mot de passe oublié ?</a>
+        </div>
+        @if (error) {
+          <div class="signin-odl__alert">{{ error }}</div>
+        }
+        <button type="submit" class="signin-odl__btn" [disabled]="loginForm.invalid">
+          <i-feather name="log-in"></i-feather>
+          <span>Se connecter</span>
+        </button>
+      </form>
+    </div>
+  </div>
 </main>
 

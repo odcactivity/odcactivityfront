@@ -1,1 +1,214 @@
+/* Page Connexion - style ODL */
+.signin-odl {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  position: relative;
+  background: linear-gradient(to bottom right, #fff 0%, rgba(255, 121, 0, 0.06) 50%, rgba(255, 121, 0, 0.08) 100%);
+}
 
+.signin-odl__bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    width: 320px;
+    height: 320px;
+    border-radius: 50%;
+    background: rgba(255, 121, 0, 0.08);
+    filter: blur(60px);
+  }
+  &::before { top: -120px; right: -120px; }
+  &::after { bottom: -120px; left: -120px; }
+}
+
+.signin-odl__card-wrapper {
+  width: 100%;
+  max-width: 400px;
+  position: relative;
+  z-index: 1;
+}
+
+.signin-odl__card {
+  background: #fff;
+  border-radius: var(--odl-radius, 12px);
+  border: 1px solid var(--odl-border, #E5E5E5);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  padding: 2rem;
+}
+
+.signin-odl__header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.signin-odl__logo {
+  height: 72px;
+  width: auto;
+  object-fit: contain;
+  margin-bottom: 0.5rem;
+}
+
+.signin-odl__brand {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #000;
+  background: #000;
+  color: #fff;
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+
+.signin-odl__title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #000;
+  margin: 0 0 0.25rem 0;
+}
+
+.signin-odl__subtitle {
+  font-size: 0.875rem;
+  color: var(--odl-muted, #525252);
+  margin: 0;
+}
+
+.signin-odl__form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.signin-odl__field label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #000;
+  margin-bottom: 0.5rem;
+}
+
+.signin-odl__input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.signin-odl__icon {
+  position: absolute;
+  left: 12px;
+  width: 20px;
+  height: 20px;
+  color: var(--odl-muted, #525252);
+  pointer-events: none;
+}
+
+.signin-odl__input {
+  width: 100%;
+  height: 44px;
+  padding: 0 12px 0 40px;
+  border: 1px solid var(--odl-input, #E5E5E5);
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  background: #fff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  &:focus {
+    outline: none;
+    border-color: var(--odl-primary, #FF7900);
+    box-shadow: 0 0 0 2px rgba(255, 121, 0, 0.2);
+  }
+  &::placeholder {
+    color: var(--odl-muted, #525252);
+  }
+}
+
+.signin-odl__input-wrap .signin-odl__eye {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: var(--odl-muted, #525252);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  &:hover { color: #000; }
+  i-feather, svg { width: 18px; height: 18px; }
+}
+
+.signin-odl__error {
+  display: block;
+  font-size: 0.8125rem;
+  color: #dc3545;
+  margin-top: 0.25rem;
+}
+
+.signin-odl__options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.signin-odl__remember {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--odl-foreground, #000);
+  cursor: pointer;
+  input { accent-color: var(--odl-primary, #FF7900); }
+}
+
+.signin-odl__forgot {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--odl-primary, #FF7900);
+  text-decoration: none;
+  &:hover { text-decoration: underline; }
+}
+
+.signin-odl__alert {
+  font-size: 0.875rem;
+  color: #dc3545;
+  background: rgba(220, 53, 69, 0.08);
+  border: 1px solid rgba(220, 53, 69, 0.2);
+  padding: 0.75rem;
+  border-radius: 8px;
+}
+
+.signin-odl__btn {
+  width: 100%;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: var(--odl-primary, #FF7900);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s;
+  box-shadow: 0 2px 8px rgba(255, 121, 0, 0.3);
+  &:hover:not(:disabled) {
+    background: #e56d00;
+  }
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  i-feather, svg { width: 20px; height: 20px; }
+}

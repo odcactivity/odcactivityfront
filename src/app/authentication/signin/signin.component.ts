@@ -28,6 +28,7 @@ export class SigninComponent implements OnInit {
   returnUrl!: string;
   error = '';
   hide = true;
+  showPassword = false;
   username!: string;
   password!: string;
 
