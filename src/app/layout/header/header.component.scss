@@ -1,9 +1,9 @@
+/* Style ODL: navbar blanche, cohérent avec le reste */
 .main-navbar.sticky {
-  background: radial-gradient(circle at top left, rgba(255, 161, 23, 0.18), #020617);
-  box-shadow:
-    0 18px 40px rgba(15, 23, 42, 0.6),
-    0 0 0 1px rgba(15, 23, 42, 0.2);
-  border-bottom: 1px solid rgba(148, 163, 184, 0.3);
+  background: #FFFFFF !important;
+  background-image: none !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid #E5E5E5;
 }
 
 .header-logo {
@@ -11,28 +11,26 @@
 }
 
 .navbar .nav-link.nav-link-lg {
-  color: rgba(226, 232, 240, 0.92);
+  color: #000000;
 }
 
 .navbar .nav-link.nav-link-lg:hover {
-  color: #fff;
+  color: #FF7900;
 }
 
 .dropdown-menu.header-dropdown {
   border-radius: 0.75rem;
-  border: 1px solid rgba(15, 23, 42, 0.7);
-  box-shadow:
-    0 20px 45px rgba(15, 23, 42, 0.8),
-    0 0 0 1px rgba(15, 23, 42, 0.4);
+  border: 1px solid #E5E5E5;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .dropdown-menu.header-dropdown .dropdown-title {
   font-weight: 600;
-  color: #e5e7eb;
+  color: #000;
 }
 
 .user-img-radious-style {
   border-radius: 9999px;
-  border: 2px solid rgba(248, 250, 252, 0.9);
-  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.55);
+  border: 2px solid #E5E5E5;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }

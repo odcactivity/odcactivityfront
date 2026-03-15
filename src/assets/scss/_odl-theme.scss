@@ -23,11 +23,12 @@
   --odl-font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
-/* Fond global blanc comme ODL */
+/* Fond global blanc comme ODL + éviter débordement */
 body {
   background-color: var(--odl-background) !important;
   color: var(--odl-foreground);
   font-family: var(--odl-font-sans);
+  overflow-x: hidden;
 }
 
 /* Boutons primaires orange ODL */
@@ -46,16 +47,26 @@ button.btn-icon.bg-warning {
   color: var(--odl-primary-foreground) !important;
 }
 
-/* Sidebar style ODL: fond clair, item actif orange */
+/* Sidebar style ODL: fond clair, textes visibles, orange cohérent */
 .main-sidebar.sidebar,
 .sidebar.main-sidebar {
   background: var(--odl-sidebar-bg) !important;
   border-right: 1px solid var(--odl-border);
 }
+/* Textes sidebar toujours visibles (inactifs = noir/gris sur fond clair) */
+.sidebar .menu .list li a.menu-top,
+.sidebar .menu .list li a.menu-top .hide-menu,
 .main-sidebar .sidebar-menu > li > a,
-.sidebar .menu .list li a.menu-top {
-  color: var(--odl-foreground);
+.sidebar .ml-menu li a {
+  color: var(--odl-foreground) !important;
 }
+.sidebar .menu .list li a.menu-top:hover:not(.active),
+.sidebar .menu .list li:not(.active):not(.active-top) > a.menu-top:hover {
+  background-color: rgba(255, 121, 0, 0.1) !important;
+  color: var(--odl-foreground) !important;
+  border-radius: 0 8px 8px 0;
+}
+/* Item actif: orange ODL, texte blanc */
 .main-sidebar .sidebar-menu > li.active > a,
 .sidebar .menu .list li.active .menu-top,
 .sidebar .menu .list li.active-top .menu-top,
@@ -64,12 +75,22 @@ button.btn-icon.bg-warning {
   color: var(--odl-sidebar-active-fg) !important;
   border-radius: 0 8px 8px 0;
 }
+.sidebar .menu .list li.active .menu-top .hide-menu,
+.sidebar .menu .list li.active-top .menu-top .hide-menu,
+.sidebar .menu .list li .ml-menu li.active a {
+  color: var(--odl-sidebar-active-fg) !important;
+}
+/* Icônes sidebar: sombres quand inactif, blanches quand actif */
 .sidebar .sidebarIcon,
 .main-sidebar .sidebar-menu .sidebarIcon {
-  color: inherit;
+  color: var(--odl-foreground) !important;
+  fill: var(--odl-foreground) !important;
 }
-.sidebar .menu .list li.active .sidebarIcon {
-  color: var(--odl-sidebar-active-fg);
+.sidebar .menu .list li.active .sidebarIcon,
+.sidebar .menu .list li.active-top .sidebarIcon,
+.sidebar .menu .list li .ml-menu li.active a .sidebarIcon {
+  color: var(--odl-sidebar-active-fg) !important;
+  fill: var(--odl-sidebar-active-fg) !important;
 }
 .sidebar-user-panel,
 .sidebar .user-panel,
@@ -89,21 +110,38 @@ button.btn-icon.bg-warning {
 .sidebar .menu .list li .ml-menu {
   background: rgba(0, 0, 0, 0.02);
 }
+.sidebar .menu .list li .ml-menu li a {
+  color: var(--odl-foreground) !important;
+}
+.sidebar .menu .list li .ml-menu li a:hover {
+  background-color: rgba(255, 121, 0, 0.1) !important;
+}
 .sidebar .menu .list li .ml-menu li.active a {
   color: var(--odl-sidebar-active-fg) !important;
   background-color: var(--odl-sidebar-active-bg) !important;
 }
 
-/* Navbar / Header style ODL: fond blanc */
+/* Navbar / Header style ODL: fond blanc, pas de dégradé */
 .main-navbar.navbar,
-.navbar.main-navbar {
-  background-color: var(--odl-background) !important;
+.navbar.main-navbar,
+.main-navbar.sticky,
+.main-navbar.navbar.sticky {
+  background: var(--odl-background) !important;
+  background-image: none !important;
   border-bottom: 1px solid var(--odl-border);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 .main-navbar .nav-link,
-.main-navbar .navbar-nav .nav-link {
-  color: var(--odl-foreground);
+.main-navbar .navbar-nav .nav-link,
+.main-navbar .nav-link.nav-link-lg {
+  color: var(--odl-foreground) !important;
+}
+.main-navbar .nav-link:hover {
+  color: var(--odl-primary) !important;
+}
+.main-navbar .headbar-brand a,
+.main-navbar .logo-name {
+  color: var(--odl-foreground) !important;
 }
 
 /* Cartes style ODL: fond blanc, bordure légère, ombre légère */
@@ -130,10 +168,14 @@ a.text-primary,
 }
 
 /* ========== Dashboard & pages (style ODL) ========== */
+/* Éviter débordement horizontal */
 .main-content {
   background-color: #fafafa;
   padding: 1.5rem;
   min-height: calc(100vh - 60px);
+  max-width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 /* Breadcrumb ODL */
@@ -215,19 +257,27 @@ label.form-label {
   outline: none;
 }
 
-/* Boutons Ajouter / actions ODL */
+/* Boutons Ajouter / actions ODL (style ODL cohérent) */
 .rounded-button,
 .btn.bg-warning.rounded-button,
-button.bg-warning.rounded-pill {
+button.bg-warning.rounded-pill,
+.btn-icon.bg-warning,
+.tbl-btn-style .btn.bg-warning {
   background-color: var(--odl-primary) !important;
   border: none !important;
   color: #fff !important;
   font-weight: 600;
   border-radius: 8px;
   padding: 0.5rem 1rem;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
 }
 .rounded-button:hover,
-.btn.bg-warning.rounded-button:hover {
+.btn.bg-warning.rounded-button:hover,
+.btn-icon.bg-warning:hover {
   background-color: var(--odl-primary-light) !important;
   color: #fff !important;
 }
@@ -235,6 +285,12 @@ button.bg-warning.rounded-pill {
 .rounded-pill.bg-warning {
   background-color: var(--odl-primary) !important;
   color: #fff !important;
+}
+/* Boutons d’action tableau (edit/delete) cohérents */
+.btn-tbl-edit,
+.btn-tbl-delete {
+  border-radius: 8px;
+  padding: 0.4rem 0.6rem;
 }
 
 /* Cartes entités (directions/services) - garder contraste avec accent orange */
