@@ -29,6 +29,12 @@ body {
   color: var(--odl-foreground);
   font-family: var(--odl-font-sans);
   overflow-x: hidden;
+  box-sizing: border-box;
+}
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 /* Boutons primaires orange ODL */
@@ -168,14 +174,35 @@ a.text-primary,
 }
 
 /* ========== Dashboard & pages (style ODL) ========== */
-/* Éviter débordement horizontal */
+/* Éviter débordement: largeur explicite pour ne pas dépasser l'écran (sidebar 260px) */
 .main-content {
   background-color: #fafafa;
   padding: 1.5rem;
+  padding-top: 70px;
   min-height: calc(100vh - 60px);
-  max-width: 100%;
   overflow-x: hidden;
   box-sizing: border-box;
+}
+/* Sidebar ouverte (par défaut): contenu à droite du sidebar, sans débordement horizontal */
+body:not(.side-closed):not(.sidebar-gone) .main-content {
+  margin-left: var(--odl-sidebar-width) !important;
+  width: calc(100vw - var(--odl-sidebar-width)) !important;
+  max-width: calc(100vw - var(--odl-sidebar-width)) !important;
+  padding-left: 1.5rem !important;
+}
+/* Sidebar réduite (3 traits): sidebar 60px */
+body.side-closed .main-content {
+  margin-left: 60px !important;
+  width: calc(100vw - 60px) !important;
+  max-width: calc(100vw - 60px) !important;
+  padding-left: 1.5rem !important;
+}
+/* Sidebar masquée (mobile) */
+body.sidebar-gone .main-content {
+  margin-left: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  padding-left: 1.5rem !important;
 }
 
 /* Breadcrumb ODL */
@@ -303,23 +330,69 @@ button.bg-warning.rounded-pill,
   color: var(--odl-primary) !important;
 }
 
-/* Tables ODL (bordures, en-têtes) */
+/* Tables / listes ODL: fond clair, lignes claires, texte gris (pas de fond sombre) */
 .table,
-.ngx-datatable {
+.ngx-datatable,
+.ngx-datatable.material {
   font-size: 0.875rem;
+  background: var(--odl-background) !important;
+  border: 1px solid var(--odl-border);
+  border-radius: var(--odl-radius);
+  box-shadow: var(--odl-card-shadow);
 }
 .table thead th,
 .ngx-datatable .datatable-header .datatable-header-cell {
   font-weight: 600;
   color: var(--odl-foreground);
   border-bottom: 2px solid var(--odl-border);
-  background: var(--odl-muted-bg);
+  background: var(--odl-muted-bg) !important;
 }
 .table td,
 .table th,
 .ngx-datatable .datatable-body .datatable-body-row .datatable-body-cell {
   border-color: var(--odl-border);
   padding: 0.75rem 1rem;
+  background: var(--odl-background) !important;
+  color: var(--odl-foreground) !important;
+}
+.ngx-datatable .datatable-body .datatable-body-row:hover .datatable-body-cell {
+  background: var(--odl-muted-bg) !important;
+  color: var(--odl-foreground) !important;
+}
+.ngx-datatable .datatable-footer {
+  background: var(--odl-muted-bg) !important;
+  border-top: 1px solid var(--odl-border);
+  color: var(--odl-foreground);
+}
+
+/* Bordures pour images (comme ODL) */
+img,
+.user-img-circle,
+.user-img-radious-style img,
+.card-body img,
+.ngx-datatable .datatable-body-cell img {
+  border: 1px solid var(--odl-border);
+  border-radius: 4px;
+}
+.img-circle,
+.user-img-circle {
+  border-radius: 50%;
+}
+
+/* Texte gris sur toute la plateforme (lisibilité, cohérence ODL) */
+body,
+.section-body,
+.card-body,
+.page-title,
+.form-label,
+.table,
+.ngx-datatable .datatable-body-cell,
+.name-col-style {
+  color: var(--odl-foreground) !important;
+}
+.card-content h6,
+.breadcrumb-item {
+  color: var(--odl-muted) !important;
 }
 
 /* Badge / statut Actif style ODL */
