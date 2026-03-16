@@ -2,38 +2,63 @@
   <div class="form-inline me-auto">
     <ul class="navbar-nav msr-3">
       <li>
-        <a data-toggle="sidebar" class="nav-link nav-link-lg
-          collapse-btn" (click)="mobileMenuSidebarOpen($event,'overlay-open')">
+        <a
+          data-toggle="sidebar"
+          class="nav-link nav-link-lg collapse-btn"
+          (click)="mobileMenuSidebarOpen($event,'overlay-open')"
+        >
           <i-feather name="menu"></i-feather>
         </a>
       </li>
-         <li>
-          <div class="headbar-brand">
-          <a routerLink="/dashboard/main"> <img id="headbar" alt="ODC Activity" src="assets/images/logo9.png" class="header-logo" /> <span
-          class="logo-name"></span>
+      <li>
+        <div class="headbar-brand">
+          <a routerLink="/dashboard/main">
+            <img
+              id="headbar"
+              alt="ODC Activity"
+              src="assets/images/logo9.png"
+              class="header-logo"
+            />
+            <span class="logo-name"></span>
           </a>
-          </div>      
-  </li>
-        <!-- <li>
-          <form class="form-inline me-auto">
-            <div class="search-element d-flex">
-              <input class="form-control" type="search" placeholder="{{'HEADER.SEARCH.TEXT' | translate}}"
-                aria-label="Search" data-width="200">
-                <button class="btn" type="submit">
-                  <i class="fas fa-search"></i>
-                </button>
-            </div>
-          </form>
-        </li> -->
+        </div>
+      </li>
     </ul>
+  </div>
+
+  <!-- Barre de recherche centrale (ODC Activité) -->
+  <div class="odl-navbar-search d-none d-md-flex">
+    <div class="odl-navbar-search-icon">
+      <i class="fas fa-search"></i>
+    </div>
+    <input
+      type="text"
+      class="form-control odl-navbar-search-input"
+      placeholder="Rechercher une activité, un courrier, un personnel..."
+      aria-label="Recherche"
+    />
   </div>
 
   <ul class="navbar-nav navbar-right">
     <li>
-      <a class="nav-link nav-link-lg
-      collapse-btn" (click)="callFullscreen()">
-      <i-feather name="maximize"></i-feather>
-     </a>
+      <a
+        class="nav-link nav-link-lg collapse-btn odl-navbar-icon-btn"
+        (click)="callFullscreen()"
+      >
+        <i-feather name="maximize"></i-feather>
+      </a>
+    </li>
+    <!-- Icône notifications (placeholder si la fonctionnalité est utilisée) -->
+    <li>
+      <a class="nav-link nav-link-lg odl-navbar-icon-btn" href="javascript:void(0);">
+        <i class="far fa-bell"></i>
+      </a>
+    </li>
+    <!-- Icône paramètres (raccourci visuel, même esprit que l’icône orange flottante) -->
+    <li>
+      <a class="nav-link nav-link-lg odl-navbar-icon-btn" href="javascript:void(0);">
+        <i class="fas fa-cog"></i>
+      </a>
     </li>
     <!--<li class="dropdown dropdown-list-toggle" ngbDropdown>
       <a data-toggle="dropdown" class="nav-link nav-link-lg lang-toggle remove-caret" ngbDropdownToggle>
@@ -56,19 +81,33 @@
     </li>-->
 
     <li ngbDropdown>
-      <a ngbDropdownToggle data-toggle="dropdown" class="nav-link dropdown-toggle nav-link-lg nav-link-user">
-      <img alt="image" src="assets/images/user.png" class="user-img-radious-style collapse-btn"> 
-      <span class="d-sm-none d-lg-inline-block"></span></a>
-
-        <div ngbDropdownMenu class="dropdown-menu dropdown-menu-right header-dropdown pullDown">
-        <div class="dropdown-title">Bonjour {{ nomComplet }}</div>
-        <a routerLink="/profile" class="dropdown-item has-icon"> <i class="far
-        fa-user"></i> Profile
+      <a
+        ngbDropdownToggle
+        data-toggle="dropdown"
+        class="nav-link dropdown-toggle nav-link-lg nav-link-user"
+      >
+        <img
+          alt="image"
+          src="assets/images/user.png"
+          class="user-img-radious-style collapse-btn"
+        />
+        <span class="d-sm-none d-lg-inline-block"></span>
       </a>
-      <div class="dropdown-divider"></div>
-        <a href="javascript:void(0);" class="dropdown-item has-icon text-danger" (click)="logout()"> <i
-        class="fas fa-sign-out-alt"></i>
-        Déconnexion
+
+      <div ngbDropdownMenu class="dropdown-menu dropdown-menu-right header-dropdown pullDown">
+        <div class="dropdown-title">Bonjour {{ nomComplet }}</div>
+        <a routerLink="/profile" class="dropdown-item has-icon">
+          <i class="far fa-user"></i>
+          Profile
+        </a>
+        <div class="dropdown-divider"></div>
+        <a
+          href="javascript:void(0);"
+          class="dropdown-item has-icon text-danger"
+          (click)="logout()"
+        >
+          <i class="fas fa-sign-out-alt"></i>
+          Déconnexion
         </a>
       </div>
     </li>

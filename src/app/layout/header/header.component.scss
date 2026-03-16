@@ -18,6 +18,48 @@
   color: #FF7900;
 }
 
+/* Barre de recherche au centre (style ODL) */
+.odl-navbar-search {
+  flex: 1;
+  max-width: 520px;
+  margin: 0 1rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid #E5E5E5;
+  background-color: #F9FAFB;
+  display: flex;
+  align-items: center;
+}
+
+.odl-navbar-search-icon {
+  color: #9CA3AF;
+  margin-right: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.odl-navbar-search-input {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  font-size: 0.9rem;
+}
+
+.odl-navbar-search-input:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+/* Petits boutons d’icônes à droite (fullscreen, notif, paramètres) */
+.odl-navbar-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.odl-navbar-icon-btn i {
+  font-size: 1rem;
+}
+
 .dropdown-menu.header-dropdown {
   border-radius: 0.75rem;
   border: 1px solid #E5E5E5;

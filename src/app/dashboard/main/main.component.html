@@ -10,187 +10,181 @@
     <li class="breadcrumb-item">Tableau de Bord</li>
   </ul>
   <div class="section-body">
-    <div class="row ">
-      <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6 col-xs-12">
-        <div class="card">
-          <div class="card-statistic-4">
-            <div class="align-items-center justify-content-between">
-              <div class="row ">
-                <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6 left-grid-spacing">
-                  <div class="card-content">
-                    <h6>Activité Total</h6>
-                    <h2 class="mb-3 font-18">{{ nombreActivite }}</h2>
-<!--                    <p class="mb-0"><span class="col-green">42%</span></p>-->
-                  </div>
-<!--                  <ngb-progressbar type="success" [value]="42" height=".3rem"></ngb-progressbar>-->
-                </div>
-                <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6 right-grid-spacing">
-                  <div class="banner-img">
-                    <img src="assets/images/activitetotal.png" alt="">
-                  </div>
-                </div>
+
+    <!-- Carte récap des activités (style ODL, regroupée) -->
+    <div class="card mb-4 odl-dashboard-card">
+      <div class="card-header">
+        <h4 class="mb-1">Vue d’ensemble des activités</h4>
+        <p class="odl-dashboard-subtitle mb-0">
+          Suivi rapide du volume et de l’état des activités dans ODC Activité.
+        </p>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <!-- Activités totales -->
+          <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
+            <div class="odl-stat-card">
+              <div class="odl-stat-icon odl-stat-icon-primary">
+                <i class="fas fa-cogs"></i>
+              </div>
+              <div class="odl-stat-content">
+                <p class="odl-stat-label">Activités totales</p>
+                <p class="odl-stat-value">{{ nombreActivite }}</p>
               </div>
             </div>
           </div>
-        </div>
-      </div>
-      <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6 col-xs-12">
-        <div class="card">
-          <div class="card-statistic-4">
-            <div class="align-items-center justify-content-between">
-              <div class="row ">
-                <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6 left-grid-spacing">
-                  <div class="card-content">
-                    <h6> Activité en cours</h6>
-                    <h2 class="mb-3 font-18">{{ nombreActiviteEncours }}</h2>
-<!--                    <p class="mb-0"><span class="col-orange">33%</span></p>-->
-                  </div>
-<!--                  <ngb-progressbar type="warning" [value]="33" height=".3rem"></ngb-progressbar>-->
-                </div>
-                <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6 right-grid-spacing">
-                  <div class="banner-img">
-                    <img src="assets/images/activiteencours.png" alt="">
-                  </div>
-                </div>
+
+          <!-- Activités en cours -->
+          <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
+            <div class="odl-stat-card">
+              <div class="odl-stat-icon odl-stat-icon-info">
+                <i class="fas fa-play-circle"></i>
+              </div>
+              <div class="odl-stat-content">
+                <p class="odl-stat-label">Activités en cours</p>
+                <p class="odl-stat-value">{{ nombreActiviteEncours }}</p>
               </div>
             </div>
           </div>
-        </div>
-      </div>
-      <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6 col-xs-12">
-        <div class="card">
-          <div class="card-statistic-4">
-            <div class="align-items-center justify-content-between">
-              <div class="row ">
-                <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6 left-grid-spacing">
-                  <div class="card-content">
-                    <h6>Activité en attente</h6>
-                    <h2 class="mb-3 font-18">{{ nombreActiviteEnAttente }}</h2>
-<!--                    <p class="mb-0"><span class="col-blue">25%</span>-->
-<!--                    </p>-->
-                  </div>
-<!--                  <ngb-progressbar type="info" [value]="25" height=".3rem"></ngb-progressbar>-->
-                </div>
-                <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6 right-grid-spacing">
-                  <div class="banner-img">
-                    <img src="assets/images/activiteattente.png" alt="">
-                  </div>
-                </div>
+
+          <!-- Activités en attente -->
+          <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
+            <div class="odl-stat-card">
+              <div class="odl-stat-icon odl-stat-icon-warning">
+                <i class="fas fa-clock"></i>
+              </div>
+              <div class="odl-stat-content">
+                <p class="odl-stat-label">Activités en attente</p>
+                <p class="odl-stat-value">{{ nombreActiviteEnAttente }}</p>
               </div>
             </div>
           </div>
-        </div>
-      </div>
-      <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6 col-xs-12">
-        <div class="card">
-          <div class="card-statistic-4">
-            <div class="align-items-center justify-content-between">
-              <div class="row ">
-                <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6 left-grid-spacing">
-                  <div class="card-content">
-                    <h6>Actitivé terminer</h6>
-                    <h2 class="mb-3 font-18">{{ nombreActiviteTerminer }}</h2>
-<!--                    <p class="mb-0"><span class="col-red">65%</span></p>-->
-                  </div>
-<!--                  <ngb-progressbar type="danger" [value]="65" height=".3rem"></ngb-progressbar>-->
-                </div>
-                <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6 right-grid-spacing">
-                  <div class="banner-img">
-                    <img src="assets/images/activiteterminer.png" alt="">
-                  </div>
-                </div>
+
+          <!-- Activités terminées -->
+          <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
+            <div class="odl-stat-card">
+              <div class="odl-stat-icon odl-stat-icon-success">
+                <i class="fas fa-check-circle"></i>
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6 col-xs-12">
-        <div class="card">
-          <div class="card-statistic-4">
-            <div class="align-items-center justify-content-between">
-              <div class="row ">
-                <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6 left-grid-spacing">
-                  <div class="card-content">
-                    <h6>Nombre personnels</h6>
-                    <h2 class="mb-3 font-18">{{ nombreUtilisateurs }}</h2>
-<!--                    <p class="mb-0"><span class="col-red">65%</span></p>-->
-                  </div>
-<!--                  <ngb-progressbar type="danger" [value]="65" height=".3rem"></ngb-progressbar>-->
-                </div>
-                <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6 right-grid-spacing">
-                  <div class="banner-img">
-                    <img src="assets/images/usertotal.png" alt="">
-                  </div>
-                </div>
+              <div class="odl-stat-content">
+                <p class="odl-stat-label">Activités terminées</p>
+                <p class="odl-stat-value">{{ nombreActiviteTerminer }}</p>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-  <div>  
-   <form [formGroup]="formCriteres">
-    <div class="row g-3 mb-4"> 
-  <!-- Filtre par Entité -->
-  <div class="col-md-3">
-    <label for="entite" class="form-label">Entité</label>
-    <select id="entite" class="form-select form-control" formControlName="selectedEntite" (change)="applyFilters()">
-      <option value="">Toutes les entités</option>
-      <ng-container *ngFor="let e of entites">
-        <option [value]="e.id">{{ e.nom }}</option>
-      </ng-container>
-    </select>
-  </div>
-<!-- Filtre par Activité -->
-    <div class="col-md-3">
-    <label for="activite" class="form-label">Activité</label>
-    <select id="activite" class="form-select form-control" formControlName="selectedActivite" (change)="applyFilters()">
-      <option value="">Toutes les activités</option>
-      <ng-container *ngFor="let a of activites">
-        <option [value]="a.id">{{ a.nom }}</option>
-      </ng-container>
-     </select>
-   
-  </div>
 
-  <!-- Filtre par Etapes -->
-    <div class="col-md-3">
-    <label for="etape" class="form-label">Etapes</label>
-    <select id="etape" class="form-select form-control" formControlName="selectedEtape" (change)="applyFilters()">
-      <option value="">Toutes les etapes</option>
-      <ng-container *ngFor="let e of etapes">
-        <option [value]="e.id">{{ e.nom }}</option>
-      </ng-container>
-     </select>
-   
-  </div>
-  <!-- Filtre Date début -->
-  <div class="col-md-3">
-    <label class="form-label">Date début</label>
-    <input type="date" class="form-control" formControlName="dateDebut" (change)="applyFilters()" />
-  </div>
-
-  <!-- Filtre Date fin -->
-  <div class="col-md-3">
-    <label class="form-label">Date fin</label>
-    <input type="date" class="form-control" formControlName="dateFin" (change)="applyFilters()" />
-  </div>
- </div> 
-  </form>
-</div>
-
-    <div class="row">
-      <div class="col-md-12 col-lg-6 col-xl-6 ">
-        <div class="card">
-          <div class="card-header">
-            <h4>Statistique des participants</h4>
+    <!-- Carte personnels (regroupé) -->
+    <div class="card mb-4 odl-dashboard-card">
+      <div class="card-header">
+        <h4 class="mb-1">Vue d’ensemble des personnels</h4>
+        <p class="odl-dashboard-subtitle mb-0">
+          Nombre total de personnels impliqués dans les activités.
+        </p>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-sm-6 col-md-4 col-lg-3">
+            <div class="odl-stat-card">
+              <div class="odl-stat-icon odl-stat-icon-neutral">
+                <i class="fas fa-users"></i>
+              </div>
+              <div class="odl-stat-content">
+                <p class="odl-stat-label">Nombre de personnels</p>
+                <p class="odl-stat-value">{{ nombreUtilisateurs }}</p>
+              </div>
+            </div>
           </div>
-          <div class="card-body">
-            <apx-chart [series]="barChartOptions.series!" [chart]="barChartOptions.chart!"
-              [dataLabels]="barChartOptions.dataLabels!" [stroke]="barChartOptions.stroke!"
-              [colors]="barChartOptions.colors!" [title]="barChartOptions.title!" [grid]="barChartOptions.grid!"
-              [tooltip]="barChartOptions.tooltip!" [plotOptions]="barChartOptions.plotOptions!"
-              [yaxis]="barChartOptions.yaxis!" [xaxis]="barChartOptions.xaxis!"></apx-chart>
+        </div>
+      </div>
+    </div>
+
+    <!-- Carte filtres de recherche -->
+    <div class="card mb-4 odl-dashboard-card">
+      <div class="card-header">
+        <h4 class="mb-1">Filtres d’analyse des activités</h4>
+        <p class="odl-dashboard-subtitle mb-0">
+          Affinez les statistiques en filtrant par entité, activité, étape et période.
+        </p>
+      </div>
+      <div class="card-body">
+        <form [formGroup]="formCriteres">
+          <div class="row g-3">
+            <!-- Entité -->
+            <div class="col-md-3">
+              <label for="entite" class="form-label">Entité</label>
+              <select id="entite" class="form-select form-control" formControlName="selectedEntite" (change)="applyFilters()">
+                <option value="">Toutes les entités</option>
+                <ng-container *ngFor="let e of entites">
+                  <option [value]="e.id">{{ e.nom }}</option>
+                </ng-container>
+              </select>
+            </div>
+
+            <!-- Activité -->
+            <div class="col-md-3">
+              <label for="activite" class="form-label">Activité</label>
+              <select id="activite" class="form-select form-control" formControlName="selectedActivite" (change)="applyFilters()">
+                <option value="">Toutes les activités</option>
+                <ng-container *ngFor="let a of activites">
+                  <option [value]="a.id">{{ a.nom }}</option>
+                </ng-container>
+              </select>
+            </div>
+
+            <!-- Étapes -->
+            <div class="col-md-3">
+              <label for="etape" class="form-label">Étapes</label>
+              <select id="etape" class="form-select form-control" formControlName="selectedEtape" (change)="applyFilters()">
+                <option value="">Toutes les étapes</option>
+                <ng-container *ngFor="let e of etapes">
+                  <option [value]="e.id">{{ e.nom }}</option>
+                </ng-container>
+              </select>
+            </div>
+
+            <!-- Date début -->
+            <div class="col-md-3">
+              <label class="form-label">Date début</label>
+              <input type="date" class="form-control" formControlName="dateDebut" (change)="applyFilters()" />
+            </div>
+
+            <!-- Date fin -->
+            <div class="col-md-3">
+              <label class="form-label">Date fin</label>
+              <input type="date" class="form-control" formControlName="dateFin" (change)="applyFilters()" />
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Carte statistique des participants -->
+    <div class="card odl-dashboard-card">
+      <div class="card-header">
+        <h4 class="mb-1">Statistique des participants</h4>
+        <p class="odl-dashboard-subtitle mb-0">
+          Répartition des participants selon les filtres sélectionnés.
+        </p>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-12 col-lg-8 col-xl-8">
+            <apx-chart
+              [series]="barChartOptions.series!"
+              [chart]="barChartOptions.chart!"
+              [dataLabels]="barChartOptions.dataLabels!"
+              [stroke]="barChartOptions.stroke!"
+              [colors]="barChartOptions.colors!"
+              [title]="barChartOptions.title!"
+              [grid]="barChartOptions.grid!"
+              [tooltip]="barChartOptions.tooltip!"
+              [plotOptions]="barChartOptions.plotOptions!"
+              [yaxis]="barChartOptions.yaxis!"
+              [xaxis]="barChartOptions.xaxis!"
+            ></apx-chart>
           </div>
         </div>
       </div>
