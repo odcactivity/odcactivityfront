@@ -15,26 +15,33 @@
   --odl-muted-bg: #F5F5F5;
   --odl-border: #E5E5E5;
   --odl-input: #E5E5E5;
-  --odl-sidebar-bg: #FAFAFA;
+  --odl-sidebar-bg: #FFFFFF;
   /* Texte et icônes du sidebar en gris (ODL) */
   --odl-sidebar-text: #6B7280;
   --odl-sidebar-icon: #6B7280;
   --odl-sidebar-active-bg: #FF7900;
   --odl-sidebar-active-fg: #FFFFFF;
+  --odl-sidebar-hover-bg: rgba(255, 121, 0, 0.08);
+  --odl-sidebar-width: 260px;
   --odl-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   --odl-radius: 0.75rem;
-  --odl-font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --odl-font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --odl-font-size-base: 1rem;   /* 16px par défaut, légèrement augmenté via html */
+  --odl-font-size-sm: 0.9375rem;
+  --odl-font-size-lg: 1.0625rem;
 }
 
 /* Fond global blanc comme ODL + éviter débordement horizontal */
 html {
   overflow-x: hidden;
   width: 100%;
+  font-size: 17px; /* Légère augmentation de la taille des écritures de l'appli */
 }
 body {
   background-color: var(--odl-background) !important;
   color: var(--odl-foreground);
   font-family: var(--odl-font-sans);
+  font-size: 1rem;
   overflow-x: hidden;
   box-sizing: border-box;
   width: 100%;
@@ -63,13 +70,144 @@ button.btn-icon.bg-warning {
   color: var(--odl-primary-foreground) !important;
 }
 
-/* Sidebar style ODL: fond clair, textes visibles, orange cohérent */
+/* Palette unique (Orange / Blanc / Noir) pour les actions */
+.btn-dark,
+.btn-secondary {
+  background-color: #111827 !important;
+  border-color: #111827 !important;
+  color: #FFFFFF !important;
+}
+.btn-dark:hover,
+.btn-secondary:hover {
+  background-color: #0b1220 !important;
+  border-color: #0b1220 !important;
+}
+.btn-outline-dark,
+.btn-outline-secondary {
+  border-color: #111827 !important;
+  color: #111827 !important;
+}
+.btn-outline-dark:hover,
+.btn-outline-secondary:hover {
+  background-color: #111827 !important;
+  color: #FFFFFF !important;
+}
+
+/* Danger: garder lisible mais éviter le rouge agressif (reste destructif) */
+.btn-danger {
+  background-color: #DC2626 !important;
+  border-color: #DC2626 !important;
+}
+.btn-danger:hover {
+  background-color: #B91C1C !important;
+  border-color: #B91C1C !important;
+}
+
+/* ========== Sidebar ODL (adapté d'ODL : couleurs + disposition 2e image) ========== */
 .main-sidebar.sidebar,
 .sidebar.main-sidebar {
   background: var(--odl-sidebar-bg) !important;
   border-right: 1px solid var(--odl-border);
+  box-shadow: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100vh !important;
 }
-/* Textes sidebar toujours visibles (gris sur fond clair, même en mode menu_dark) */
+/* Panneau utilisateur fixe en haut (comme la navbar : ne disparaît pas au scroll) */
+.sidebar-user-panel,
+.sidebar-user-panel--fixed {
+  flex-shrink: 0 !important;
+  padding: 1rem 1rem 1.25rem !important;
+  border-bottom: 1px solid var(--odl-border) !important;
+  text-align: center;
+  background: var(--odl-sidebar-bg) !important;
+}
+.sidebar .menu.menu--scroll {
+  flex: 1 !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding-left: 0 !important;
+}
+.sidebar .menu.menu--scroll ng-scrollbar {
+  flex: 1 !important;
+  min-height: 0 !important;
+}
+/* Liste menu : pas de padding gauche pour que l’item actif soit bien délimité à gauche (comme ODL) */
+.sidebar.main-sidebar .menu.menu--scroll .list {
+  padding-left: 0 !important;
+}
+.sidebar.main-sidebar .menu .list > li {
+  padding: 0 !important;
+}
+/* Panneau utilisateur : style ODL (icône carrée arrondie, texte en gris) */
+.sidebar-user-panel .user-panel,
+.sidebar-user-panel--fixed .user-panel {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+.sidebar-user-panel .user-panel .image img,
+.sidebar-user-panel--fixed .user-panel .image img,
+.sidebar .user-info .image img {
+  border: 2px solid var(--odl-border) !important;
+  border-radius: 12px !important;
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+}
+.profile-usertitle,
+.sidebar-user-panel .profile-usertitle-job,
+.sidebar-userpic-name,
+.sidebar .user-info .name,
+.sidebar .user-info .email {
+  color: var(--odl-sidebar-text) !important;
+  font-size: 0.875rem !important;
+}
+.sidebar-userpic-name {
+  font-weight: 600;
+  color: var(--odl-foreground) !important;
+}
+.profile-usertitle-job {
+  font-size: 0.75rem !important;
+  margin-top: 0.15rem;
+}
+/* Items menu : épaisseur comme ODL (fine), délimité à gauche (coins arrondis à droite seulement) */
+.sidebar.main-sidebar .menu .list > li > a.menu-top {
+  padding: 6px 12px 6px 14px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-size: 0.9375rem !important;
+  border-radius: 0 8px 8px 0 !important;
+  margin: 0 10px 2px 0 !important;
+  margin-left: 0 !important;
+}
+.sidebar.main-sidebar .menu .list > li > a.menu-top .sidebarIcon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+}
+.sidebar.main-sidebar .menu .list > li > a.menu-top .hide-menu {
+  flex: 1;
+}
+/* Chevron ODL : gris, pointe vers le haut quand ouvert (comme image 2) */
+.sidebar.main-sidebar .menu .list li > a.menu-top .chevron {
+  color: var(--odl-sidebar-icon) !important;
+  font-size: 0.75rem !important;
+  display: inline-block;
+  transition: transform 0.2s ease;
+  margin-left: auto;
+}
+.sidebar.main-sidebar .menu .list li > a.menu-top .chevron.open {
+  transform: rotate(-90deg); /* ▸ → ↑ (caret vers le haut quand ouvert) */
+}
+.sidebar.main-sidebar .menu .list li.active .menu-top .chevron,
+.sidebar.main-sidebar .menu .list li.active-top .menu-top .chevron {
+  color: var(--odl-sidebar-active-fg) !important;
+}
+/* Textes sidebar : gris (inactif), blanc (actif, comme image ODL) */
 body .sidebar.main-sidebar .menu .list li a.menu-top,
 body .menu_dark .sidebar .menu .list li a.menu-top,
 body .sidebar.main-sidebar .menu .list li a.menu-top .hide-menu,
@@ -77,25 +215,23 @@ body .sidebar.main-sidebar .menu .list li .ml-menu li a {
   color: var(--odl-sidebar-text) !important;
 }
 body .sidebar.main-sidebar .menu .list li:not(.active):not(.active-top) > a.menu-top:hover {
-  background-color: rgba(255, 121, 0, 0.1) !important;
+  background-color: var(--odl-sidebar-hover-bg) !important;
   color: var(--odl-sidebar-text) !important;
-  border-radius: 0 8px 8px 0;
 }
-/* Item actif: orange ODL, texte blanc */
+/* Item actif : fond orange ODL, texte et icône en blanc (comme image ODL) */
 .main-sidebar .sidebar-menu > li.active > a,
 .sidebar .menu .list li.active .menu-top,
 .sidebar .menu .list li.active-top .menu-top,
 .sidebar .menu .list li .ml-menu li.active a {
   background-color: var(--odl-sidebar-active-bg) !important;
   color: var(--odl-sidebar-active-fg) !important;
-  border-radius: 0 8px 8px 0;
 }
 .sidebar .menu .list li.active .menu-top .hide-menu,
 .sidebar .menu .list li.active-top .menu-top .hide-menu,
 .sidebar .menu .list li .ml-menu li.active a {
   color: var(--odl-sidebar-active-fg) !important;
 }
-/* Icônes sidebar: gris quand inactif, blanches quand actif */
+/* Icônes : gris inactif ; item actif = blanc sur orange (ODL) */
 body .sidebar.main-sidebar .sidebarIcon,
 body .menu_dark .sidebar .sidebarIcon {
   color: var(--odl-sidebar-icon) !important;
@@ -107,33 +243,46 @@ body .sidebar .menu .list li .ml-menu li.active a .sidebarIcon {
   color: var(--odl-sidebar-active-fg) !important;
   fill: var(--odl-sidebar-active-fg) !important;
 }
-.sidebar-user-panel,
 .sidebar .user-panel,
 .sidebar .user-info {
   border-bottom: 1px solid var(--odl-border);
 }
-.sidebar .user-panel .image img,
-.sidebar .user-info .image img {
-  border: 2px solid var(--odl-border);
-}
-.profile-usertitle-job,
-.sidebar-userpic-name,
-.sidebar .user-info .name,
-.sidebar .user-info .email {
-  color: var(--odl-sidebar-text) !important;
-}
+/* Sous-menus ODL : trait vertical gris à gauche, indentation (disposition image 2) */
 .sidebar .menu .list li .ml-menu {
-  background: rgba(0, 0, 0, 0.02);
+  background: transparent !important;
+  padding-left: 0 !important;
+  margin-left: 18px !important;
+  border-left: 2px solid var(--odl-border) !important;
+  list-style: none !important;
 }
 .sidebar .menu .list li .ml-menu li a {
   color: var(--odl-sidebar-text) !important;
+  padding-left: 14px !important;
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+  font-size: 0.9375rem !important;
+  border-radius: 0 6px 6px 0 !important;
+  margin: 1px 10px 1px 0 !important;
+  display: block !important;
+}
+/* Cacher la flèche Font Awesome des sous-items pour garder uniquement le trait vertical ODL */
+.sidebar.main-sidebar .menu .list li .ml-menu li a::before {
+  content: none !important;
 }
 .sidebar .menu .list li .ml-menu li a:hover {
-  background-color: rgba(255, 121, 0, 0.1) !important;
+  background-color: var(--odl-sidebar-hover-bg) !important;
 }
 .sidebar .menu .list li .ml-menu li.active a {
   color: var(--odl-sidebar-active-fg) !important;
   background-color: var(--odl-sidebar-active-bg) !important;
+}
+/* Titre de groupe (header) si utilisé */
+.sidebar .menu .list .header {
+  color: var(--odl-sidebar-text) !important;
+  font-size: 0.7rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  padding: 12px 18px 6px !important;
 }
 
 /* Navbar / Header style ODL: fond blanc, pas de dégradé */
@@ -183,14 +332,29 @@ a.text-primary,
 }
 
 /* ========== Dashboard & pages (style ODL) ========== */
-/* On laisse _layout.scss gérer la largeur, ici on s'occupe du fond et de l'espacement sous la navbar */
+/* IMPORTANT: décaler le contenu à droite du sidebar pour qu'il ne soit jamais masqué */
 .main-content {
   background-color: #fafafa;
-  padding: 1.5rem;
-  padding-top: 90px; /* plus d'espace entre la navbar et les titres */
+  margin-left: var(--odl-sidebar-width) !important;
+  width: calc(100vw - var(--odl-sidebar-width)) !important;
+  max-width: calc(100vw - var(--odl-sidebar-width)) !important;
+  padding: 1.5rem !important;
+  padding-top: 90px !important;
   min-height: calc(100vh - 60px);
   overflow-x: hidden;
   box-sizing: border-box;
+}
+/* Sidebar réduite (60px) */
+body.side-closed .main-content {
+  margin-left: 60px !important;
+  width: calc(100vw - 60px) !important;
+  max-width: calc(100vw - 60px) !important;
+}
+/* Mobile : sidebar masquée */
+body.sidebar-gone .main-content {
+  margin-left: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
 }
 
 /* Breadcrumb ODL */
@@ -201,6 +365,19 @@ a.text-primary,
   margin: 0.75rem 0 1rem 0; /* petit espace sous la navbar */
   border-bottom: 1px solid var(--odl-border);
   font-size: 0.875rem;
+}
+
+/* Sous-titre de page (après le breadcrumb) */
+.odl-page-subtitle {
+  margin: 0 0 1rem 0;
+  color: var(--odl-muted);
+  font-size: 0.95rem;
+}
+
+/* Séparer visuellement les sections */
+.section-body > .card,
+.section-body > .row > [class*="col-"] > .card {
+  margin-bottom: 1rem;
 }
 .breadcrumb-item .page-title,
 .breadcrumb-style .page-title {

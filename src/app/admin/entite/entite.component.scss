@@ -1,22 +1,21 @@
 /* Cartes Entité – style ODL */
+/* Cartes Entité – style ODL, un peu moins orangé */
 .card-hover {
   border-radius: 1.25rem;
   overflow: hidden;
   cursor: pointer;
-  border: 1px solid rgba(255, 161, 23, 0.35);
-  background: radial-gradient(circle at top left, rgba(255, 161, 23, 0.14), #020617);
+  border: 1px solid #E5E5E5;
+  background: #FFFFFF;
   box-shadow:
-    0 18px 40px rgba(15, 23, 42, 0.45),
-    0 0 0 1px rgba(15, 23, 42, 0.3);
+    0 12px 30px rgba(15, 23, 42, 0.25);
   transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
 }
 
 .card-hover:hover {
-  transform: translateY(-6px) scale(1.01);
-  border-color: rgba(255, 161, 23, 0.55);
+  transform: translateY(-4px) scale(1.01);
+  border-color: rgba(0, 0, 0, 0.08);
   box-shadow:
-    0 24px 60px rgba(15, 23, 42, 0.6),
-    0 0 0 1px rgba(255, 255, 255, 0.02);
+    0 20px 45px rgba(15, 23, 42, 0.35);
 }
 
 /* Bordure uniquement sur les images des cartes (logo Divisions / DCIRE) */
@@ -27,15 +26,28 @@
 }
 
 .card-hover:hover .card-img-top {
-  transform: scale(1.04);
+  transform: scale(1.03);
 }
 
 .card-body {
   transition: background 0.3s ease, color 0.3s ease;
 }
 
-.card-hover:hover .card-body {
-  background: linear-gradient(to bottom, #020617, #0b1120);
+.entite-card-body {
+  background: #111827; /* fond sombre neutre, accent orange gardé seulement sur les icônes/compteurs */
+}
+
+.card-hover:hover .entite-card-body {
+  background: linear-gradient(to bottom, #030712, #111827);
+}
+
+/* Assombrir les images avec un overlay dédié */
+.entite-card-image-wrapper {
+  position: relative;
+}
+
+.entite-card-image-overlay {
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
 }
 
 /* Bandeau texte / compte d’activités */

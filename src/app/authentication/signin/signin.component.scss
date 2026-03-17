@@ -48,11 +48,13 @@
   margin-bottom: 1.5rem;
 }
 
+/* Logo agrandi comme ODL (bien visible en haut de la carte) */
 .signin-odl__logo {
-  height: 72px;
+  height: 120px;
   width: auto;
+  max-width: 100%;
   object-fit: contain;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .signin-odl__brand {

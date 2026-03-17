@@ -1,24 +1,22 @@
 <aside id="leftsidebar" class="sidebar main-sidebar">
 
-  <div class="menu">
+  <!-- Panneau utilisateur fixe (admin / SUPERADMIN ne disparaît pas au scroll) -->
+  <div class="sidebar-user-panel sidebar-user-panel--fixed">
+    <div class="user-panel">
+      <div class="image">
+        <img *ngIf="genre==='Homme'" src="assets/images/users/userhomme.png" class="img-circle user-img-circle" alt="User" />
+        <img *ngIf="genre==='Femme'" src="assets/images/users/userfemme.png" class="img-circle user-img-circle" alt="User" />
+      </div>
+    </div>
+    <div class="profile-usertitle">
+      <div class="sidebar-userpic-name">{{ nomComplet }}</div>
+      <div class="profile-usertitle-job">{{ useRole }}</div>
+    </div>
+  </div>
+
+  <div class="menu menu--scroll">
     <ng-scrollbar [style.height]="listMaxHeight + 'px'" visibility="hover">
-
       <ul class="list">
-
-        <!-- User panel -->
-        <li class="sidebar-user-panel">
-          <div class="user-panel">
-            <div class="image">
-              <img *ngIf="genre==='Homme'" src="assets/images/users/userhomme.png" class="img-circle user-img-circle" alt="User" />
-              <img *ngIf="genre==='Femme'" src="assets/images/users/userfemme.png" class="img-circle user-img-circle" alt="User" />
-            </div>
-          </div>
-          <div class="profile-usertitle">
-            <div class="sidebar-userpic-name">{{ nomComplet }}</div>
-            <div class="profile-usertitle-job">{{ useRole }}</div>
-          </div>
-        </li>
-
         <!-- MENU ITEMS -->
         @for(item of sidebarItems; track item) {
           <li [routerLinkActive]="item.submenu.length > 0 ? 'active' : 'active-top'">

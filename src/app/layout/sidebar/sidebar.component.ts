@@ -68,7 +68,8 @@ export class SidebarComponent implements OnInit {
   }
 
   setMenuHeight() {
-    const height = window.innerHeight - 60;
-    this.listMaxHeight = height + '';
+    const navbarHeight = 60;
+    const userPanelHeight = 140;
+    this.listMaxHeight = (window.innerHeight - navbarHeight - userPanelHeight) + '';
   }
 }

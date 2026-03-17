@@ -11,11 +11,12 @@
     <li class="breadcrumb-item">Entité DCIRE</li>
   </ul>
 
-  <div class="d-flex align-items-center gap-3 fs-5 fw-bold">
-    <div class="d-flex flex-column align-items-start">
-      <div class="px-3 py-1 bg-warning rounded-pill text-white">
-        Nos Entités
-      </div>
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <div>
+      <h4 class="mb-1 text-dark">Entités DCIRE</h4>
+      <p class="mb-0 text-muted small">
+        Divisions et services du DCIRE. Sélectionnez une entité pour voir ses activités.
+      </p>
     </div>
     <div class="header-buttons-left">
       <div class="tbl-btn-style">
@@ -26,9 +27,9 @@
     </div>
   </div>
 
-  <div class="fs-5 fw-bold text-dark mt-3 d-flex justify-content-between align-items-center">
+  <div class="fs-6 fw-semibold text-muted mt-2 d-flex justify-content-between align-items-center">
     @if (viewMode === 'directions') {
-      <span class="text-warning">Divisions</span>
+      <span>Divisions</span>
     } @else {
       <span class="text-warning">Services de : {{ selectedDirection?.nom }}</span>
       <button class="btn btn-sm bg-warning text-white border-0 px-3 py-1 rounded-pill shadow-sm d-flex align-items-center gap-2" 
@@ -49,8 +50,8 @@
         (click)="showDirectionServices(direction)"
         class="col"
       >
-        <div class="card shadow-sm border-0 cursor-pointer transition-all duration-300 scale-100 hover:scale-105 hover:shadow-lg">
-          <div class="position-relative overflow-hidden rounded-top">
+        <div class="card shadow-sm border-0 card-hover cursor-pointer">
+          <div class="position-relative overflow-hidden rounded-top entite-card-image-wrapper">
             @if (getLogoUrl(direction.logo)) {
               <img [src]="getLogoUrl(direction.logo)"
                    alt="{{ direction.nom }}"
@@ -67,9 +68,9 @@
                 </div>
               </div>
             }
-            <div class="position-absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-70"></div>
+            <div class="position-absolute inset-0 entite-card-image-overlay"></div>
           </div>
-          <div class="card-body bg-dark text-white p-3">
+          <div class="card-body entite-card-body text-white p-3">
             <h3 class="card-title fs-6 fw-bold text-white mb-2">{{ direction.nom }}</h3>
             <div class="d-flex align-items-center justify-content-between">
               <div class="d-flex align-items-center">
@@ -99,8 +100,8 @@
         (click)="viewEntiteDetails(service)"
         class="col"
       >
-        <div class="card shadow-sm border-0 cursor-pointer transition-all duration-300 scale-100 hover:scale-105 hover:shadow-lg">
-          <div class="position-relative overflow-hidden rounded-top">
+        <div class="card shadow-sm border-0 card-hover cursor-pointer">
+          <div class="position-relative overflow-hidden rounded-top entite-card-image-wrapper">
             @if (getLogoUrl(service.logo)) {
               <img [src]="getLogoUrl(service.logo)"
                    alt="{{ service.nom }}"
@@ -117,9 +118,9 @@
                 </div>
               </div>
             }
-            <div class="position-absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-70"></div>
+            <div class="position-absolute inset-0 entite-card-image-overlay"></div>
           </div>
-          <div class="card-body bg-dark text-white p-3">
+          <div class="card-body entite-card-body text-white p-3">
             <h3 class="card-title fs-6 fw-bold text-white mb-2">{{ service.nom }}</h3>
             <div class="d-flex align-items-center justify-content-between">
               <div class="d-flex align-items-center">

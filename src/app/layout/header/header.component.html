@@ -1,15 +1,7 @@
 <nav class="navbar navbar-expand-lg main-navbar sticky">
   <div class="form-inline me-auto">
     <ul class="navbar-nav msr-3">
-      <li>
-        <a
-          data-toggle="sidebar"
-          class="nav-link nav-link-lg collapse-btn"
-          (click)="mobileMenuSidebarOpen($event,'overlay-open')"
-        >
-          <i-feather name="menu"></i-feather>
-        </a>
-      </li>
+      <!-- Sidebar toujours ouvert sur desktop : on masque le bouton "3 traits" -->
       <li>
         <div class="headbar-brand">
           <a routerLink="/dashboard/main">
