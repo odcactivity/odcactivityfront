@@ -35,7 +35,8 @@ export class SidebarComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.useRole = this.authService.getCurrentUserFromStorage()?.roles || [];
+    const rawRoles = this.authService.getCurrentUserFromStorage()?.roles || [];
+    this.useRole = this.normalizeRoles(rawRoles);
 
     // Charger JSON Menu + filtrer par rôle
     this.sidebarService.getRouteInfo().subscribe(routes => {
@@ -60,7 +61,33 @@ export class SidebarComponent implements OnInit {
   }
 
   checkRoles(roles?: string[]): boolean {
-    return !roles || roles.length === 0 || roles.some(r => this.useRole.includes(r));
+    if (!roles || roles.length === 0) {
+      return true;
+    }
+    const requestedRoles = this.normalizeRoles(roles);
+    return requestedRoles.some(r => this.useRole.includes(r));
+  }
+
+  private normalizeRoles(roles: unknown): string[] {
+    const roleArray = Array.isArray(roles)
+      ? roles
+      : typeof roles === 'string'
+        ? [roles]
+        : [];
+
+    const normalized = roleArray
+      .map(r => String(r).trim().toUpperCase())
+      .filter(Boolean);
+
+    // Compatibilite entre les deux libelles utilises dans l'application.
+    if (normalized.includes('ADMIN') && !normalized.includes('SUPERADMIN')) {
+      normalized.push('SUPERADMIN');
+    }
+    if (normalized.includes('SUPERADMIN') && !normalized.includes('ADMIN')) {
+      normalized.push('ADMIN');
+    }
+
+    return [...new Set(normalized)];
   }
 
   toggle(item: any) {
