@@ -231,6 +231,16 @@ body .sidebar.main-sidebar .menu .list li:not(.active):not(.active-top) > a.menu
 .sidebar .menu .list li .ml-menu li.active a {
   color: var(--odl-sidebar-active-fg) !important;
 }
+/* Force texte + icone en blanc sur item actif */
+.sidebar .menu .list li.active > a.menu-top span,
+.sidebar .menu .list li.active-top > a.menu-top span,
+.sidebar .menu .list li.active > a.menu-top i,
+.sidebar .menu .list li.active-top > a.menu-top i,
+.sidebar .menu .list li .ml-menu li.active > a span,
+.sidebar .menu .list li .ml-menu li.active > a i {
+  color: var(--odl-sidebar-active-fg) !important;
+  fill: var(--odl-sidebar-active-fg) !important;
+}
 /* Icônes : gris inactif ; item actif = blanc sur orange (ODL) */
 body .sidebar.main-sidebar .sidebarIcon,
 body .menu_dark .sidebar .sidebarIcon {

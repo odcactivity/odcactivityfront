@@ -2,6 +2,8 @@
 /* Nouveau dashboard style ODL */
 .odl-dashboard-card {
   border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 6px rgba(17, 24, 39, 0.04);
 }
 
 .odl-dashboard-subtitle {
@@ -70,4 +72,66 @@
   font-size: 1.4rem;
   font-weight: 700;
   color: #111827;
+}
+
+.odl-graph-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.odl-period-switch {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.odl-period-switch .btn {
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #374151;
+  font-weight: 600;
+  border-radius: 8px;
+  min-width: 84px;
+}
+
+.odl-period-switch .btn.active {
+  background: #ff7900;
+  border-color: #ff7900;
+  color: #fff;
+}
+
+.odl-entity-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 1rem;
+  background: #ffffff;
+  min-height: 180px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.odl-entity-card h5 {
+  color: #111827;
+  font-weight: 700;
+}
+
+.odl-entity-card p {
+  color: #4b5563;
+  font-size: 0.92rem;
+}
+
+:host ::ng-deep .odl-tooltip {
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+@media (max-width: 768px) {
+  .odl-graph-header {
+    flex-direction: column;
+  }
 }

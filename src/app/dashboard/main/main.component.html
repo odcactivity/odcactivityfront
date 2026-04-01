@@ -101,90 +101,73 @@
       </div>
     </div>
 
-    <!-- Carte filtres de recherche -->
+    <!-- Graphe 1: répartition des activités -->
     <div class="card mb-4 odl-dashboard-card">
       <div class="card-header">
-        <h4 class="mb-1">Filtres d’analyse des activités</h4>
+        <h4 class="mb-1">Répartition des activités par statut</h4>
         <p class="odl-dashboard-subtitle mb-0">
-          Affinez les statistiques en filtrant par entité, activité, étape et période.
-        </p>
-      </div>
-      <div class="card-body">
-        <form [formGroup]="formCriteres">
-          <div class="row g-3">
-            <!-- Entité -->
-            <div class="col-md-3">
-              <label for="entite" class="form-label">Entité</label>
-              <select id="entite" class="form-select form-control" formControlName="selectedEntite" (change)="applyFilters()">
-                <option value="">Toutes les entités</option>
-                <ng-container *ngFor="let e of entites">
-                  <option [value]="e.id">{{ e.nom }}</option>
-                </ng-container>
-              </select>
-            </div>
-
-            <!-- Activité -->
-            <div class="col-md-3">
-              <label for="activite" class="form-label">Activité</label>
-              <select id="activite" class="form-select form-control" formControlName="selectedActivite" (change)="applyFilters()">
-                <option value="">Toutes les activités</option>
-                <ng-container *ngFor="let a of activites">
-                  <option [value]="a.id">{{ a.nom }}</option>
-                </ng-container>
-              </select>
-            </div>
-
-            <!-- Étapes -->
-            <div class="col-md-3">
-              <label for="etape" class="form-label">Étapes</label>
-              <select id="etape" class="form-select form-control" formControlName="selectedEtape" (change)="applyFilters()">
-                <option value="">Toutes les étapes</option>
-                <ng-container *ngFor="let e of etapes">
-                  <option [value]="e.id">{{ e.nom }}</option>
-                </ng-container>
-              </select>
-            </div>
-
-            <!-- Date début -->
-            <div class="col-md-3">
-              <label class="form-label">Date début</label>
-              <input type="date" class="form-control" formControlName="dateDebut" (change)="applyFilters()" />
-            </div>
-
-            <!-- Date fin -->
-            <div class="col-md-3">
-              <label class="form-label">Date fin</label>
-              <input type="date" class="form-control" formControlName="dateFin" (change)="applyFilters()" />
-            </div>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <!-- Carte statistique des participants -->
-    <div class="card odl-dashboard-card">
-      <div class="card-header">
-        <h4 class="mb-1">Statistique des participants</h4>
-        <p class="odl-dashboard-subtitle mb-0">
-          Répartition des participants selon les filtres sélectionnés.
+          Activités en cours, terminées et en attente.
         </p>
       </div>
       <div class="card-body">
         <div class="row">
-          <div class="col-md-12 col-lg-8 col-xl-8">
+          <div class="col-12 col-lg-8">
             <apx-chart
-              [series]="barChartOptions.series!"
-              [chart]="barChartOptions.chart!"
-              [dataLabels]="barChartOptions.dataLabels!"
-              [stroke]="barChartOptions.stroke!"
-              [colors]="barChartOptions.colors!"
-              [title]="barChartOptions.title!"
-              [grid]="barChartOptions.grid!"
-              [tooltip]="barChartOptions.tooltip!"
-              [plotOptions]="barChartOptions.plotOptions!"
-              [yaxis]="barChartOptions.yaxis!"
-              [xaxis]="barChartOptions.xaxis!"
+              [series]="statusChartOptions.series"
+              [chart]="statusChartOptions.chart"
+              [labels]="statusChartOptions.labels"
+              [colors]="statusChartOptions.colors"
+              [legend]="statusChartOptions.legend"
+              [dataLabels]="statusChartOptions.dataLabels"
+              [tooltip]="statusChartOptions.tooltip"
             ></apx-chart>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Graphe 2: activité globale par entité -->
+    <div class="card odl-dashboard-card">
+      <div class="card-header">
+        <div class="odl-graph-header">
+          <div>
+            <h4 class="mb-1">Activité globale par entité</h4>
+            <p class="odl-dashboard-subtitle mb-0">
+              Entités suivies: Kalanso, Multimedia, Orange Fab, FabLab.
+            </p>
+          </div>
+          <div class="odl-period-switch">
+            <button class="btn btn-light" [class.active]="selectedPeriod === 'semaine'" (click)="setPeriod('semaine')">Semaine</button>
+            <button class="btn btn-light" [class.active]="selectedPeriod === 'mois'" (click)="setPeriod('mois')">Mois</button>
+            <button class="btn btn-light" [class.active]="selectedPeriod === 'annee'" (click)="setPeriod('annee')">Année</button>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-12 col-lg-8">
+            <apx-chart
+              [series]="entityChartOptions.series"
+              [chart]="entityChartOptions.chart"
+              [dataLabels]="entityChartOptions.dataLabels"
+              [stroke]="entityChartOptions.stroke"
+              [colors]="entityChartOptions.colors"
+              [grid]="entityChartOptions.grid"
+              [tooltip]="entityChartOptions.tooltip"
+              [fill]="entityChartOptions.fill"
+              [markers]="entityChartOptions.markers"
+              [yaxis]="entityChartOptions.yaxis"
+              [xaxis]="entityChartOptions.xaxis"
+            ></apx-chart>
+          </div>
+          <div class="col-md-12 col-lg-4">
+            <div class="odl-entity-card" *ngIf="selectedEntityCard as details">
+              <h5 class="mb-2">{{ details.entite }}</h5>
+              <p class="mb-1"><strong>Titre Activité:</strong> {{ details.titres.length ? details.titres.join(', ') : 'Aucune activité' }}</p>
+              <p class="mb-1"><strong>Nombre d'Homme:</strong> {{ details.hommes }}</p>
+              <p class="mb-1"><strong>Nombre de Femme:</strong> {{ details.femmes }}</p>
+              <p class="mb-0"><strong>Total inscrit:</strong> {{ details.total }}</p>
+            </div>
           </div>
         </div>
       </div>
