@@ -3,45 +3,88 @@ import { NgApexchartsModule } from 'ng-apexcharts';
 import { RouterLink } from '@angular/router';
 import { GlobalService } from '@core/service/global.service';
 import { Participant } from '@core/models/Participant';
-import { NgIf } from '@angular/common';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Activity } from '@core/models/Activity';
+import { Entite } from '@core/models/Entite';
 
-type PeriodType = 'semaine' | 'mois' | 'annee';
+type PeriodKey = 'semaine' | 'mois' | 'annee';
 
-interface EntityActivityStat {
-  entite: string;
+interface EntitySlot {
+  labelShort: string;
+  labelFull: string;
+}
+
+interface ActivityBreakdownRow {
+  titre: string;
+  hommes: number;
+  femmes: number;
+  total: number;
+}
+
+interface CellStat {
+  entiteShort: string;
+  entiteFull: string;
+  bucketLabel: string;
   total: number;
   hommes: number;
   femmes: number;
   titres: string[];
+  /** Détail par activité (stats globales sur la période / créneau) */
+  breakdown: ActivityBreakdownRow[];
 }
+
 @Component({
   selector: 'app-main',
   templateUrl: './main.component.html',
   styleUrls: ['./main.component.scss'],
-  imports: [
-    RouterLink,
-    NgApexchartsModule,
-    NgIf
-  ]
+  imports: [RouterLink, NgApexchartsModule]
 })
 export class MainComponent implements OnInit {
   public statusChartOptions: any;
   public entityChartOptions: any;
+
   nombreUtilisateurs: number | undefined;
   nombreActivite: number = 0;
   nombreActiviteEncours: number = 0;
   nombreActiviteEnAttente: number = 0;
   nombreActiviteTerminer: number = 0;
-  selectedPeriod: PeriodType = 'annee';
-  readonly targetEntities = ['Kalanso', 'Multimedia', 'Orange Fab', 'FabLab'];
+
+  /** Vue temps : Semaine = jours lun–dim, Mois = jours 1–n, Année = mois janv.–déc. */
+  selectedPeriod: PeriodKey = 'semaine';
+
+  readonly entitySlots: EntitySlot[] = [
+    { labelShort: 'Kalanso', labelFull: 'Orange Digital Kalanso' },
+    { labelShort: 'FabLab', labelFull: 'Orange FabLab' },
+    { labelShort: 'Orange Fab', labelFull: 'Orange Fab' },
+    { labelShort: 'Multimedia', labelFull: 'Multimedia' }
+  ];
+
+  private static readonly WEEKDAY_LABELS = ['lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.', 'dim.'];
+
+  private static readonly MONTH_LABELS = [
+    'janv.',
+    'févr.',
+    'mars',
+    'avr.',
+    'mai',
+    'juin',
+    'juil.',
+    'août',
+    'sept.',
+    'oct.',
+    'nov.',
+    'déc.'
+  ];
+
+  /** [entityIndex][xBucketIndex] — rempli selon selectedPeriod */
+  private cellStats: CellStat[][] = [];
+
   allActivities: Activity[] = [];
-  allParticipants: Participant[] = [];
   safeParticipants: Participant[] = [];
-  entityActivityStats: EntityActivityStat[] = [];
-  selectedEntityCard: EntityActivityStat | null = null;
+  private entiteById = new Map<number, Entite>();
+  /** id entité API → index 0..3 (prioritaire sur le matching par nom) */
+  private entiteIdToSlot = new Map<number, number>();
 
   constructor(private globalService: GlobalService) {}
 
@@ -55,54 +98,78 @@ export class MainComponent implements OnInit {
     this.loadDashboardData();
   }
 
+  setPeriod(period: PeriodKey): void {
+    this.selectedPeriod = period;
+    this.buildEntityChart();
+  }
+
+  private escapeHtml(s: string): string {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
   getNombreUitlisateur() {
     this.globalService.get('utilisateur/nombre').subscribe({
-      next: (count) => this.nombreUtilisateurs = count,
-      error: err => console.log(err),
+      next: (count) => (this.nombreUtilisateurs = count),
+      error: (err) => console.log(err)
     });
   }
 
   getNombreActivite() {
     this.globalService.get('activite/nombre').subscribe({
-      next: (count) => this.nombreActivite = count,
-      error: err => console.log(err),
+      next: (count) => (this.nombreActivite = count),
+      error: (err) => console.log(err)
     });
   }
 
   getNombreActiviteEncours() {
     this.globalService.get('activite/nombreActivitesEncours').subscribe({
-      next: (count) => this.nombreActiviteEncours = count,
-      error: err => console.log(err),
+      next: (count) => (this.nombreActiviteEncours = count),
+      error: (err) => console.log(err)
     });
   }
 
   getNombreActiviteEnAttente() {
     this.globalService.get('activite/nombreActivitesEnAttente').subscribe({
-      next: (count) => this.nombreActiviteEnAttente = count,
-      error: err => console.log(err),
+      next: (count) => (this.nombreActiviteEnAttente = count),
+      error: (err) => console.log(err)
     });
   }
 
   getNombreActiviteTerminer() {
     this.globalService.get('activite/nombreActivitesTerminer').subscribe({
-      next: (count) => this.nombreActiviteTerminer = count,
-      error: err => console.log(err),
+      next: (count) => (this.nombreActiviteTerminer = count),
+      error: (err) => console.log(err)
     });
-  }
-
-  setPeriod(period: PeriodType): void {
-    this.selectedPeriod = period;
-    this.buildEntityChart();
   }
 
   private loadDashboardData(): void {
     forkJoin({
       activities: this.globalService.get('activite').pipe(catchError(() => of([]))),
       participants: this.globalService.get('participant').pipe(catchError(() => of([]))),
+      entites: this.globalService.get('entite').pipe(catchError(() => of([]))),
       blacklist: this.globalService.get('blacklist').pipe(catchError(() => of([])))
-    }).subscribe(({ activities, participants, blacklist }: any) => {
+    }).subscribe(({ activities, participants, entites, blacklist }: any) => {
       this.allActivities = Array.isArray(activities) ? activities : [];
-      this.allParticipants = Array.isArray(participants) ? participants : [];
+      const allParticipants = Array.isArray(participants) ? participants : [];
+      const entiteList: Entite[] = Array.isArray(entites) ? entites : [];
+      this.entiteById = new Map(
+        entiteList.filter((e) => e.id != null).map((e) => [e.id as number, e])
+      );
+
+      this.entiteIdToSlot = new Map();
+      for (const e of entiteList) {
+        if (e.id == null) {
+          continue;
+        }
+        const slot = this.matchEntitySlotFromNom(e.nom);
+        if (slot >= 0) {
+          this.entiteIdToSlot.set(e.id, slot);
+        }
+      }
 
       const blacklistedEmails = new Set(
         (Array.isArray(blacklist) ? blacklist : [])
@@ -110,8 +177,8 @@ export class MainComponent implements OnInit {
           .filter(Boolean)
       );
 
-      this.safeParticipants = this.allParticipants.filter(
-        p => !blacklistedEmails.has(String(p.email || '').toLowerCase())
+      this.safeParticipants = allParticipants.filter(
+        (p) => !blacklistedEmails.has(String(p.email || '').toLowerCase())
       );
 
       this.buildStatusChart();
@@ -125,36 +192,50 @@ export class MainComponent implements OnInit {
       chart: { type: 'pie', height: 360, toolbar: { show: false } },
       labels: ['En cours', 'Terminées', 'En attente'],
       colors: ['#1E88E5', '#14B8A6', '#F5B427'],
+      plotOptions: {
+        pie: {
+          offsetY: 6,
+          dataLabels: { offset: 20 }
+        }
+      },
       legend: {
         position: 'bottom',
         horizontalAlign: 'center',
-        fontSize: '16px',
+        fontSize: '14px',
         labels: { colors: '#1f2937' },
         markers: { width: 10, height: 10, radius: 12 }
       },
       dataLabels: {
         enabled: true,
-        formatter: (value: number) => `${Math.round(value)}%`,
-        style: { fontSize: '16px', fontWeight: '500' }
+        formatter: (value: number, opts: any) => {
+          const label = opts?.w?.globals?.labels?.[opts.seriesIndex] ?? '';
+          return `${label.toUpperCase()} ${Math.round(value)}%`;
+        },
+        style: { fontSize: '14px', fontWeight: '500' }
       },
       stroke: { width: 1, colors: ['#ffffff'] }
     };
 
+    const xLen = 7;
     this.entityChartOptions = {
-      series: [{ name: 'Total inscrits', data: [0, 0, 0, 0] }],
-      chart: { type: 'area', height: 320, toolbar: { show: false } },
-      xaxis: { categories: this.targetEntities },
-      yaxis: { title: { text: 'Nombre d’inscrits' }, min: 0 },
-      stroke: { curve: 'smooth', width: 3 },
-      markers: { size: 5 },
-      colors: ['#9CA3AF']
+      series: this.entitySlots.map((s) => ({ name: s.labelShort, data: new Array(xLen).fill(0) })),
+      chart: { type: 'area', height: 360, toolbar: { show: false } },
+      xaxis: { categories: MainComponent.WEEKDAY_LABELS },
+      yaxis: { min: 0, title: { text: "Nombre d'inscrits" } },
+      stroke: { curve: 'smooth', width: 2 },
+      fill: { type: 'gradient', gradient: { opacityFrom: 0.35, opacityTo: 0.05 } },
+      colors: ['#3B82F6', '#14B8A6', '#F59E0B', '#8B5CF6'],
+      dataLabels: { enabled: false },
+      legend: { position: 'top', horizontalAlign: 'right', fontSize: '13px' },
+      grid: { borderColor: '#e5e7eb', strokeDashArray: 3 },
+      markers: { size: 4, strokeWidth: 2, hover: { size: 6 } }
     };
   }
 
   private buildStatusChart(): void {
-    const inProgress = this.allActivities.filter(a => this.resolveStatus(a) === 'encours').length;
-    const done = this.allActivities.filter(a => this.resolveStatus(a) === 'terminee').length;
-    const waiting = this.allActivities.filter(a => this.resolveStatus(a) === 'attente').length;
+    const inProgress = this.allActivities.filter((a) => this.resolveStatus(a) === 'encours').length;
+    const done = this.allActivities.filter((a) => this.resolveStatus(a) === 'terminee').length;
+    const waiting = this.allActivities.filter((a) => this.resolveStatus(a) === 'attente').length;
 
     this.statusChartOptions = {
       ...this.statusChartOptions,
@@ -168,136 +249,354 @@ export class MainComponent implements OnInit {
   }
 
   private buildEntityChart(): void {
-    const filteredActivities = this.filterActivitiesByPeriod(this.selectedPeriod);
+    const { categories, activityInBucket } = this.buildTimeBuckets(this.selectedPeriod);
+    const nEnt = this.entitySlots.length;
+    const nX = categories.length;
 
-    this.entityActivityStats = this.targetEntities.map((entityName) => {
-      const entityActivities = filteredActivities.filter(a =>
-        this.normalizeValue(a.entite?.nom) === this.normalizeValue(entityName)
-      );
-      const entityActivityIds = new Set(entityActivities.map(a => a.id));
-      const participants = this.safeParticipants.filter(p => entityActivityIds.has(p.activite?.id));
-      const hommes = participants.filter(p => this.normalizeValue(p.genre) === 'HOMME').length;
-      const femmes = participants.filter(p => this.normalizeValue(p.genre) === 'FEMME').length;
-      const titres = [...new Set(entityActivities.map(a => a.titre || a.nom).filter(Boolean))] as string[];
+    this.cellStats = Array.from({ length: nEnt }, (_, ei) =>
+      Array.from({ length: nX }, (_, xi) => this.emptyStat(ei, categories[xi]))
+    );
 
-      return {
-        entite: entityName,
-        total: participants.length,
-        hommes,
-        femmes,
-        titres
-      };
-    });
+    for (let ei = 0; ei < nEnt; ei++) {
+      for (let xi = 0; xi < nX; xi++) {
+        this.cellStats[ei][xi] = this.aggregateBucket(ei, activityInBucket[xi], categories[xi]);
+      }
+    }
+
+    const series = this.entitySlots.map((slot, ei) => ({
+      name: slot.labelShort,
+      data: categories.map((_, xi) => this.cellStats[ei][xi].total)
+    }));
 
     const that = this;
     this.entityChartOptions = {
-      series: [{
-        name: 'Total inscrits',
-        data: this.entityActivityStats.map(stat => stat.total)
-      }],
+      series,
       chart: {
         type: 'area',
-        height: 320,
-        toolbar: { show: false },
-        events: {
-          dataPointMouseEnter: function (_: any, __: any, config: any) {
-            that.selectEntityFromChart(config.dataPointIndex);
-          },
-          dataPointSelection: function (_: any, __: any, config: any) {
-            that.selectEntityFromChart(config.dataPointIndex);
-          }
-        }
+        height: 380,
+        toolbar: { show: false }
       },
       xaxis: {
-        categories: this.targetEntities,
-        labels: { style: { fontSize: '14px', colors: '#6b7280' } }
+        categories,
+        labels: {
+          style: { fontSize: this.selectedPeriod === 'mois' ? '10px' : '12px', colors: '#6b7280' },
+          rotate: this.selectedPeriod === 'mois' ? -45 : 0,
+          rotateAlways: this.selectedPeriod === 'mois',
+          hideOverlappingLabels: false
+        }
       },
       yaxis: {
         min: 0,
-        title: { text: 'Nombre d’inscrits' },
+        tickAmount: undefined,
+        decimalsInFloat: 0,
+        title: { text: "Nombre d'inscrits", style: { color: '#6b7280', fontSize: '12px' } },
         labels: { style: { colors: '#6b7280' } }
       },
-      stroke: { curve: 'smooth', width: 3, colors: ['#d1d5db'] },
+      stroke: { curve: 'smooth', width: 2 },
       fill: {
         type: 'gradient',
-        gradient: { opacityFrom: 0.6, opacityTo: 0.08 }
+        gradient: { opacityFrom: 0.4, opacityTo: 0.06 }
       },
+      colors: ['#3B82F6', '#14B8A6', '#F59E0B', '#8B5CF6'],
+      dataLabels: { enabled: false },
+      legend: { position: 'top', horizontalAlign: 'right', fontSize: '13px' },
+      grid: { borderColor: '#e5e7eb', strokeDashArray: 3 },
       markers: {
-        size: 5,
-        colors: ['#111827'],
-        strokeColors: '#ffffff',
+        size: 4,
         strokeWidth: 2,
-        hover: { size: 7 }
+        strokeColors: '#fff',
+        hover: { size: 6 }
       },
-      grid: {
-        borderColor: '#e5e7eb',
-        strokeDashArray: 3
-      },
-      colors: ['#d1d5db'],
       tooltip: {
-        custom: ({ dataPointIndex }: { dataPointIndex: number }) => {
-          const stat = this.entityActivityStats[dataPointIndex];
+        custom: ({
+          seriesIndex,
+          dataPointIndex
+        }: {
+          seriesIndex: number;
+          dataPointIndex: number;
+        }) => {
+          const stat = that.cellStats[seriesIndex]?.[dataPointIndex];
           if (!stat) {
             return '';
           }
-          const titres = stat.titres.length > 0 ? stat.titres.join(', ') : 'Aucune activité';
+          const lines =
+            stat.breakdown.length > 0
+              ? stat.breakdown
+                  .map(
+                    (row) =>
+                      `<div class="odl-tooltip-row"><span class="odl-tooltip-titre">${that.escapeHtml(row.titre)}</span> — H: ${row.hommes}, F: ${row.femmes}, Total: ${row.total}</div>`
+                  )
+                  .join('')
+              : '<div class="odl-tooltip-row">Aucune activité sur ce créneau pour cette entité.</div>';
           return `<div class="odl-tooltip">
-            <div><strong>${stat.entite}</strong></div>
-            <div>Titre Activité: ${titres}</div>
-            <div>Nombre d'Homme: ${stat.hommes}</div>
-            <div>Nombre de Femme: ${stat.femmes}</div>
-            <div>Total inscrit: ${stat.total}</div>
+            <div class="odl-tooltip-head"><strong>${stat.entiteFull}</strong> · ${stat.bucketLabel}</div>
+            <div class="odl-tooltip-sub">Total inscrits (entité) : ${stat.total} — H: ${stat.hommes}, F: ${stat.femmes}</div>
+            <div class="odl-tooltip-list">${lines}</div>
           </div>`;
         }
       }
     };
-
-    this.selectedEntityCard = this.entityActivityStats[0] || null;
   }
 
-  private selectEntityFromChart(index: number): void {
-    this.selectedEntityCard = this.entityActivityStats[index] || null;
+  private buildTimeBuckets(period: PeriodKey): {
+    categories: string[];
+    activityInBucket: ((a: Activity) => boolean)[];
+  } {
+    const now = new Date();
+
+    if (period === 'semaine') {
+      const start = this.startOfWeekMonday(now);
+      const activityInBucket: ((a: Activity) => boolean)[] = [];
+      for (let i = 0; i < 7; i++) {
+        const day = new Date(start);
+        day.setDate(start.getDate() + i);
+        activityInBucket.push((a) => this.activityOverlapsCalendarDay(a, day));
+      }
+      return { categories: [...MainComponent.WEEKDAY_LABELS], activityInBucket };
+    }
+
+    if (period === 'mois') {
+      const y = now.getFullYear();
+      const m = now.getMonth();
+      const lastDay = new Date(y, m + 1, 0).getDate();
+      const categories: string[] = [];
+      const activityInBucket: ((a: Activity) => boolean)[] = [];
+      for (let day = 1; day <= lastDay; day++) {
+        categories.push(String(day));
+        const d = new Date(y, m, day);
+        activityInBucket.push((a) => this.activityOverlapsCalendarDay(a, d));
+      }
+      return { categories, activityInBucket };
+    }
+
+    const y = now.getFullYear();
+    const categories = [...MainComponent.MONTH_LABELS];
+    const activityInBucket: ((a: Activity) => boolean)[] = [];
+    for (let month = 0; month < 12; month++) {
+      activityInBucket.push((a) => this.activityOverlapsMonth(a, y, month));
+    }
+    return { categories, activityInBucket };
   }
 
-  private filterActivitiesByPeriod(period: PeriodType): Activity[] {
-    const today = new Date();
+  private startOfWeekMonday(ref: Date): Date {
+    const d = new Date(ref);
+    d.setHours(0, 0, 0, 0);
+    const day = (d.getDay() + 6) % 7;
+    d.setDate(d.getDate() - day);
+    return d;
+  }
 
-    return this.allActivities.filter(activity => {
-      const rawDate = activity.dateDebut || activity.dateFin;
-      if (!rawDate) {
-        return false;
-      }
+  /** Plage temporelle de l’activité (début → fin ; si pas de début, seule la date de fin). */
+  private activityDateRange(a: Activity): { start: Date; end: Date } | null {
+    const startRaw = a.dateDebut ?? a.dateFin;
+    if (!startRaw) {
+      return null;
+    }
+    const start = new Date(startRaw);
+    if (Number.isNaN(start.getTime())) {
+      return null;
+    }
+    const endRaw = a.dateFin ? new Date(a.dateFin) : new Date(start);
+    if (Number.isNaN(endRaw.getTime())) {
+      return null;
+    }
+    const s = new Date(start);
+    s.setHours(0, 0, 0, 0);
+    const e = new Date(endRaw);
+    e.setHours(23, 59, 59, 999);
+    if (e < s) {
+      return { start: s, end: s };
+    }
+    return { start: s, end: e };
+  }
 
-      const activityDate = new Date(rawDate);
-      if (Number.isNaN(activityDate.getTime())) {
-        return false;
-      }
+  /** L’activité a au moins un jour en commun avec le jour calendaire `day`. */
+  private activityOverlapsCalendarDay(a: Activity, day: Date): boolean {
+    const r = this.activityDateRange(a);
+    if (!r) {
+      return false;
+    }
+    const d0 = new Date(day);
+    d0.setHours(0, 0, 0, 0);
+    const d1 = new Date(day);
+    d1.setHours(23, 59, 59, 999);
+    return r.start <= d1 && r.end >= d0;
+  }
 
-      if (period === 'annee') {
-        return activityDate.getFullYear() === today.getFullYear();
-      }
-      if (period === 'mois') {
-        return activityDate.getFullYear() === today.getFullYear()
-          && activityDate.getMonth() === today.getMonth();
-      }
+  private activityOverlapsMonth(a: Activity, year: number, month: number): boolean {
+    const r = this.activityDateRange(a);
+    if (!r) {
+      return false;
+    }
+    const m0 = new Date(year, month, 1, 0, 0, 0, 0);
+    const m1 = new Date(year, month + 1, 0, 23, 59, 59, 999);
+    return r.start <= m1 && r.end >= m0;
+  }
 
-      return this.isSameWeek(activityDate, today);
+  private emptyStat(entityIndex: number, bucketLabel: string): CellStat {
+    const slot = this.entitySlots[entityIndex] ?? this.entitySlots[0];
+    return {
+      entiteShort: slot.labelShort,
+      entiteFull: slot.labelFull,
+      bucketLabel,
+      total: 0,
+      hommes: 0,
+      femmes: 0,
+      titres: [],
+      breakdown: []
+    };
+  }
+
+  private aggregateBucket(
+    entityIndex: number,
+    activityMatchesBucket: (a: Activity) => boolean,
+    bucketLabel: string
+  ): CellStat {
+    const slot = this.entitySlots[entityIndex];
+
+    const actsInBucket = this.allActivities.filter(
+      (a) => this.activityEntityIndex(a) === entityIndex && activityMatchesBucket(a)
+    );
+
+    const activityIds = new Set(
+      actsInBucket.map((a) => a.id).filter((id): id is number => id != null)
+    );
+
+    const participantsForActs = this.safeParticipants.filter((p) => {
+      const act = this.resolveActivityForParticipant(p);
+      const pid = act?.id;
+      return pid != null && activityIds.has(pid);
     });
+
+    const hommes = participantsForActs.filter(
+      (p) => this.normalizeGenre(p.genre) === 'HOMME'
+    ).length;
+    const femmes = participantsForActs.filter(
+      (p) => this.normalizeGenre(p.genre) === 'FEMME'
+    ).length;
+
+    const breakdown: ActivityBreakdownRow[] = [];
+    for (const act of actsInBucket) {
+      if (act.id == null) {
+        continue;
+      }
+      const titre = String(act.titre || act.nom || 'Activité sans titre');
+      const parts = participantsForActs.filter((p) => this.resolveActivityForParticipant(p)?.id === act.id);
+      const h = parts.filter((p) => this.normalizeGenre(p.genre) === 'HOMME').length;
+      const f = parts.filter((p) => this.normalizeGenre(p.genre) === 'FEMME').length;
+      breakdown.push({ titre, hommes: h, femmes: f, total: parts.length });
+    }
+
+    breakdown.sort((a, b) => b.total - a.total);
+
+    const titres = breakdown.map((b) => b.titre);
+
+    return {
+      entiteShort: slot.labelShort,
+      entiteFull: slot.labelFull,
+      bucketLabel,
+      total: participantsForActs.length,
+      hommes,
+      femmes,
+      titres,
+      breakdown
+    };
   }
 
-  private isSameWeek(date: Date, reference: Date): boolean {
-    const ref = new Date(reference);
-    ref.setHours(0, 0, 0, 0);
-    const day = (ref.getDay() + 6) % 7;
-    const start = new Date(ref);
-    start.setDate(ref.getDate() - day);
-    const end = new Date(start);
-    end.setDate(start.getDate() + 6);
-    return date >= start && date <= end;
+  private activityEntityIndex(activity: Activity): number {
+    const e = activity.entite as Entite | number | undefined | null;
+    let entiteId: number | undefined;
+    if (typeof e === 'number') {
+      entiteId = e;
+    } else if (e && typeof e === 'object' && e.id != null) {
+      entiteId = e.id;
+    }
+    if (entiteId != null && this.entiteIdToSlot.has(entiteId)) {
+      return this.entiteIdToSlot.get(entiteId)!;
+    }
+    return this.matchEntitySlotFromNom(this.resolveEntiteNom(activity));
+  }
+
+  /** Activité complète (fusion liste `activite` si l’API ne renvoie qu’un id sur le participant). */
+  private resolveActivityForParticipant(p: Participant): Activity | null {
+    const raw = p.activite as Activity | undefined;
+    if (!raw) {
+      return null;
+    }
+    const id = raw.id;
+    if (id != null) {
+      const full = this.allActivities.find((a) => a.id === id);
+      if (full) {
+        return { ...raw, ...full };
+      }
+    }
+    return raw;
+  }
+
+  private resolveEntiteNom(activity: Activity): string {
+    const e = activity.entite as Entite | number | undefined | null;
+    if (e == null) {
+      return '';
+    }
+    if (typeof e === 'number') {
+      return this.entiteById.get(e)?.nom ?? '';
+    }
+    if (typeof e === 'object') {
+      if (e.nom) {
+        return e.nom;
+      }
+      if (e.id != null) {
+        return this.entiteById.get(e.id)?.nom ?? '';
+      }
+    }
+    return '';
+  }
+
+  /**
+   * 0 Kalanso, 1 FabLab, 2 Orange Fab, 3 Multimedia.
+   * FabLab est toujours testé avant Orange Fab (même chaîne « Orange FabLab »).
+   */
+  private matchEntitySlotFromNom(nom: string | undefined): number {
+    const raw = String(nom || '').trim();
+    if (!raw) {
+      return -1;
+    }
+    const n = raw.replace(/\s+/g, ' ');
+    const up = n.toUpperCase().replace(/\s+/g, '');
+
+    if (/\bFAB[\s-]*LAB\b/i.test(n) || up.includes('FABLAB') || /\bFABLAB\b/i.test(n)) {
+      return 1;
+    }
+
+    if (up.includes('KALANSO') || (n.toUpperCase().includes('ORANGE') && n.toUpperCase().includes('DIGITAL'))) {
+      return 0;
+    }
+
+    if (up.includes('MULTIMEDIA') || n.toUpperCase().includes('MULTIMÉDIA')) {
+      return 3;
+    }
+
+    if (/\bORANGE\s+FAB\b/i.test(n)) {
+      const idx = n.toUpperCase().search(/\bORANGE\s+FAB\b/);
+      if (idx >= 0) {
+        const after = n.slice(idx + 'ORANGE FAB'.length).trim();
+        if (!/^LAB\b/i.test(after)) {
+          return 2;
+        }
+      }
+    }
+
+    if (/\bFAB\b/i.test(n) && !/\bFAB[\s-]*LAB\b/i.test(n) && !up.includes('FABLAB')) {
+      return 2;
+    }
+
+    return -1;
   }
 
   private resolveStatus(activity: Activity): 'encours' | 'terminee' | 'attente' {
-    const status = this.normalizeValue(activity.statut);
+    const status = String(activity.statut || '')
+      .trim()
+      .toUpperCase();
     if (status.includes('COURS')) {
       return 'encours';
     }
@@ -307,7 +606,16 @@ export class MainComponent implements OnInit {
     return 'attente';
   }
 
-  private normalizeValue(value: unknown): string {
-    return String(value || '').trim().toUpperCase();
+  private normalizeGenre(genre: string | undefined): string {
+    const g = String(genre || '')
+      .trim()
+      .toUpperCase();
+    if (g === 'H' || g.startsWith('HOM')) {
+      return 'HOMME';
+    }
+    if (g === 'F' || g.startsWith('FEM')) {
+      return 'FEMME';
+    }
+    return g;
   }
 }

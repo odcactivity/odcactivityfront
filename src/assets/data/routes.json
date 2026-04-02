@@ -8,7 +8,7 @@
       "class": "",
       "groupTitle": false,
       "submenu": [],
-      "roles": ["PERSONNEL", "SUPERADMIN"]
+      "roles": ["PERSONNEL", "SUPERADMIN", "DIRECTEUR"]
     },
     {
       "path": "/entite",
@@ -20,7 +20,7 @@
       "badge": "",
       "badgeClass": "",
       "submenu": [],
-      "roles": ["SUPERADMIN"]
+      "roles": ["DIRECTEUR"]
     },
     {
       "path": "/utilisateur",
@@ -59,7 +59,7 @@
       "class": "",
       "groupTitle": false,
       "submenu": [],
-      "roles": ["PERSONNEL", "SUPERADMIN"]
+      "roles": ["PERSONNEL", "SUPERADMIN", "DIRECTEUR"]
     },
     {
       "path": "",

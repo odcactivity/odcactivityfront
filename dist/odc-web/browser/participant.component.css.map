@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/personnels/participant/participant.component.scss"],
+  "sourcesContent": [".blacklisted {\r\n  background-color: #ffdddd !important; /* Rouge clair */\r\n  color: #b30000 !important; /* Rouge foncé pour le texte */\r\n  font-weight: bold;\r\n}\r\n"],
+  "mappings": ";;;AAAA,CAAA;AACE,oBAAA;AACA,SAAA;AACA,eAAA;;",
+  "names": []
+}

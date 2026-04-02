@@ -110,64 +110,58 @@
         </p>
       </div>
       <div class="card-body">
-        <div class="row">
-          <div class="col-12 col-lg-8">
+        <div class="row justify-content-center">
+          <div class="col-12 col-xl-10">
             <apx-chart
               [series]="statusChartOptions.series"
               [chart]="statusChartOptions.chart"
               [labels]="statusChartOptions.labels"
               [colors]="statusChartOptions.colors"
               [legend]="statusChartOptions.legend"
+              [plotOptions]="statusChartOptions.plotOptions"
               [dataLabels]="statusChartOptions.dataLabels"
               [tooltip]="statusChartOptions.tooltip"
+              [stroke]="statusChartOptions.stroke"
             ></apx-chart>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Graphe 2: activité globale par entité -->
+    <!-- Graphe 2: statistique globale des activités dans le temps — une courbe par entité -->
     <div class="card odl-dashboard-card">
       <div class="card-header">
         <div class="odl-graph-header">
           <div>
-            <h4 class="mb-1">Activité globale par entité</h4>
+            <h4 class="mb-1">Statistique globale des activités</h4>
             <p class="odl-dashboard-subtitle mb-0">
-              Entités suivies: Kalanso, Multimedia, Orange Fab, FabLab.
+              Suivez votre évolution dans le temps — survolez le graphe pour le détail par entité et par activité.
             </p>
           </div>
           <div class="odl-period-switch">
-            <button class="btn btn-light" [class.active]="selectedPeriod === 'semaine'" (click)="setPeriod('semaine')">Semaine</button>
-            <button class="btn btn-light" [class.active]="selectedPeriod === 'mois'" (click)="setPeriod('mois')">Mois</button>
-            <button class="btn btn-light" [class.active]="selectedPeriod === 'annee'" (click)="setPeriod('annee')">Année</button>
+            <button type="button" class="btn btn-light" [class.active]="selectedPeriod === 'semaine'" (click)="setPeriod('semaine')">Semaine</button>
+            <button type="button" class="btn btn-light" [class.active]="selectedPeriod === 'mois'" (click)="setPeriod('mois')">Mois</button>
+            <button type="button" class="btn btn-light" [class.active]="selectedPeriod === 'annee'" (click)="setPeriod('annee')">Année</button>
           </div>
         </div>
       </div>
       <div class="card-body">
-        <div class="row g-3">
-          <div class="col-md-12 col-lg-8">
+        <div class="row">
+          <div class="col-12">
             <apx-chart
               [series]="entityChartOptions.series"
               [chart]="entityChartOptions.chart"
               [dataLabels]="entityChartOptions.dataLabels"
               [stroke]="entityChartOptions.stroke"
+              [fill]="entityChartOptions.fill"
+              [markers]="entityChartOptions.markers"
               [colors]="entityChartOptions.colors"
               [grid]="entityChartOptions.grid"
               [tooltip]="entityChartOptions.tooltip"
-              [fill]="entityChartOptions.fill"
-              [markers]="entityChartOptions.markers"
+              [legend]="entityChartOptions.legend"
               [yaxis]="entityChartOptions.yaxis"
               [xaxis]="entityChartOptions.xaxis"
             ></apx-chart>
-          </div>
-          <div class="col-md-12 col-lg-4">
-            <div class="odl-entity-card" *ngIf="selectedEntityCard as details">
-              <h5 class="mb-2">{{ details.entite }}</h5>
-              <p class="mb-1"><strong>Titre Activité:</strong> {{ details.titres.length ? details.titres.join(', ') : 'Aucune activité' }}</p>
-              <p class="mb-1"><strong>Nombre d'Homme:</strong> {{ details.hommes }}</p>
-              <p class="mb-1"><strong>Nombre de Femme:</strong> {{ details.femmes }}</p>
-              <p class="mb-0"><strong>Total inscrit:</strong> {{ details.total }}</p>
-            </div>
           </div>
         </div>
       </div>

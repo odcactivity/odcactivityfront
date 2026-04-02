@@ -207,29 +207,53 @@ button.btn-icon.bg-warning {
 .sidebar.main-sidebar .menu .list li.active-top .menu-top .chevron {
   color: var(--odl-sidebar-active-fg) !important;
 }
-/* Textes sidebar : gris (inactif), blanc (actif, comme image ODL) */
-body .sidebar.main-sidebar .menu .list li a.menu-top,
-body .menu_dark .sidebar .menu .list li a.menu-top,
-body .sidebar.main-sidebar .menu .list li a.menu-top .hide-menu,
-body .sidebar.main-sidebar .menu .list li .ml-menu li a {
+/*
+ * Texte inactif : UNIQUEMENT hors .active / .active-top.
+ * (L’ancienne règle ciblait tous les li a.menu-top avec body… et battait la couleur « actif »
+ * à cause d’une spécificité plus forte sur le span .hide-menu.)
+ */
+body .sidebar.main-sidebar .menu .list li:not(.active):not(.active-top) > a.menu-top,
+body .menu_dark .sidebar .menu .list li:not(.active):not(.active-top) > a.menu-top,
+body .sidebar.main-sidebar .menu .list li:not(.active):not(.active-top) > a.menu-top .hide-menu,
+body .sidebar.main-sidebar .menu .list li .ml-menu li:not(.active) > a {
   color: var(--odl-sidebar-text) !important;
 }
 body .sidebar.main-sidebar .menu .list li:not(.active):not(.active-top) > a.menu-top:hover {
   background-color: var(--odl-sidebar-hover-bg) !important;
   color: var(--odl-sidebar-text) !important;
 }
-/* Item actif : fond orange ODL, texte et icône en blanc (comme image ODL) */
+body .sidebar.main-sidebar .menu .list li:not(.active):not(.active-top) > a.menu-top:hover .hide-menu {
+  color: var(--odl-sidebar-text) !important;
+}
+/* Item actif : fond orange sur le lien, libellé en blanc (sans fond sur le span) */
+body .sidebar.main-sidebar .menu .list li.active > a.menu-top,
+body .sidebar.main-sidebar .menu .list li.active-top > a.menu-top {
+  background-color: var(--odl-sidebar-active-bg) !important;
+  color: #ffffff !important;
+}
+body .sidebar.main-sidebar .menu .list li.active > a.menu-top .hide-menu,
+body .sidebar.main-sidebar .menu .list li.active-top > a.menu-top .hide-menu {
+  color: #ffffff !important;
+  background-color: transparent !important;
+}
+body .sidebar.main-sidebar .menu .list li .ml-menu li.active > a {
+  background-color: var(--odl-sidebar-active-bg) !important;
+  color: #ffffff !important;
+}
+body .sidebar.main-sidebar .menu .list li .ml-menu li.active > a span {
+  color: #ffffff !important;
+}
 .main-sidebar .sidebar-menu > li.active > a,
 .sidebar .menu .list li.active .menu-top,
 .sidebar .menu .list li.active-top .menu-top,
 .sidebar .menu .list li .ml-menu li.active a {
   background-color: var(--odl-sidebar-active-bg) !important;
-  color: var(--odl-sidebar-active-fg) !important;
+  color: #ffffff !important;
 }
 .sidebar .menu .list li.active .menu-top .hide-menu,
 .sidebar .menu .list li.active-top .menu-top .hide-menu,
 .sidebar .menu .list li .ml-menu li.active a {
-  color: var(--odl-sidebar-active-fg) !important;
+  color: #ffffff !important;
 }
 /* Force texte + icone en blanc sur item actif */
 .sidebar .menu .list li.active > a.menu-top span,
@@ -238,8 +262,8 @@ body .sidebar.main-sidebar .menu .list li:not(.active):not(.active-top) > a.menu
 .sidebar .menu .list li.active-top > a.menu-top i,
 .sidebar .menu .list li .ml-menu li.active > a span,
 .sidebar .menu .list li .ml-menu li.active > a i {
-  color: var(--odl-sidebar-active-fg) !important;
-  fill: var(--odl-sidebar-active-fg) !important;
+  color: #ffffff !important;
+  fill: #ffffff !important;
 }
 /* Icônes : gris inactif ; item actif = blanc sur orange (ODL) */
 body .sidebar.main-sidebar .sidebarIcon,
@@ -247,11 +271,12 @@ body .menu_dark .sidebar .sidebarIcon {
   color: var(--odl-sidebar-icon) !important;
   fill: var(--odl-sidebar-icon) !important;
 }
-body .sidebar .menu .list li.active .sidebarIcon,
-body .sidebar .menu .list li.active-top .sidebarIcon,
-body .sidebar .menu .list li .ml-menu li.active a .sidebarIcon {
-  color: var(--odl-sidebar-active-fg) !important;
-  fill: var(--odl-sidebar-active-fg) !important;
+body .sidebar.main-sidebar .menu .list li.active .sidebarIcon,
+body .sidebar.main-sidebar .menu .list li.active-top .sidebarIcon,
+body .sidebar.main-sidebar .menu .list li .ml-menu li.active a .sidebarIcon {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+  stroke: #ffffff !important;
 }
 .sidebar .user-panel,
 .sidebar .user-info {
@@ -265,7 +290,7 @@ body .sidebar .menu .list li .ml-menu li.active a .sidebarIcon {
   border-left: 2px solid var(--odl-border) !important;
   list-style: none !important;
 }
-.sidebar .menu .list li .ml-menu li a {
+.sidebar .menu .list li .ml-menu li:not(.active) > a {
   color: var(--odl-sidebar-text) !important;
   padding-left: 14px !important;
   padding-top: 6px !important;
@@ -279,7 +304,7 @@ body .sidebar .menu .list li .ml-menu li.active a .sidebarIcon {
 .sidebar.main-sidebar .menu .list li .ml-menu li a::before {
   content: none !important;
 }
-.sidebar .menu .list li .ml-menu li a:hover {
+.sidebar .menu .list li .ml-menu li:not(.active) > a:hover {
   background-color: var(--odl-sidebar-hover-bg) !important;
 }
 .sidebar .menu .list li .ml-menu li.active a {
@@ -342,6 +367,35 @@ a.text-primary,
 }
 
 /* ========== Dashboard & pages (style ODL) ========== */
+/* Filtres Semaine / Mois / Année : surcharger .btn.light.active (Bootstrap = gris/bleuté) */
+.odl-period-switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.odl-period-switch .btn.btn-light {
+  border: 1px solid #d1d5db;
+  background: #fff !important;
+  color: #374151 !important;
+  font-weight: 600;
+  border-radius: 8px;
+  min-width: 84px;
+  height: 34px;
+  padding: 0 14px;
+  font-size: 0.95rem;
+  --bs-btn-active-bg: #ff7900;
+  --bs-btn-active-border-color: #ff7900;
+  --bs-btn-active-color: #fff;
+}
+.odl-period-switch .btn.btn-light.active,
+.odl-period-switch .btn.btn-light.active:focus,
+.odl-period-switch .btn.btn-light.active:hover {
+  background: #ff7900 !important;
+  border-color: #ff7900 !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
 /* IMPORTANT: décaler le contenu à droite du sidebar pour qu'il ne soit jamais masqué */
 .main-content {
   background-color: #fafafa;

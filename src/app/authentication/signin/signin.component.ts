@@ -94,7 +94,7 @@ export class SigninComponent implements OnInit {
           const roles = currentUserWithRoles.roles;
 
           // Redirection en fonction du rôle
-          if (roles?.includes('SUPERADMIN')) {
+          if (roles?.includes('SUPERADMIN') || roles?.includes('ADMIN') || roles?.includes('DIRECTEUR')) {
             this.router.navigateByUrl('/dashboard/main').then(() => {
               this.cdRef.detectChanges();
             });

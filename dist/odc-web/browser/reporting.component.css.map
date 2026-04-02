@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/personnels/reporting/reporting.component.scss"],
+  "sourcesContent": [".table thead {\r\n  background-color: #ffffff; /* fond blanc */\r\n  color: #000;               /* texte noir */\r\n}\r\n"],
+  "mappings": ";AAAA,CAAA,MAAA;AACE,oBAAA;AACA,SAAA;;",
+  "names": []
+}

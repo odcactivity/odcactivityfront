@@ -1,4 +1,3 @@
-
 /* Nouveau dashboard style ODL */
 .odl-dashboard-card {
   border-radius: 12px;
@@ -8,7 +7,7 @@
 
 .odl-dashboard-subtitle {
   font-size: 0.875rem;
-  color: #6B7280;
+  color: #6b7280;
 }
 
 .odl-stat-card {
@@ -17,8 +16,8 @@
   gap: 0.75rem;
   padding: 0.85rem 1rem;
   border-radius: 10px;
-  border: 1px solid #E5E5E5;
-  background-color: #FFFFFF;
+  border: 1px solid #e5e5e5;
+  background-color: #fff;
 }
 
 .odl-stat-icon {
@@ -33,27 +32,27 @@
 
 .odl-stat-icon-primary {
   background-color: rgba(255, 121, 0, 0.1);
-  color: #FF7900;
+  color: #ff7900;
 }
 
 .odl-stat-icon-info {
   background-color: rgba(59, 130, 246, 0.08);
-  color: #2563EB;
+  color: #2563eb;
 }
 
 .odl-stat-icon-warning {
   background-color: rgba(245, 158, 11, 0.08);
-  color: #D97706;
+  color: #d97706;
 }
 
 .odl-stat-icon-success {
   background-color: rgba(34, 197, 94, 0.08);
-  color: #16A34A;
+  color: #16a34a;
 }
 
 .odl-stat-icon-neutral {
   background-color: rgba(107, 114, 128, 0.08);
-  color: #4B5563;
+  color: #4b5563;
 }
 
 .odl-stat-content {
@@ -64,7 +63,7 @@
 .odl-stat-label {
   margin: 0;
   font-size: 0.85rem;
-  color: #6B7280;
+  color: #6b7280;
 }
 
 .odl-stat-value {
@@ -81,43 +80,10 @@
   gap: 1rem;
 }
 
-.odl-period-switch {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.odl-period-switch .btn {
-  border: 1px solid #d1d5db;
-  background: #fff;
-  color: #374151;
-  font-weight: 600;
-  border-radius: 8px;
-  min-width: 84px;
-}
-
-.odl-period-switch .btn.active {
-  background: #ff7900;
-  border-color: #ff7900;
-  color: #fff;
-}
-
-.odl-entity-card {
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 1rem;
-  background: #ffffff;
-  min-height: 180px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.odl-entity-card h5 {
-  color: #111827;
-  font-weight: 700;
-}
-
-.odl-entity-card p {
-  color: #4b5563;
-  font-size: 0.92rem;
+@media (max-width: 768px) {
+  .odl-graph-header {
+    flex-direction: column;
+  }
 }
 
 :host ::ng-deep .odl-tooltip {
@@ -126,12 +92,47 @@
   line-height: 1.5;
   border-radius: 8px;
   border: 1px solid #e5e7eb;
-  background: #ffffff;
+  background: #fff;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  max-width: 360px;
 }
 
-@media (max-width: 768px) {
-  .odl-graph-header {
-    flex-direction: column;
-  }
+:host ::ng-deep .odl-tooltip-head {
+  margin-bottom: 4px;
+}
+
+:host ::ng-deep .odl-tooltip-sub {
+  color: #6b7280;
+  font-size: 11px;
+  margin-bottom: 8px;
+}
+
+:host ::ng-deep .odl-tooltip-list {
+  border-top: 1px solid #f3f4f6;
+  padding-top: 6px;
+}
+
+:host ::ng-deep .odl-tooltip-row {
+  font-size: 11px;
+  margin-bottom: 4px;
+  color: #374151;
+}
+
+:host ::ng-deep .odl-tooltip-titre {
+  font-weight: 600;
+  color: #111827;
+}
+
+:host ::ng-deep .apexcharts-legend {
+  padding-top: 4px !important;
+}
+
+:host ::ng-deep .apexcharts-pie-label {
+  font-weight: 500 !important;
+  fill: #1f2937 !important;
+}
+
+:host ::ng-deep .apexcharts-xaxistooltip,
+:host ::ng-deep .apexcharts-yaxistooltip {
+  display: none !important;
 }
