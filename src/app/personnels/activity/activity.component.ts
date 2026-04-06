@@ -25,8 +25,6 @@ import { AuthService } from "@core";
 import { timer } from 'rxjs';
 
 import { ActivityValidation } from '@core/models/ActivityValidation';
-import { Utilisateur } from '@core/models/Utilisateur.model';
-
 
 @Component({
   selector: 'app-activity',
@@ -63,12 +61,9 @@ export class ActivityComponent {
   public selected: number[] = [];
   useRole: string[];
   validation: ActivityValidation = new ActivityValidation();
-  utilisateursPersonnels: Utilisateur[] = [];
-  showCommentaire: boolean = false;
   selectedFile: File | null = null;
   currentUserId: number | null = this.getCurrentUserId();
   activityValidation: ActivityValidation = new ActivityValidation();
-  superviseurMap: Record<number, string> = {};
   columns = [
     { prop: 'nom' },
     { prop: 'titre' },
@@ -175,8 +170,6 @@ export class ActivityComponent {
     this.getAllActivite();
     this.getAllTypeActivite();
     this.getAllSalle();
-    this.getAllUtilisateur();
-    // this.getMapSuperviseur();
     // initialize form creation
     this.register = this.fb.group({
       id: [''],
@@ -270,36 +263,7 @@ export class ActivityComponent {
       });
     }
   }
-  getMapSuperviseur(): void {
-    this.glogalService.get('utilisateur').subscribe({
-      next: (data: Utilisateur[]) => {
-        this.utilisateursPersonnels = data.filter(user => user.id !== this.currentUserId);
-        // console.log("Users (sans le connecté)", this.utilisateursPersonnels);
-        this.filteredData = [...this.utilisateursPersonnels];
-        // console.log('3SuperviseurMap chargée :', this.utilisateursPersonnels);
-      },
-      error: (err) => {
-        console.error('Erreur lors du chargement des superviseurs', err);
-      }
-    });
-  }
-
   // fetch data
-  getAllUtilisateur() {
-    this.loadingIndicator = true;
-    this.glogalService.get('utilisateur').subscribe({
-      next: (value: Utilisateur[]) => {
-        this.utilisateursPersonnels = value;
-        console.log("Users", this.utilisateursPersonnels)
-
-        this.filteredData = [...value];
-        setTimeout(() => {
-          this.loadingIndicator = false;
-        }, 500);
-      }
-    })
-  }
-
   getAllActivite() {
     this.loadingIndicator = true;
     this.glogalService.get('activite').subscribe({
@@ -491,46 +455,12 @@ export class ActivityComponent {
     this.glogalService.post('activite', form.value).subscribe({
       next: (activite: Activity) => {
         console.log("Activité créée :", activite);
-        // Vérifie si un superviseur est sélectionné
-        const superviseurId = form.value.superviseurId;
-        const fichierjoint = form.value.fichierjoint || null;
-        if (superviseurId) {
-          console.log(" Création de validation pour superviseur :", superviseurId);
-          // Prépare la validation
-          const validation: ActivityValidation = {
-            envoyeurId: this.getCurrentUserId() || undefined,
-            activiteId: activite.id,
-            superviseurId,
-            commentaire: form.value.commentaire || null,
-            statut: 'En_Attente',
-            fichierjoint
-          };
-          const fichier: File | undefined = form.value.fichier;
-          // Étape 2 : Création de la validation
-          this.glogalService.createValidation(validation, fichier, 'DESIGNATION').subscribe({
-            next: () => {
-              console.log(" Validation créée !");
-              this.addRecordSuccess();
-              this.modalService.dismissAll();
-              this.reloadActivities();
-              form.reset();
-            },
-            error: (err) => {
-              console.error("Erreur validation :", err);
-              this.loadingIndicator = false;
-            },
-            complete: () => {
-              this.loadingIndicator = false;
-            }
-          });
-        } else {
-          // Pas de superviseur sélectionné, on saute la création de validation
-          this.addRecordSuccess();
-          this.modalService.dismissAll();
-          this.reloadActivities();
-          form.reset();
-          this.loadingIndicator = false;
-        }
+        // Validation : uniquement le directeur ODC (workflow hors formulaire personnel)
+        this.addRecordSuccess();
+        this.modalService.dismissAll();
+        this.reloadActivities();
+        form.reset();
+        this.loadingIndicator = false;
       }, error: (err) => {
         this.toastr.error(err, "Erreur");
         console.error(" Erreur activité :", err);
@@ -564,7 +494,6 @@ export class ActivityComponent {
   }
   // add new record
   addRow(content: any) {
-    this.getMapSuperviseur();
     this.register.reset();
     this.modalService.open(content, {
       ariaLabelledBy: 'modal-basic-title',
@@ -699,21 +628,6 @@ export class ActivityComponent {
       this.register.patchValue({ fichier: file });
       this.register.get('fichier')?.updateValueAndValidity();
       console.log('Fichier sélectionné :', file.name);
-    }
-  }
-  onSuperviseurSelected(event: any) {
-    const superviseurId = event.target.value;
-
-    if (superviseurId) {
-      // Stocker l’ID sélectionné dans le form
-      this.register.patchValue({ superviseurId });
-
-      // Afficher le champ commentaire (tu peux gérer ça via un booléen)
-      this.showCommentaire = true;
-    } else {
-      // Si aucun superviseur choisi, on masque le champ commentaire
-      this.showCommentaire = false;
-      this.register.patchValue({ superviseurId: null, commentaire: '' });
     }
   }
 

@@ -10,7 +10,7 @@
     </div>
     <div class="profile-usertitle">
       <div class="sidebar-userpic-name">{{ nomComplet }}</div>
-      <div class="profile-usertitle-job">{{ useRole }}</div>
+      <div class="profile-usertitle-job">{{ roleLabel }}</div>
     </div>
   </div>
 
@@ -18,8 +18,8 @@
     <ng-scrollbar [style.height]="listMaxHeight + 'px'" visibility="hover">
       <ul class="list">
         <!-- MENU ITEMS -->
-        @for(item of sidebarItems; track item) {
-          <li [routerLinkActive]="item.submenu.length > 0 ? 'active' : 'active-top'">
+        @for(item of sidebarItems; track $index) {
+          <li [routerLinkActive]="(item.submenu?.length ?? 0) > 0 ? 'active' : 'active-top'">
 
             <!-- Group Title -->
             @if(item.groupTitle) {
@@ -30,7 +30,7 @@
             @if(!item.groupTitle) {
 
               <!-- 1 — ITEM SANS SUBMENU -->
-              @if(item.submenu.length === 0 && item.path !== '') {
+              @if((item.submenu?.length ?? 0) === 0 && item.path !== '') {
                 <a [routerLink]="[item.path]" class="menu-top">
                   <i-feather [name]="item.icon" class="sidebarIcon"></i-feather>
                   <span class="hide-menu">{{ item.title }}</span>
@@ -38,7 +38,7 @@
               }
 
               <!-- 2 — ITEM AVEC SUBMENU -->
-              @if(item.submenu.length > 0) {
+              @if((item.submenu?.length ?? 0) > 0) {
                 <a href="javascript:void(0)" class="menu-top" (click)="toggle(item)">
                   <i-feather [name]="item.icon" class="sidebarIcon"></i-feather>
                   <span class="hide-menu">{{ item.title }}</span>
@@ -46,7 +46,7 @@
                 </a>
 
                 <ul class="ml-menu" [style.display]="item.open ? 'block' : 'none'">
-                  @for(sub of item.submenu; track sub) {
+                  @for(sub of item.submenu; track sub.path + sub.title) {
                     <li [routerLinkActive]="'active'">
                       <a [routerLink]="[sub.path]">
                         {{ sub.title }}

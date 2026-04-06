@@ -70,6 +70,51 @@ export class GlobalService {
       catchError(this.handleError.bind(this))
     );
   }
+
+  /** POST multipart (FormData) — ne pas forcer Content-Type, le navigateur pose le boundary. */
+  postMultipart(path: string, formData: FormData): Observable<any> {
+    return this.http.post(`${this.baseUrl}/${path}`, formData).pipe(
+      catchError(this.handleError.bind(this))
+    );
+  }
+
+  postCourrierValiderTransmissionDcire(courrierId: number): Observable<any> {
+    return this.http
+      .post(`${this.baseUrl}/api/courriers/odc/${courrierId}/valider-transmission-dcire`, {})
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  postCourrierResoumettreRevision(courrierId: number): Observable<any> {
+    return this.http
+      .post(`${this.baseUrl}/api/courriers/odc/${courrierId}/resoumettre-revision`, {})
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  getCourriersValidationDirecteurOdc(): Observable<any[]> {
+    return this.http
+      .get<any[]>(`${this.baseUrl}/api/courriers/odc-directeur/en-cours-validation`)
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  postCourrierSuggestionDirecteurOdc(courrierId: number, texte: string): Observable<any> {
+    const params = new HttpParams().set('texte', texte);
+    return this.http
+      .post(`${this.baseUrl}/api/courriers/odc-directeur/${courrierId}/suggestion`, null, { params })
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  postCourrierAnnulerDirecteurOdc(courrierId: number): Observable<any> {
+    return this.http
+      .post(`${this.baseUrl}/api/courriers/odc-directeur/${courrierId}/annuler`, {})
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  postCourrierTransmettreVersOdc(courrierId: number, odcDirectionId: number): Observable<any> {
+    const params = new HttpParams().set('odcDirectionId', String(odcDirectionId));
+    return this.http
+      .post(`${this.baseUrl}/api/courriers/dcire/${courrierId}/transmettre-odc`, {}, { params })
+      .pipe(catchError(this.handleError.bind(this)));
+  }
   /**
      * Met à jour un objet dans la collection spécifiée.
      *

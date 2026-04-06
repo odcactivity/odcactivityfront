@@ -34,6 +34,7 @@ import {
   UrlTree
 } from '@angular/router';
 import { AuthService } from '../service/auth.service';
+import { canonicalizeAppRoles, rolesFromJwtPayload } from '../utils/app-roles';
 
 @Injectable({
   providedIn: 'root',
@@ -43,24 +44,49 @@ export class AuthGuard implements CanActivate {
 
   canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean | UrlTree {
     const currentUser = this.authService.getCurrentUserFromStorage();
-    const roles = currentUser?.roles || [];
+    const roles = canonicalizeAppRoles(currentUser?.roles || []);
 
     const restrictedRoutes = [
       '/dashboard/main',
       '/entite',
       '/utilisateur',
-      '/role'
+      '/role',
+      '/courrier'
     ];
 
-    const isRestricted = restrictedRoutes.some(path => state.url.startsWith(path));
+    const isRestricted = restrictedRoutes.some((path) => state.url.startsWith(path));
     const isPersonnel = roles.includes('PERSONNEL');
 
-    if (!currentUser || roles.length === 0) {
+    if (!currentUser?.bearer) {
       return this.router.parseUrl('/authentication/signin');
     }
 
+    let effectiveRoles = roles;
+    if (effectiveRoles.length === 0) {
+      try {
+        const payload = JSON.parse(atob(currentUser.bearer.split('.')[1])) as Record<string, unknown>;
+        effectiveRoles = rolesFromJwtPayload(payload);
+      } catch {
+        /* ignore */
+      }
+    }
+
+    if (effectiveRoles.length === 0) {
+      return this.router.parseUrl('/authentication/signin');
+    }
+
+    if (state.url.startsWith('/directeur-odc')) {
+      const ok =
+        effectiveRoles.includes('DIRECTEUR_ODC') ||
+        effectiveRoles.includes('SUPERADMIN') ||
+        effectiveRoles.includes('ADMIN');
+      if (!ok) {
+        this.router.navigate([isPersonnel ? '/dashboardActivite' : '/dashboard/main'], { replaceUrl: true });
+        return false;
+      }
+    }
+
     if (isRestricted && isPersonnel) {
-      // ✅ Forcer la redirection
       this.router.navigate(['/dashboardActivite'], { replaceUrl: true });
       return false;
     }

@@ -5,6 +5,7 @@ import { NgIf } from '@angular/common';
 import { FeatherModule } from 'angular-feather';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '@core';
+import { canonicalizeAppRoles } from '@core/utils/app-roles';
 import { SidebarService } from './sidebar.service';
 
 @Component({
@@ -27,6 +28,7 @@ export class SidebarComponent implements OnInit {
   nomComplet = 'Utilisateur';
   genre = 'Homme';
   useRole: string[] = [];
+  roleLabel = '';
   listMaxHeight = '500';
 
   constructor(
@@ -36,7 +38,18 @@ export class SidebarComponent implements OnInit {
 
   ngOnInit(): void {
     const rawRoles = this.authService.getCurrentUserFromStorage()?.roles || [];
-    this.useRole = this.normalizeRoles(rawRoles);
+    this.useRole = canonicalizeAppRoles(rawRoles);
+    this.roleLabel = this.useRole
+      .map((r) => {
+        if (r === 'DIRECTEUR') {
+          return 'DCIRE';
+        }
+        if (r === 'DIRECTEUR_ODC') {
+          return 'Directeur ODC';
+        }
+        return r;
+      })
+      .join(', ');
 
     // Charger JSON Menu + filtrer par rôle
     this.sidebarService.getRouteInfo().subscribe(routes => {
@@ -45,7 +58,7 @@ export class SidebarComponent implements OnInit {
         .map(item => ({
           ...item,
           submenu: (item.submenu || []).filter(x => this.checkRoles(x.roles)),
-          open: false
+          open: item.title === 'Directeur ODC'
         }));
     });
 
@@ -64,30 +77,8 @@ export class SidebarComponent implements OnInit {
     if (!roles || roles.length === 0) {
       return true;
     }
-    const requestedRoles = this.normalizeRoles(roles);
+    const requestedRoles = canonicalizeAppRoles(roles);
     return requestedRoles.some(r => this.useRole.includes(r));
-  }
-
-  private normalizeRoles(roles: unknown): string[] {
-    const roleArray = Array.isArray(roles)
-      ? roles
-      : typeof roles === 'string'
-        ? [roles]
-        : [];
-
-    const normalized = roleArray
-      .map(r => String(r).trim().toUpperCase())
-      .filter(Boolean);
-
-    // Compatibilite entre les deux libelles utilises dans l'application.
-    if (normalized.includes('ADMIN') && !normalized.includes('SUPERADMIN')) {
-      normalized.push('SUPERADMIN');
-    }
-    if (normalized.includes('SUPERADMIN') && !normalized.includes('ADMIN')) {
-      normalized.push('ADMIN');
-    }
-
-    return [...new Set(normalized)];
   }
 
   toggle(item: any) {

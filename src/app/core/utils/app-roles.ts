@@ -1,0 +1,41 @@
+/**
+ * Rôles alignés avec routes.json et @PreAuthorize côté API (sans préfixe Spring ROLE_).
+ */
+export function canonicalizeAppRoles(roles: unknown): string[] {
+  const roleArray = Array.isArray(roles)
+    ? roles
+    : typeof roles === 'string'
+      ? [roles]
+      : [];
+  const normalized = roleArray
+    .map((r) => {
+      let x = String(r).trim().toUpperCase().replace(/\s+/g, '_');
+      if (x.startsWith('ROLE_')) {
+        x = x.slice(5);
+      }
+      return x;
+    })
+    .filter(Boolean);
+  const set = new Set(normalized);
+  if (set.has('ADMIN') && !set.has('SUPERADMIN')) {
+    set.add('SUPERADMIN');
+  }
+  if (set.has('SUPERADMIN') && !set.has('ADMIN')) {
+    set.add('ADMIN');
+  }
+  return [...set];
+}
+
+export function rolesFromJwtPayload(payload: Record<string, unknown> | null | undefined): string[] {
+  if (!payload) {
+    return [];
+  }
+  const r = payload['role'];
+  if (r == null) {
+    return [];
+  }
+  if (Array.isArray(r)) {
+    return canonicalizeAppRoles(r);
+  }
+  return canonicalizeAppRoles([String(r)]);
+}

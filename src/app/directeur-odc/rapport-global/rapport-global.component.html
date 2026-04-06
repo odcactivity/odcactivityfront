@@ -1,0 +1,62 @@
+<section class="main-content p-4">
+  <h4 class="mb-3">Rapport global</h4>
+  <p class="text-muted mb-4">
+    Filtrez par entité (piliers ODC, etc.), par activité précise ou toutes, et par période (année entière ou un mois). Les brouillons non validés et les activités refusées sont exclus.
+  </p>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <label class="form-label">Entité (optionnel)</label>
+      <select class="form-select" [(ngModel)]="entiteId">
+        <option [ngValue]="null">Toutes</option>
+        @for (e of entites; track e.id) {
+          <option [ngValue]="e.id">{{ e.nom }}</option>
+        }
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Activité (optionnel)</label>
+      <select class="form-select" [(ngModel)]="activiteId">
+        <option [ngValue]="null">Toutes les activités</option>
+        @for (a of activites; track a.id) {
+          <option [ngValue]="a.id">{{ a.nom }}</option>
+        }
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Année</label>
+      <input type="number" class="form-control" [(ngModel)]="annee" min="2000" max="2100" />
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Période</label>
+      <select class="form-select" [(ngModel)]="periodeMode">
+        <option value="annee">Année complète</option>
+        <option value="mois">Un mois</option>
+      </select>
+    </div>
+    @if (periodeMode === 'mois') {
+      <div class="col-md-4">
+        <label class="form-label">Mois</label>
+        <select class="form-select" [(ngModel)]="mois">
+          <option [ngValue]="1">Janvier</option>
+          <option [ngValue]="2">Février</option>
+          <option [ngValue]="3">Mars</option>
+          <option [ngValue]="4">Avril</option>
+          <option [ngValue]="5">Mai</option>
+          <option [ngValue]="6">Juin</option>
+          <option [ngValue]="7">Juillet</option>
+          <option [ngValue]="8">Août</option>
+          <option [ngValue]="9">Septembre</option>
+          <option [ngValue]="10">Octobre</option>
+          <option [ngValue]="11">Novembre</option>
+          <option [ngValue]="12">Décembre</option>
+        </select>
+      </div>
+    }
+  </div>
+
+  <div class="d-flex flex-wrap gap-2">
+    <button type="button" class="btn btn-outline-primary" (click)="downloadCsv()">Télécharger CSV</button>
+    <button type="button" class="btn btn-outline-danger" (click)="downloadPdf()">Télécharger PDF</button>
+  </div>
+</section>

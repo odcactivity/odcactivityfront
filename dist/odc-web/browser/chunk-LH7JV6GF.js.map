@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["src/app/core/models/ActivityValidation.ts"],
-  "sourcesContent": ["export class ActivityValidation {\r\n  id?: number;\r\n  commentaire?: string;\r\n  date?: string;\r\n  statut?: 'En_Attente' | 'Valider' | 'Rejeter';\r\n  fichierChiffre?: Blob;\r\n  fichierjoint?: string;\r\n  envoyeurId?: number;\r\n  activiteId?: number;\r\n  superviseurId?: number;\r\n  canDelete?: boolean;\r\n  isRead?:boolean;\r\n  constructor(data?: Partial<ActivityValidation>) {\r\n    if (data) {\r\n      Object.assign(this, data);\r\n    }\r\n}}"],
-  "mappings": ";AAAM,IAAO,qBAAP,MAAyB;EAY7B,YAAY,MAAkC;AAC5C,QAAI,MAAM;AACR,aAAO,OAAO,MAAM,IAAI;IAC1B;EACJ;;",
-  "names": []
-}

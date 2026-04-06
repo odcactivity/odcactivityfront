@@ -8,7 +8,7 @@
       "class": "",
       "groupTitle": false,
       "submenu": [],
-      "roles": ["PERSONNEL", "SUPERADMIN", "DIRECTEUR"]
+      "roles": ["SUPERADMIN", "DIRECTEUR", "DIRECTEUR_ODC"]
     },
     {
       "path": "/entite",
@@ -21,6 +21,35 @@
       "badgeClass": "",
       "submenu": [],
       "roles": ["DIRECTEUR"]
+    },
+    {
+      "path": "",
+      "title": "Directeur ODC",
+      "iconType": "feather",
+      "icon": "shield",
+      "class": "",
+      "groupTitle": false,
+      "roles": ["DIRECTEUR_ODC"],
+      "submenu": [
+        {
+          "path": "/directeur-odc/validation-activites",
+          "title": "Validation activités",
+          "submenu": [],
+          "roles": ["DIRECTEUR_ODC"]
+        },
+        {
+          "path": "/directeur-odc/validation-courriers",
+          "title": "Validation courriers",
+          "submenu": [],
+          "roles": ["DIRECTEUR_ODC"]
+        },
+        {
+          "path": "/directeur-odc/rapport-global",
+          "title": "Rapport global",
+          "submenu": [],
+          "roles": ["DIRECTEUR_ODC"]
+        }
+      ]
     },
     {
       "path": "/utilisateur",
@@ -59,7 +88,7 @@
       "class": "",
       "groupTitle": false,
       "submenu": [],
-      "roles": ["PERSONNEL", "SUPERADMIN", "DIRECTEUR"]
+      "roles": ["SUPERADMIN", "DIRECTEUR"]
     },
     {
       "path": "",

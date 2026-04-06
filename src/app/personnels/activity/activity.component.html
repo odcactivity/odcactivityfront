@@ -288,42 +288,21 @@
                       </select>
                     </div>
                   </div>
-                  <!-- Debut validation -->
                   <div class="row">
-                  <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
-                    <label>Superviseur / Valideur</label>
-                    <select class="form-select form-control" formControlName="superviseurId" (change)="onSuperviseurSelected($event)">
-                      <option value="">-- Sélectionnez un superviseur --</option>
-                      <option *ngFor="let user of utilisateursPersonnels" [value]="user.id">
-                        {{ user.nom }} {{ user.prenom }}
-                      </option>
-                    </select>
+                    <div class="col-12 mb-2">
+                      <label for="fichier">Fichier joint :</label>
+                      <input
+                        type="file"
+                        id="fichier"
+                        (change)="onFileSelected($event)"
+                        accept=".pdf,.png,.jpg,.jpeg,.docx"
+                        class="form-control"
+                      />
+                    </div>
+                    <div *ngIf="selectedFile" class="col-12 mt-2 text-success">
+                      <small>Fichier sélectionné : {{ selectedFile.name }}</small>
+                    </div>
                   </div>
-
-                  <div *ngIf="showCommentaire" class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
-                    <label>Commentaire du superviseur</label>
-                    <textarea class="form-control"
-                              rows="3"
-                              placeholder="Ajouter un commentaire..."
-                              formControlName="commentaire">
-                    </textarea>
-                  </div>
-                   <div class="form-group mt-3">
-    <label for="fichier">Fichier joint :</label>
-    <input 
-      type="file"
-      id="fichier"
-      (change)="onFileSelected($event)"
-      accept=".pdf,.png,.jpg,.jpeg,.docx"
-      class="form-control"
-    />
-  </div>
-
-  <div *ngIf="selectedFile" class="mt-2 text-success">
-    <small>Fichier sélectionné : {{ selectedFile.name }}</small>
-  </div>
-</div>
-<!-- Fin validation -->
 
                   <div class="modal-footer">
                     <button type="submit" class="btn btn-warning" [disabled]="!register.valid || loadingIndicator">

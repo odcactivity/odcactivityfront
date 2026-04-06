@@ -2,11 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { NgApexchartsModule } from 'ng-apexcharts';
 import { RouterLink } from '@angular/router';
 import { GlobalService } from '@core/service/global.service';
+import { AuthService } from '@core';
 import { Participant } from '@core/models/Participant';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Activity } from '@core/models/Activity';
 import { Entite } from '@core/models/Entite';
+import { canonicalizeAppRoles } from '@core/utils/app-roles';
 
 type PeriodKey = 'semaine' | 'mois' | 'annee';
 
@@ -85,10 +87,12 @@ export class MainComponent implements OnInit {
   private entiteById = new Map<number, Entite>();
   /** id entité API → index 0..3 (prioritaire sur le matching par nom) */
   private entiteIdToSlot = new Map<number, number>();
+  private currentRoles: string[] = [];
 
-  constructor(private globalService: GlobalService) {}
+  constructor(private globalService: GlobalService, private authService: AuthService) {}
 
   ngOnInit() {
+    this.currentRoles = canonicalizeAppRoles(this.authService.getCurrentUserFromStorage()?.roles || []);
     this.getNombreUitlisateur();
     this.getNombreActivite();
     this.getNombreActiviteEncours();
@@ -153,9 +157,10 @@ export class MainComponent implements OnInit {
       entites: this.globalService.get('entite').pipe(catchError(() => of([]))),
       blacklist: this.globalService.get('blacklist').pipe(catchError(() => of([])))
     }).subscribe(({ activities, participants, entites, blacklist }: any) => {
-      this.allActivities = Array.isArray(activities) ? activities : [];
+      const rawActivities: Activity[] = Array.isArray(activities) ? activities : [];
       const allParticipants = Array.isArray(participants) ? participants : [];
-      const entiteList: Entite[] = Array.isArray(entites) ? entites : [];
+      const rawEntites: Entite[] = Array.isArray(entites) ? entites : [];
+      const entiteList = this.filterEntitesByScope(rawEntites);
       this.entiteById = new Map(
         entiteList.filter((e) => e.id != null).map((e) => [e.id as number, e])
       );
@@ -170,6 +175,10 @@ export class MainComponent implements OnInit {
           this.entiteIdToSlot.set(e.id, slot);
         }
       }
+      const allowedEntiteIds = new Set<number>(
+        entiteList.filter((e) => e.id != null).map((e) => e.id as number)
+      );
+      this.allActivities = rawActivities.filter((a) => this.isActivityAllowedByScope(a, allowedEntiteIds));
 
       const blacklistedEmails = new Set(
         (Array.isArray(blacklist) ? blacklist : [])
@@ -593,10 +602,73 @@ export class MainComponent implements OnInit {
     return -1;
   }
 
+  /** Vue complète (toutes entités / activités) : admin, DCIRE, directeur ODC produit. */
+  private isDcireScope(): boolean {
+    return (
+      this.currentRoles.includes('DIRECTEUR') ||
+      this.currentRoles.includes('DCIRE') ||
+      this.currentRoles.includes('SUPERADMIN') ||
+      this.currentRoles.includes('ADMIN') ||
+      this.currentRoles.includes('DIRECTEUR_ODC')
+    );
+  }
+
+  private normalizeName(value: string | undefined): string {
+    return String(value || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toUpperCase()
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  private isOdcEntiteName(nom: string | undefined): boolean {
+    const n = this.normalizeName(nom);
+    if (!n) {
+      return false;
+    }
+    return (
+      n.includes('ORANGE DIGITAL KALANSO') ||
+      n.includes('ODK') ||
+      n.includes('ORANGE DIGITAL MULTIMEDIA') ||
+      n.includes('MULTIMEDIA') ||
+      n.includes('ORANGE FABLAB') ||
+      n.includes('FABLAB') ||
+      n.includes('ORANGE FAB')
+    );
+  }
+
+  private filterEntitesByScope(entites: Entite[]): Entite[] {
+    if (this.isDcireScope()) {
+      return entites;
+    }
+    return entites.filter((e) => this.isOdcEntiteName(e?.nom));
+  }
+
+  private isActivityAllowedByScope(activity: Activity, allowedEntiteIds: Set<number>): boolean {
+    if (this.isDcireScope()) {
+      return true;
+    }
+    const e = activity.entite as Entite | number | undefined | null;
+    if (typeof e === 'number') {
+      return allowedEntiteIds.has(e);
+    }
+    if (e && typeof e === 'object') {
+      if (e.id != null && allowedEntiteIds.has(e.id)) {
+        return true;
+      }
+      return this.isOdcEntiteName(e.nom);
+    }
+    return false;
+  }
+
   private resolveStatus(activity: Activity): 'encours' | 'terminee' | 'attente' {
     const status = String(activity.statut || '')
       .trim()
       .toUpperCase();
+    if (status.includes('VALIDATION_DIRECTEUR') || status.includes('REJET')) {
+      return 'attente';
+    }
     if (status.includes('COURS')) {
       return 'encours';
     }

@@ -1,0 +1,55 @@
+<section class="main-content p-4">
+  <h4 class="mb-3">Validation des courriers</h4>
+  <p class="text-muted mb-4">
+    Les courriers créés par l’admin arrivent ici. Vous pouvez demander des corrections (l’admin reprend le dossier puis vous le renvoie) ou valider l’envoi vers la DCIRE.
+  </p>
+
+  @if (loading) {
+    <p>Chargement…</p>
+  } @else if (rows.length === 0) {
+    <p class="text-muted">Aucun courrier à traiter.</p>
+  } @else {
+    <div class="table-responsive mb-4">
+      <table class="table table-hover align-middle">
+        <thead>
+          <tr>
+            <th>N°</th>
+            <th>Objet</th>
+            <th>Statut</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of rows; track r.id) {
+            <tr [class.table-active]="selected?.id === r.id">
+              <td>{{ r.numero }}</td>
+              <td>{{ r.objet }}</td>
+              <td><code class="small">{{ r.statut }}</code></td>
+              <td>
+                <button type="button" class="btn btn-sm btn-outline-primary" (click)="selectRow(r)">Sélectionner</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  @if (selected) {
+    <div class="card p-3">
+      <h6 class="mb-2">Courrier {{ selected.numero }}</h6>
+      @if (selected.suggestionDirecteur) {
+        <p class="small text-muted mb-2">Dernière suggestion enregistrée : {{ selected.suggestionDirecteur }}</p>
+      }
+      <label class="form-label">Suggestions / remarques pour l’admin</label>
+      <textarea class="form-control mb-3" rows="4" [(ngModel)]="suggestionText" placeholder="Décrivez les changements souhaités…"></textarea>
+      <div class="d-flex flex-wrap gap-2">
+        <button type="button" class="btn btn-warning" (click)="envoyerSuggestion()">Envoyer les suggestions à l’admin</button>
+        @if (peutValiderDcire(selected)) {
+          <button type="button" class="btn btn-success" (click)="validerVersDcire()">Valider le contenu → DCIRE</button>
+        }
+        <button type="button" class="btn btn-outline-secondary" (click)="annuler()">Archiver / annuler</button>
+      </div>
+    </div>
+  }
+</section>

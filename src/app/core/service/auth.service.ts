@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import {jwtDecode} from "jwt-decode";
 import { environment } from 'environments/environment';
 import { Utilisateur} from '@core/models/Utilisateur.model';
+import { canonicalizeAppRoles, rolesFromJwtPayload } from '@core/utils/app-roles';
 
 
 
@@ -44,13 +45,33 @@ export class AuthService {
       const storedUserString = localStorage.getItem('currentUser');
       const rolesString = localStorage.getItem('roles');
       try {
-        const utilisateur = storedUserString ? JSON.parse(storedUserString) as Utilisateur : null;
-        const roles = rolesString ? JSON.parse(rolesString) as string[] : [];
+        const utilisateur = storedUserString ? JSON.parse(storedUserString) as Utilisateur & { roles?: string[] } : null;
+        let roles: string[] = [];
+        if (rolesString) {
+          try {
+            roles = JSON.parse(rolesString) as string[];
+          } catch {
+            roles = [];
+          }
+        }
+        if ((!roles || roles.length === 0) && utilisateur?.roles?.length) {
+          roles = utilisateur.roles;
+        }
+        roles = canonicalizeAppRoles(roles);
+        const bearer = utilisateur ? (utilisateur as Utilisateur & { bearer?: string }).bearer : undefined;
+        if (!roles.length && bearer) {
+          try {
+            const payload = JSON.parse(atob(bearer.split('.')[1])) as Record<string, unknown>;
+            roles = rolesFromJwtPayload(payload);
+          } catch {
+            /* ignore */
+          }
+        }
         return utilisateur ? {
           ...utilisateur, roles,
           nom: utilisateur.nom,
           prenom: utilisateur.prenom,
-        } : { } as Utilisateur & { roles: string[] }; // Adaptez selon votre modèle User
+        } : { } as Utilisateur & { roles: string[] };
       } catch (error) {
         console.error('Erreur lors de la récupération de l\'utilisateur depuis localStorage', error);
       }
@@ -72,7 +93,8 @@ export class AuthService {
               nom: decoded.nom,
               email: decoded.sub,
             };
-            const roles = decoded && decoded.role ? [decoded.role] : [];
+            const rawRole = decoded && decoded.role != null ? String(decoded.role).trim() : '';
+            const roles = canonicalizeAppRoles(rawRole ? [rawRole] : []);
 
             const currentUserWithRoles = { ...user, bearer: response.token, roles };
 
