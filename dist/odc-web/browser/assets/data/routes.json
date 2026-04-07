@@ -8,7 +8,7 @@
       "class": "",
       "groupTitle": false,
       "submenu": [],
-      "roles": ["SUPERADMIN", "DIRECTEUR", "DIRECTEUR_ODC"]
+      "roles": ["SUPERADMIN", "DIRECTEUR"]
     },
     {
       "path": "/entite",
@@ -26,11 +26,17 @@
       "path": "",
       "title": "Directeur ODC",
       "iconType": "feather",
-      "icon": "shield",
+      "icon": "clipboard",
       "class": "",
       "groupTitle": false,
       "roles": ["DIRECTEUR_ODC"],
       "submenu": [
+        {
+          "path": "/dashboard/main",
+          "title": "Dashboard",
+          "submenu": [],
+          "roles": ["DIRECTEUR_ODC"]
+        },
         {
           "path": "/directeur-odc/validation-activites",
           "title": "Validation activités",
@@ -88,7 +94,7 @@
       "class": "",
       "groupTitle": false,
       "submenu": [],
-      "roles": ["SUPERADMIN", "DIRECTEUR"]
+      "roles": ["SUPERADMIN", "ADMIN", "DIRECTEUR"]
     },
     {
       "path": "",

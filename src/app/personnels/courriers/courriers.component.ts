@@ -14,6 +14,8 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DatatableComponent, NgxDatatableModule, SelectionType } from '@swimlane/ngx-datatable';
 import { ToastrService } from 'ngx-toastr';
 import Swal from 'sweetalert2';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 interface selectActivitySupportInterface {
   id: number;
@@ -169,14 +171,12 @@ loading = false;
       return;
     }
 
-    this.getAllEntite();
-    this.getUtilisateur();
     this.register = this.fb.group({
-      entite: ['', [Validators.required]],
       numero: ['', [Validators.required]],
       objet: ['', [Validators.required]],
       expediteur: ['', [Validators.required]],
       fichier: [''],
+      odcDirectionId: [null as number | null],
     });
 
     this.registerExterne = this.fb.group({
@@ -186,6 +186,9 @@ loading = false;
       expediteur: ['', [Validators.required]],
       fichier: [''],
     });
+
+    this.getAllEntite();
+    this.getUtilisateur();
 
     const userString = localStorage.getItem('currentUser');
     if (userString) {
@@ -209,8 +212,8 @@ loading = false;
     this.glogalService.get('entite').subscribe({
       next: (value: Entite[]) => {
         this.entites = value;
-        this.directions = value.filter((e) => e.type === 'DIRECTION');
-        this.services = value.filter((e) => e.type === 'SERVICE');
+        this.directions = value.filter((e) => this.isDirectionEntiteType(e.type));
+        this.services = value.filter((e) => String(e?.type || '').toUpperCase() === 'SERVICE');
 
         this.odcDirections = this.directions.filter(
           (e) => this.isOdcDirectionName(e.nom) && !this.isDcireDirectionName(e.nom)
@@ -221,15 +224,84 @@ loading = false;
         const dc = this.directions.find((e) => this.isDcireDirectionName(e.nom));
         this.dcireDirectionId = dc?.id ?? null;
 
+        this.patchRegisterOdcDirectionDefaults();
+
         this.loadingIndicator = false;
         if (this.isDcireRole) {
           this.refreshCourriersDcire();
+        } else {
+          this.loadOdcCourriersMerged();
         }
         setTimeout(() => {
           this.loadingIndicator = false;
         }, 500);
       }
     });
+  }
+
+  /** Liste admin : fusion de toutes les directions ODC (sans filtre manuel). */
+  loadOdcCourriersMerged(): void {
+    if (this.isDcireRole) {
+      this.refreshCourriersDcire();
+      return;
+    }
+    if (!this.odcDirections?.length) {
+      this.Courriers = [];
+      this.filteredData = [];
+      return;
+    }
+    const vue = this.mapTypelisteToVueParam();
+    this.loadingIndicator = true;
+    const reqs = this.odcDirections.map((d) =>
+      this.glogalService.get(`api/courriers/odc/${d.id}?vue=${vue}`).pipe(catchError(() => of([])))
+    );
+    forkJoin(reqs).subscribe({
+      next: (arrays: unknown[]) => {
+        const byId = new Map<number, any>();
+        for (const arr of arrays as any[][]) {
+          for (const c of arr || []) {
+            if (c?.id != null) {
+              byId.set(Number(c.id), c);
+            }
+          }
+        }
+        this.Courriers = [...byId.values()];
+        this.filteredData = [...this.Courriers];
+        this.loadingIndicator = false;
+      },
+      error: () => {
+        this.Courriers = [];
+        this.filteredData = [];
+        this.loadingIndicator = false;
+      },
+    });
+  }
+
+  private isDirectionEntiteType(type: string | undefined): boolean {
+    return String(type ?? '').toUpperCase() === 'DIRECTION';
+  }
+
+  /** Règle alignée avec le backend (CourrierService.estDirectionOdc). */
+  private patchRegisterOdcDirectionDefaults(): void {
+    if (!this.register) {
+      return;
+    }
+    const ctrl = this.register.get('odcDirectionId');
+    if (!ctrl) {
+      return;
+    }
+    if (this.odcDirections.length === 0) {
+      ctrl.clearValidators();
+      ctrl.setValue(null);
+    } else {
+      ctrl.setValidators([Validators.required]);
+      if (this.odcDirections.length === 1) {
+        ctrl.setValue(this.odcDirections[0].id ?? null);
+      } else if (!this.odcDirections.some((d) => d.id === ctrl.value)) {
+        ctrl.setValue(null);
+      }
+    }
+    ctrl.updateValueAndValidity({ emitEvent: false });
   }
 
   private normalizeNomCourrier(nom: string | undefined): string {
@@ -258,6 +330,8 @@ loading = false;
       n.includes('ORANGE FABLAB') ||
       n.includes('FABLAB') ||
       n.includes('ORANGE FAB') ||
+      n.includes('ORANGE DIGITAL CENTER') ||
+      n.includes('DIGITAL CENTER') ||
       n.includes('ODC')
     );
   }
@@ -330,10 +404,10 @@ loading = false;
     }
     this.glogalService.postCourrierValiderTransmissionDcire(row.id).subscribe({
       next: () => {
-        this.toastr.success('Courrier transmis à la DCIRE.');
+        this.toastr.success('Courrier validé : transmission effectuée.');
         if (this.isDcireRole) {
           this.refreshCourriersDcire();
-        } else if (this.idEntite) {
+        } else {
           this.getCourrierByEntite();
         }
       },
@@ -350,9 +424,7 @@ loading = false;
     this.glogalService.postCourrierResoumettreRevision(row.id).subscribe({
       next: () => {
         this.toastr.success('Courrier renvoyé au directeur ODC pour validation.');
-        if (this.idEntite) {
-          this.getCourrierByEntite();
-        }
+        this.getCourrierByEntite();
       },
       error: (err) => {
         this.toastr.error(err?.error?.message || 'Renvoi impossible.');
@@ -412,7 +484,7 @@ loading = false;
     this.loadingIndicator = true;
     this.glogalService.postMultipart('api/courriers/dcire/reception-externe', fd).subscribe({
       next: () => {
-        this.toastr.success('Courrier enregistré à la DCIRE.');
+        this.toastr.success('Courrier enregistré.');
         modal.close();
         this.refreshCourriersDcire();
         this.loadingIndicator = false;
@@ -432,79 +504,12 @@ loading = false;
       this.refreshCourriersDcire();
       return;
     }
-
-    if (!this.idEntite) {
-      this.Courriers = [];
-      this.filteredData = [];
-      return;
-    }
-
     this.idService = null;
-
-    const idEntiteNumber = Number(this.idEntite);
-    this.selectedDirection = this.directions.find((dir) => dir.id === idEntiteNumber) ?? null;
-    if (this.selectedDirection) {
-      this.servicesOfDirection = this.services.filter(
-        (service) => service.parentId === this.selectedDirection!.id
-      );
-    } else {
-      this.servicesOfDirection = [];
-    }
-
-    const vue = this.mapTypelisteToVueParam();
-    this.loadingIndicator = true;
-    this.glogalService.get(`api/courriers/odc/${this.idEntite}?vue=${vue}`).subscribe({
-      next: (value: any[]) => {
-        this.Courriers = Array.isArray(value) ? value : [];
-        this.filteredData = [...this.Courriers];
-        setTimeout(() => {
-          this.loadingIndicator = false;
-        }, 300);
-      },
-      error: () => {
-        this.loadingIndicator = false;
-        this.Courriers = [];
-        this.filteredData = [];
-      }
-    });
+    this.loadOdcCourriersMerged();
   }
 
   getCourrierByService() {
-    if (this.isDcireRole) {
-      this.refreshCourriersDcire();
-      return;
-    }
-
-    if (!this.idService) {
-      this.getCourrierByEntite();
-      return;
-    }
-
-    const sid = Number(this.idService);
-    const selectedService = this.servicesOfDirection.find((service) => service.id === sid);
-    if (!selectedService) {
-      this.getCourrierByEntite();
-      return;
-    }
-
-    if (!this.idEntite) {
-      return;
-    }
-    const vue = this.mapTypelisteToVueParam();
-    this.loadingIndicator = true;
-    this.glogalService.get(`api/courriers/odc/${this.idEntite}?vue=${vue}`).subscribe({
-      next: (value: any[]) => {
-        const all = Array.isArray(value) ? value : [];
-        const filtered = all.filter((c) => this.rowEntiteId(c) === sid);
-        this.Courriers = filtered;
-        this.filteredData = [...filtered];
-        this.loadingIndicator = false;
-      },
-      error: () => {
-        this.loadingIndicator = false;
-        this.getCourrierByEntite();
-      }
-    });
+    this.getCourrierByEntite();
   }
 
   getAllOnglet() {
@@ -524,9 +529,6 @@ loading = false;
     if (this.isDcireRole) {
       this.Courriers = this.applyDcireTabFilter(this.courriersDcireBruts);
       this.filteredData = [...this.Courriers];
-      return;
-    }
-    if (!this.idEntite) {
       return;
     }
     this.getCourrierByEntite();
@@ -657,6 +659,24 @@ loading = false;
       }
     }
 
+    if (!this.isDcireRole && content !== 'repondre') {
+      const ent = row?.entite ?? row?.directionInitial;
+      const dirId =
+        ent && typeof ent === 'object' && ent.id != null
+          ? Number(ent.id)
+          : ent != null && typeof ent === 'number'
+            ? ent
+            : null;
+      if (dirId != null) {
+        this.selectedDirection = this.directions.find((d) => d.id === dirId) ?? null;
+        if (this.selectedDirection) {
+          this.servicesOfDirection = this.services.filter(
+            (s) => s.parentId === this.selectedDirection!.id
+          );
+        }
+      }
+    }
+
     // Si c'est pour répondre au courrier, ouvrir la modal de réponse
     if (content === 'repondre') {
       this.selectedCourrier = row;
@@ -674,26 +694,6 @@ loading = false;
       return;
     }
 
-    // Logique existante pour l'imputation normale
-    if (!this.selectedDirection && this.idEntite) {
-      const idEntiteNumber = Number(this.idEntite);
-      this.selectedDirection = this.directions.find(dir => dir.id === idEntiteNumber);
-      if (this.selectedDirection) {
-        this.servicesOfDirection = this.services.filter(service => service.parentId === this.selectedDirection!.id);
-        console.log(`Direction récupérée dans ImputeModal: ${this.selectedDirection.nom}`);
-        console.log('Services de cette direction:', this.servicesOfDirection.map(s => s.nom));
-      }
-    }
-    
-    if (this.selectedDirection) {
-      console.log(`Modale d'imputation - Direction: ${this.selectedDirection.nom}`);
-      console.log('Services disponibles:', this.servicesOfDirection.map(s => s.nom));
-    } else {
-      console.log('Aucune direction sélectionnée pour l\'imputation');
-      console.log('idEntite:', this.idEntite);
-      console.log('directions disponibles:', this.directions.map(d => d.nom));
-    }
-    
     this.modalService.open(content, {
       ariaLabelledBy: 'modal-basic-title',
       size: 'meduim',
@@ -750,12 +750,22 @@ loading = false;
   }
 
   onAddRowSave(form: UntypedFormGroup) {
+    const dirId =
+      form.value.odcDirectionId != null
+        ? Number(form.value.odcDirectionId)
+        : this.odcDirections[0]?.id;
+    if (dirId == null || Number.isNaN(dirId)) {
+      this.toastr.error(
+        'Aucune direction ODC disponible : vérifiez les entités (type Direction, nom reconnu ODC) ou contactez l’administrateur.'
+      );
+      return;
+    }
     this.loadingIndicator = true;
     const fd = new FormData();
     fd.append("numero", form.value.numero);
     fd.append("objet", form.value.objet);
     fd.append("expediteur", form.value.expediteur);
-    fd.append("odcDirectionId", String(form.value.entite));
+    fd.append("odcDirectionId", String(dirId));
     if (form.value.fichier) {
       fd.append("fichier", form.value.fichier);
     }
@@ -766,6 +776,7 @@ loading = false;
         
         // Réinitialiser le formulaire complètement
         form.reset();
+        this.patchRegisterOdcDirectionDefaults();
         this.selectedFile = null;
         
         // Réinitialiser manuellement le champ fichier
@@ -815,6 +826,7 @@ loading = false;
   }
 
   addRow(content: any) {
+    this.patchRegisterOdcDirectionDefaults();
     this.modalService.open(content, {
       ariaLabelledBy: 'modal-basic-title',
       size: 'medium',

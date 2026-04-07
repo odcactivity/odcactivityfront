@@ -112,6 +112,12 @@
                       <div class="badge-outline col-indigo">{{row.statut}}
                       </div>
                     }
+                    @if (row.statut === 'En_Validation_Directeur_ODC') {
+                      <div class="badge-outline col-orange">{{row.statut}}</div>
+                    }
+                    @if (row.statut === 'Rejetee') {
+                      <div class="badge-outline col-red">{{row.statut}}</div>
+                    }
 <!--                  </div>-->
                 </ng-template>
               </ngx-datatable-column>

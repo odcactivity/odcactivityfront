@@ -9,6 +9,7 @@ import { catchError } from 'rxjs/operators';
 import { Activity } from '@core/models/Activity';
 import { Entite } from '@core/models/Entite';
 import { canonicalizeAppRoles } from '@core/utils/app-roles';
+import { filterEntitesOdcPiliers, isOdcPillarEntiteName } from '@core/utils/odc-entite';
 
 type PeriodKey = 'semaine' | 'mois' | 'annee';
 
@@ -198,7 +199,13 @@ export class MainComponent implements OnInit {
   private initEmptyCharts(): void {
     this.statusChartOptions = {
       series: [0, 0, 0],
-      chart: { type: 'pie', height: 360, toolbar: { show: false } },
+      chart: {
+        type: 'pie',
+        height: 360,
+        toolbar: { show: false },
+        zoom: { enabled: false },
+        pan: { enabled: false }
+      },
       labels: ['En cours', 'Terminées', 'En attente'],
       colors: ['#1E88E5', '#14B8A6', '#F5B427'],
       plotOptions: {
@@ -228,7 +235,13 @@ export class MainComponent implements OnInit {
     const xLen = 7;
     this.entityChartOptions = {
       series: this.entitySlots.map((s) => ({ name: s.labelShort, data: new Array(xLen).fill(0) })),
-      chart: { type: 'area', height: 360, toolbar: { show: false } },
+      chart: {
+        type: 'area',
+        height: 360,
+        toolbar: { show: false },
+        zoom: { enabled: false },
+        pan: { enabled: false }
+      },
       xaxis: { categories: MainComponent.WEEKDAY_LABELS },
       yaxis: { min: 0, title: { text: "Nombre d'inscrits" } },
       stroke: { curve: 'smooth', width: 2 },
@@ -283,7 +296,9 @@ export class MainComponent implements OnInit {
       chart: {
         type: 'area',
         height: 380,
-        toolbar: { show: false }
+        toolbar: { show: false },
+        zoom: { enabled: false },
+        pan: { enabled: false }
       },
       xaxis: {
         categories,
@@ -613,36 +628,11 @@ export class MainComponent implements OnInit {
     );
   }
 
-  private normalizeName(value: string | undefined): string {
-    return String(value || '')
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toUpperCase()
-      .replace(/\s+/g, ' ')
-      .trim();
-  }
-
-  private isOdcEntiteName(nom: string | undefined): boolean {
-    const n = this.normalizeName(nom);
-    if (!n) {
-      return false;
-    }
-    return (
-      n.includes('ORANGE DIGITAL KALANSO') ||
-      n.includes('ODK') ||
-      n.includes('ORANGE DIGITAL MULTIMEDIA') ||
-      n.includes('MULTIMEDIA') ||
-      n.includes('ORANGE FABLAB') ||
-      n.includes('FABLAB') ||
-      n.includes('ORANGE FAB')
-    );
-  }
-
   private filterEntitesByScope(entites: Entite[]): Entite[] {
     if (this.isDcireScope()) {
       return entites;
     }
-    return entites.filter((e) => this.isOdcEntiteName(e?.nom));
+    return filterEntitesOdcPiliers(entites);
   }
 
   private isActivityAllowedByScope(activity: Activity, allowedEntiteIds: Set<number>): boolean {
@@ -657,7 +647,7 @@ export class MainComponent implements OnInit {
       if (e.id != null && allowedEntiteIds.has(e.id)) {
         return true;
       }
-      return this.isOdcEntiteName(e.nom);
+      return isOdcPillarEntiteName(e.nom);
     }
     return false;
   }

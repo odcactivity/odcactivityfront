@@ -71,7 +71,7 @@ export class ValidationCourriersDirecteurComponent implements OnInit {
     }
     this.global.postCourrierValiderTransmissionDcire(this.selected.id).subscribe({
       next: () => {
-        this.toast.success('Courrier transmis à la DCIRE.');
+        this.toast.success('Courrier validé.');
         this.load();
       },
       error: () => this.toast.error('Validation impossible.')

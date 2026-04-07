@@ -1,11 +1,11 @@
 import { ChangeDetectorRef, Component, NgZone, ViewChild } from '@angular/core';
 import {
-  UntypedFormBuilder, UntypedFormGroup, Validators, FormsModule,
+  UntypedFormBuilder, UntypedFormGroup, FormsModule,
   ReactiveFormsModule,
 } from '@angular/forms';
 import { AuthService } from '@core';
+import { canonicalizeAppRoles } from '@core/utils/app-roles';
 import { ActivityValidation } from '@core/models/ActivityValidation';
-import { Utilisateur } from '@core/models/Utilisateur.model';
 import { GlobalService } from '@core/service/global.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DatatableComponent, SelectionType, NgxDatatableModule } from '@swimlane/ngx-datatable';
@@ -33,7 +33,6 @@ export class ActivityvalidationComponent {
   rows = [];
   activite: Activity[] = [];
   activiteval: Activity[] = [];
-  activitesEnAttente: Activity[] = [];
   activitevalidation: ActivityValidation[] = [];
   superviseurMap: Record<number, string> = {};
   envoyeurMap: Record<number, string> = {};
@@ -52,17 +51,13 @@ export class ActivityvalidationComponent {
   public selected: number[] = [];
   useRole: string[];
   validation: ActivityValidation = new ActivityValidation();
-  utilisateursPersonnels: Utilisateur[] = [];
-  showCommentaire: boolean = false;
-  selectedFile: File | null = null;
   activityValidation: ActivityValidation = new ActivityValidation();
   selectedActivite?: Activity = new Activity();
   currentUserId: number | null = this.getCurrentUserId()
   canDelete: boolean = false;
   actval?: ActivityValidation[];
-  idsuperviseur?: number | null = null;;
-  @ViewChild('validationModal') validationModal: any;
-  validationForm!: UntypedFormGroup;
+  /** Liste complète affichable (avant filtre recherche) */
+  private activitevalSource: Activity[] = [];
   //Constructeur
   constructor(private zone: NgZone,
     private cdr: ChangeDetectorRef,
@@ -76,7 +71,7 @@ export class ActivityvalidationComponent {
     };
     this.selection = SelectionType.checkbox;
 
-    this.useRole = this.authService.getCurrentUserFromStorage().roles;
+    this.useRole = canonicalizeAppRoles(this.authService.getCurrentUserFromStorage().roles || []);
     // console.log('Roles utilisateur dans ActivityValidationComponent:', this.useRole);
   }
   // select record using check box
@@ -115,58 +110,20 @@ export class ActivityvalidationComponent {
     this.getAllActivite();
     this.getAllTypeActivite();
     this.getAllSalle();
-    this.getAllUtilisateur();
-    this.getMapSuperviseur();
     this.getMapEnvoyeur();
-    this.getActivitesForSuperviseur();
-    this.getCurrentUserId();
     this.reloadActivitieValidations();
-    this.reloadActivities();
-    currentUserId: this.getCurrentUserId();
   }
 
   // fetch data
-  getAllUtilisateur() {
-    this.loadingIndicator = true;
-    this.glogalService.get('utilisateur').subscribe({
-      next: (value: Utilisateur[]) => {
-        this.utilisateursPersonnels = value.filter((s: any) => s.id !== this.currentUserId);
-        // console.log("Users",this.utilisateursPersonnels)
-
-        this.filteredData = [...value];
-        setTimeout(() => {
-          this.loadingIndicator = false;
-        }, 500);
-      }
-    })
-  }
-  getMapSuperviseur(): void {
-    this.glogalService.get('utilisateur').subscribe({
-      next: (data) => {
-        // const filteredData = data.filter((s: any) => s.id !== this.currentUserId);
-        const filteredData = data;
-
-        console.log('1SuperviseurMap chargée :', filteredData);
-        this.superviseurMap = Object.fromEntries(
-          filteredData.map((s: any) => [s.id, s.nom + '-' + s.prenom])
-        );
-        // this.superviseurMap = Object.fromEntries(
-        //   data.map((s: any) => [s.id, s.nom+'-'+s.prenom])
-        // );
-        console.log('3SuperviseurMap chargée :', this.superviseurMap);
-      },
-      error: (err) => {
-        console.error('Erreur lors du chargement des superviseurs', err);
-      }
-    });
-  }
   getMapEnvoyeur(): void {
     this.glogalService.get('utilisateur').subscribe({
       next: (data) => {
         this.envoyeurMap = Object.fromEntries(
           data.map((s: any) => [s.id, s.nom + '-' + s.prenom])
         );
-        // console.log('EnvoyeurMap chargée :', this.envoyeurMap);
+        this.superviseurMap = Object.fromEntries(
+          data.map((s: any) => [s.id, s.nom + '-' + s.prenom])
+        );
       },
       error: (err) => {
         console.error('Erreur lors du chargement des senvoyer', err);
@@ -177,14 +134,30 @@ export class ActivityvalidationComponent {
     this.loadingIndicator = true;
     this.glogalService.get('activite').subscribe({
       next: (value: Activity[]) => {
-        console.log('Activity:', value);
         this.activite = value;
-        this.filteredData = [...value];
+        this.activitevalSource = this.filterActivitesForValidationView(value);
+        this.activiteval = [...this.activitevalSource];
         setTimeout(() => {
           this.loadingIndicator = false;
         }, 500);
       }
     })
+  }
+
+  /**
+   * Personnel : uniquement ses activités (suivi + statut directeur ODC).
+   * Superadmin / admin : vue globale.
+   */
+  private filterActivitesForValidationView(list: Activity[]): Activity[] {
+    const roles = canonicalizeAppRoles(this.useRole);
+    if (roles.includes('SUPERADMIN') || roles.includes('ADMIN')) {
+      return [...list];
+    }
+    const uid = this.currentUserId;
+    if (uid == null) {
+      return [];
+    }
+    return list.filter((a) => a.createdBy?.id === uid);
   }
 
   getAllEntite() {
@@ -227,71 +200,6 @@ export class ActivityvalidationComponent {
         }, 500);
       }
     })
-  }
-
-  onAddRowSaveValidation(form: UntypedFormGroup, value: ActivityValidation) {
-    this.glogalService.createValidation(value).subscribe({
-      next: (activite) => {
-        // console.log("validation Activite crée ", activite);
-      }
-    });
-
-    error: (err: any) => {
-      console.error('Erreur activité', err);
-      this.loadingIndicator = false;
-    }
-  }
-
-
-  async onAddRowSave(form: UntypedFormGroup) {
-    if (form.invalid) return;
-    this.loadingIndicator = true;
-    const activiteData = { ...form.value };
-
-    //  Créer l'Activite
-    this.glogalService.post('activite', activiteData).subscribe({
-      next: (activite: Activity) => {
-        console.log("Activite crée ==", activite);
-
-        //  Créer la Validation uniquement si un superviseur est sélectionné
-        if (form.value.fichierjoint) {
-          this.activityValidation.fichierjoint = form.value.fichierjoint;
-        }
-        if (form.value.superviseurId) {
-          const validation: ActivityValidation = {
-            activiteId: activite.id,
-            superviseurId: form.value.superviseurId,
-            commentaire: form.value.commentaire || null, // facultatif
-            statut: 'En_Attente',
-            fichierjoint: this.activityValidation.fichierjoint // facultatif
-          };
-
-          const fichier: File | undefined = form.value.fichier;
-
-          this.glogalService.createValidation(validation, fichier, 'DESIGNATION').subscribe({
-            next: () => {
-              this.addRecordSuccess();
-              this.modalService.dismissAll();
-              form.reset();
-              this.reloadActivities();
-            },
-            error: (err) => console.error('Erreur validation', err),
-            complete: () => this.loadingIndicator = false
-          });
-        } else {
-          // Pas de superviseur => pas de validation, juste succès Activite
-          this.addRecordSuccess();
-          this.modalService.dismissAll();
-          form.reset();
-          this.reloadActivities();
-          this.loadingIndicator = false;
-        }
-      },
-      error: (err) => {
-        console.error('Erreur activité', err);
-        this.loadingIndicator = false;
-      }
-    });
   }
 
   downloadOrOpenFile(validationId: number, openInNewTab = false) {
@@ -337,11 +245,11 @@ export class ActivityvalidationComponent {
   reloadActivities() {
     this.glogalService.get('activite').subscribe({
       next: (data) => {
-        // this.activite = Array.isArray(data) ? data : [];
         this.activite = data;
-        // console.log("mes activites reload====",this.activite);
+        this.activitevalSource = this.filterActivitesForValidationView(data);
+        this.activiteval = [...this.activitevalSource];
         this.loadingIndicator = false;
-        this.cdr.detectChanges(); // force Angular à rafraîchir l'affichage
+        this.cdr.detectChanges();
       },
       error: (err) => {
         this.loadingIndicator = false;
@@ -364,16 +272,6 @@ export class ActivityvalidationComponent {
       },
     });
   }
-  // add new record
-  addRow(content: any) {
-    this.getMapSuperviseur();
-    this.modalService.open(content, {
-      ariaLabelledBy: 'modal-basic-title',
-      size: 'lg',
-    });
-
-  }
-
   selectedEtapeIds: number[] = [];
 
 
@@ -421,55 +319,6 @@ export class ActivityvalidationComponent {
     this.selectedRowData = row;
     console.log("edit row", row);
   };
-  editRowValidation(row: any, validationRecord: any) {
-    // console.log("validation row",row);
-    this.selectedActivite = row;
-    this.validationForm = this.fb.group({
-      statut: ['', Validators.required],      // Acceptee ou Rejetee
-      superviseurId: [''],                           // Optionnel
-      commentaire: [''],                           // Optionnel
-      fichierjoint: [null],                             // Optionnel
-    });
-
-    this.modalService.open(this.validationModal, { size: 'lg', centered: true });
-  }
-  // Save validation by activity
-  onValidate() {
-    if (this.validationForm.invalid) {
-      this.validationForm.markAllAsTouched();
-      return;
-    }
-    const fichierChiffre = this.selectedFile || null;
-    const fichierjoint = this.selectedFile?.name || null;
-
-    const validation: ActivityValidation = {
-      envoyeurId: this.getCurrentUserId() || undefined,
-      activiteId: this.selectedActivite?.id,
-      statut: this.validationForm.value.statut,
-      superviseurId: this.validationForm.value.superviseurId || undefined,
-      commentaire: this.validationForm.value.commentaire || undefined,
-      fichierjoint: fichierjoint || undefined,
-      fichierChiffre: fichierChiffre || undefined
-    };
-
-    this.glogalService.createValidation(validation, fichierChiffre!, 'DESIGNATION').subscribe({
-      next: () => {
-
-  // Fermer le modal
-  this.modalService.dismissAll();
-  //  Supprimer l'activité validée de la liste locale
-  this.activiteval = this.activiteval.filter(
-    act => act.id !== this.selectedActivite?.id
-  );
-  //  Rafraîchir l'affichage
-  this.activiteval = [...this.activiteval];
-  //  Message succès
-  this.editSuccessMessage(3000);
-},
-      error: (err) => console.error('Erreur validation :', err),
-    });
-  }
-
   onEditSave(form: UntypedFormGroup) {
     // console.log("modification", form.value);
     if (form?.value?.id) {
@@ -513,29 +362,6 @@ export class ActivityvalidationComponent {
           });
         }
       });
-    }
-  }
-
-  onSuperviseurSelectedVal(event: any) {
-    const superviseurId = event.target.value;
-    if (superviseurId) {
-      // Stocker l’ID sélectionné dans le form
-      this.validationForm.patchValue({ superviseurId });
-      // Afficher le champ commentaire (tu peux gérer ça via un booléen)
-      this.showCommentaire = true;
-    } else {
-      // Si aucun superviseur choisi, on masque le champ commentaire
-      this.showCommentaire = false;
-      this.validationForm.patchValue({ superviseurId: null, commentaire: '' });
-    }
-  }
-  onFileSelectedVal(event: any): void {
-    const file = event.target.files[0];
-    if (file) {
-      this.selectedFile = file;
-      this.validationForm.patchValue({ fichier: file });
-      this.validationForm.get('fichier')?.updateValueAndValidity();
-      console.log('Fichier sélectionné :', file.name);
     }
   }
 
@@ -651,39 +477,6 @@ export class ActivityvalidationComponent {
       return isNaN(val) ? null : val;
     }
   }
-  // 🔹 toutes les activités où je suis superviseur
-  getActivitesForSuperviseur() {
-    const id = this.getCurrentUserId();
-    // console.error('ID utilisateur trouvé dans le stockage local:', id);
-    if (id === null) {
-      return;
-    }
-    this.glogalService.getActivitesBySuperviseur(id).subscribe({
-      next: (data) => {
-        this.activiteval = data;
-        const allValidations = this.activiteval.flatMap(a => a.activitevalidation);
-        const validationForCurrentUser = allValidations.find(v => v?.superviseurId === this.currentUserId);
-        this.idsuperviseur = validationForCurrentUser?.superviseurId || null;
-      },
-      error: (err) => console.error('Erreur getActivitesBySuperviseur:', err)
-    });
-  }
-  getActivitesEnAttenteForSuperviseur() {
-    const id = this.getCurrentUserId();
-    if (id === null) {
-      console.error('ID utilisateur non trouvé dans le stockage local.');
-      return;
-    }
-    // 🔹 seulement celles en attente
-    this.glogalService.getActivitesEnAttenteBySuperviseur(id).subscribe({
-      next: (data) => {
-        this.activitesEnAttente = data;
-        console.log('Activités en attente :', data);
-      },
-      error: (err) => console.error('Erreur getActivitesEnAttenteBySuperviseur:', err)
-    });
-  }
-
   deleteRecord(row: any) {
     console.log("row to delete", row);
     // Activer le loading pendant la suppression
@@ -732,14 +525,16 @@ export class ActivityvalidationComponent {
 
 
   filterDatatable(event: any) {
-    const val = event.target.value.toLowerCase();
-
-    this.activite = this.filteredData.filter((item) => {
-      return Object.values(item).some((field: any) =>
-        field?.toString().toLowerCase().includes(val)
+    const val = event.target.value.toLowerCase().trim();
+    if (!val) {
+      this.activiteval = [...this.activitevalSource];
+    } else {
+      this.activiteval = this.activitevalSource.filter((item) =>
+        Object.values(item).some((field: any) =>
+          field?.toString().toLowerCase().includes(val)
+        )
       );
-    });
-
+    }
     this.table.offset = 0;
   }
 

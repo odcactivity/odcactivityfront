@@ -22,6 +22,7 @@ import Swal from "sweetalert2";
 import { NgForOf, NgIf } from "@angular/common";
 import { RouterLink } from "@angular/router";
 import { AuthService } from "@core";
+import { filterEntitesOdcPiliers } from '@core/utils/odc-entite';
 import { timer } from 'rxjs';
 
 import { ActivityValidation } from '@core/models/ActivityValidation';
@@ -282,14 +283,22 @@ export class ActivityComponent {
     this.loadingIndicator = true;
     this.glogalService.get('entite').subscribe({
       next: (value: Entite[]) => {
-        this.entite = value;
-        this.filteredData = [...value];
+        const raw = Array.isArray(value) ? value : [];
+        this.entite = filterEntitesOdcPiliers(raw);
+        this.filteredData = [...this.entite];
         setTimeout(() => {
           this.loadingIndicator = false;
         }, 500);
-        console.log("Entite :", this.entite)
       }
     })
+  }
+
+  /** Garde l’entité d’une ligne existante dans la liste déroulante même si elle n’est pas un pilier ODC. */
+  private ensureEntiteOptionPresent(e: Entite | undefined | null) {
+    if (!e?.id) return;
+    if (!this.entite.some((x) => x.id === e.id)) {
+      this.entite = [...this.entite, e];
+    }
   }
 
   getAllSalle() {
@@ -461,9 +470,10 @@ export class ActivityComponent {
         this.reloadActivities();
         form.reset();
         this.loadingIndicator = false;
-      }, error: (err) => {
-        this.toastr.error(err, "Erreur");
-        console.error(" Erreur activité :", err);
+      }, error: (err: unknown) => {
+        const msg = err instanceof Error ? err.message : this.glogalService.extractMessageFromError(err);
+        this.toastr.error(msg, 'Création d’activité');
+        console.error('Erreur activité :', err);
         this.loadingIndicator = false;
       }
     });
@@ -521,6 +531,7 @@ export class ActivityComponent {
         : [];
 
     this.selectedEtapeIds = etapes.map((e: any) => e.id);
+    this.ensureEntiteOptionPresent(row.entite);
     this.detailForm.patchValue({
       id: row.id,
       nom: row.nom,
@@ -556,6 +567,7 @@ export class ActivityComponent {
         : [];
 
     this.selectedEtapeIds = etapes.map((e: any) => e.id);
+    this.ensureEntiteOptionPresent(row.entite);
     this.editForm.patchValue({
       id: row.id,
       nom: row.nom,

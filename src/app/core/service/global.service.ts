@@ -65,7 +65,7 @@ export class GlobalService {
    * @return {Observable<Object>} Un observable qui émet la réponse du serveur.
    */
   post(name: string, object: Object): Observable<Object> {
-    console.log('Appel POST à l\'endpoint :', Object);
+    console.log('Appel POST :', `${this.baseUrl}/${name}`);
     return this.http.post(`${this.baseUrl}/${name}`, object).pipe(
       catchError(this.handleError.bind(this))
     );
@@ -125,7 +125,7 @@ export class GlobalService {
      */
 
   postId(name: string, iduser: number, object: Object): Observable<Object> {
-    console.log('Appel POST à l\'endpoint :', Object);
+    console.log('Appel POST :', `${this.baseUrl}/${name}/${iduser}`);
     return this.http.post(`${this.baseUrl}/${name}/${iduser}`, object).pipe(
       catchError(this.handleError.bind(this))
     );
@@ -205,18 +205,29 @@ export class GlobalService {
         // Erreur côté client
         errorMessage = `Erreur réseau : ${error.error.message}`;
       } else {
-        // Erreur côté serveur
-        if (error.error && typeof error.error === 'object' && error.error.message) {
-          errorMessage = error.error.message;
-        } else if (typeof error.error === 'string') {
-          try {
-            const parsed = JSON.parse(error.error);
-            errorMessage = parsed.message || error.statusText || 'Erreur serveur';
-          } catch (e) {
-            errorMessage = error.error || error.statusText || 'Erreur serveur';
+        // Erreur côté serveur : message JSON Spring (message / detail) en priorité
+        let resolved = false;
+        if (error.error && typeof error.error === 'object') {
+          const body = error.error as Record<string, unknown>;
+          if (typeof body['message'] === 'string') {
+            errorMessage = body['message'] as string;
+            resolved = true;
+          } else if (typeof body['detail'] === 'string') {
+            errorMessage = body['detail'] as string;
+            resolved = true;
           }
-        } else {
-          // Messages par défaut selon le status
+        }
+        if (!resolved && typeof error.error === 'string') {
+          try {
+            const parsed = JSON.parse(error.error) as { message?: string; detail?: string };
+            errorMessage = parsed.message || parsed.detail || error.statusText || 'Erreur serveur';
+            resolved = true;
+          } catch {
+            errorMessage = error.error || error.statusText || 'Erreur serveur';
+            resolved = true;
+          }
+        }
+        if (!resolved) {
           switch (error.status) {
             case 403:
               errorMessage = 'Accès interdit - Vous n\'avez pas les permissions nécessaires';
@@ -224,8 +235,11 @@ export class GlobalService {
             case 404:
               errorMessage = 'Ressource non trouvée';
               break;
+            case 406:
+              errorMessage = 'Requête non acceptable (vérifiez les données saisies).';
+              break;
             case 409:
-              errorMessage = 'Ce nom existe déjà. Veuillez en choisir un autre.';
+              errorMessage = 'Conflit : cette ressource existe déjà ou est indisponible (ex. salle déjà réservée sur ces dates).';
               break;
             case 500:
               errorMessage = 'Erreur interne du serveur';

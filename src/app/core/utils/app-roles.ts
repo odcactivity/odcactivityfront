@@ -34,6 +34,12 @@ export function rolesFromJwtPayload(payload: Record<string, unknown> | null | un
   if (r == null) {
     return [];
   }
+  if (typeof r === 'object' && r !== null && !Array.isArray(r)) {
+    const o = r as Record<string, unknown>;
+    if (typeof o['nom'] === 'string') {
+      return canonicalizeAppRoles([o['nom']]);
+    }
+  }
   if (Array.isArray(r)) {
     return canonicalizeAppRoles(r);
   }

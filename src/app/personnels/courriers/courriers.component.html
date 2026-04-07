@@ -14,9 +14,9 @@
 
   <p class="odl-page-subtitle">
     @if (isDcireRole) {
-      <strong>Vue DCIRE</strong> — tous les courriers transitent par la structure mère. Réception des dossiers hors ODC, puis transmission vers une direction ODC si besoin.
+      Réception des courriers externes et suivi. Vous pouvez transmettre un dossier vers l’ODC si nécessaire.
     } @else {
-      <strong>Vue ODC</strong> — création d’un courrier (admin), validation du contenu par le <strong>directeur ODC</strong>, puis transmission à la DCIRE. Les suggestions du directeur reviennent ici pour correction avant renvoi.
+      Création des courriers par l’administrateur. Le <strong>directeur ODC</strong> est notifié par e-mail pour valider le contenu ou demander des corrections avant envoi au destinataire.
     }
   </p>
 
@@ -48,7 +48,7 @@
                         </button>
                       } @else {
                         <button class="btn btn-icon icon-left bg-warning text-white rounded-button"
-                                (click)='addRow(addRecord)' title="Nouveau courrier ODC (brouillon → validation → DCIRE)">
+                                (click)='addRow(addRecord)' title="Nouveau courrier (brouillon)">
                           <i class="material-icons">add</i>
                         </button>
                       }
@@ -57,42 +57,6 @@
                         <i class="material-icons">delete</i>
                       </button>
                     </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Section Filtres (Entité et Service) -->
-            <div class="row mb-4">
-              <div class="col-12">
-                <div class="d-flex flex-wrap gap-3 align-items-start">
-                  <!-- Champs de sélection -->
-                  <div class="d-flex flex-wrap gap-3 align-items-center flex-grow-1">
-                    <!-- Champ Entité -->
-                    @if (!isDcireRole) {
-                    <div class="d-flex flex-column">
-                      <label class="mb-1 fw-semibold">Direction ODC <span class="text-danger">*</span></label>
-                      <select class="form-select readonly-select customselect" name="idEntite"
-                              [(ngModel)]="idEntite" (change)="getCourrierByEntite()" style="min-width: 200px;">
-                        <option value="" [ngValue]="null" disabled>-- Sélectionnez une direction ODC --</option>
-                        <option *ngFor="let dir of odcDirections" [value]="dir.id">{{dir.nom}}</option>
-                      </select>
-                    </div>
-                    } @else {
-                      <p class="text-muted mb-0 small">Filtre direction non requis : liste globale DCIRE.</p>
-                    }
-
-                    <!-- Champ Service (conditionnel) -->
-                    @if(!isDcireRole && idEntite) {
-                      <div class="d-flex flex-column">
-                        <label class="mb-1 fw-semibold">Service</label>
-                        <select class="form-select readonly-select customselect" name="idService" 
-                                [(ngModel)]="idService" (change)="getCourrierByService()" style="min-width: 180px;">
-                          <option [ngValue]="null">-- Tous les services --</option>
-                          <option *ngFor="let service of servicesOfDirection" [value]="service.id">{{service.nom}}</option>
-                        </select>
-                      </div>
-                    }
                   </div>
                 </div>
               </div>
@@ -193,7 +157,7 @@
                         </span>
                       } @else if(row.statut === 'TRANSMIS_DCIRE') {
                         <span class="badge bg-dark">
-                          <i class="fas fa-building me-1"></i>Chez DCIRE
+                          <i class="fas fa-paper-plane me-1"></i>Transmis
                         </span>
                       } @else if(row.statut === 'ENVOYER') {
                         <span class="badge bg-warning">
@@ -379,6 +343,9 @@
       </button>
     </div>
     <div class="modal-body">
+      <p class="small text-muted mb-3">
+        Après validation du directeur ODC, indiquez le service et, si besoin, le collaborateur qui assurera l’envoi ou le suivi auprès du destinataire.
+      </p>
       <div class="row">
         <!-- Choisir le service qui doit traiter -->
         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
@@ -404,9 +371,9 @@
 
         <!-- Choisir la personne qui doit traiter le courrier -->
         <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
-          <label>Personnel <span class="text-danger"></span></label>
+          <label>Collaborateur chargé du traitement (facultatif)</label>
           <select class="form-select form-control readonly-select" name="personnel" [(ngModel)]="personnel">
-            <option value="" [ngValue]="null" disabled>-- Sélectionnez un personnel --</option>
+            <option value="" [ngValue]="null">-- Aucun — imputation au service seul --</option>
             <option *ngFor="let perso of Utilisateurs" [value]="perso.id">{{perso.prenom}} {{perso.nom}}</option>
           </select>
         </div>
@@ -427,7 +394,7 @@
     <div class="modal-header editRowModal">
       <div class="modal-title-container">
         <h5 class="modal-title fw-bold">Nouveau courrier ODC</h5>
-        <small class="modal-subtitle">Brouillon — après validation admin, envoi à la DCIRE</small>
+        <small class="modal-subtitle">Brouillon : le directeur ODC sera notifié pour validation ou annulation.</small>
       </div>
       <button type="button" class="close" aria-label="Close" (click)="modal.dismiss()">
         <span aria-hidden="true"><i class="material-icons">close</i></span>
@@ -461,17 +428,26 @@
             }
           </div>
 
-          <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
-            <label>Direction ODC <span class="text-danger">*</span></label>
-            <select class="form-select form-control readonly-select" formControlName="entite">
-              <option value="" [ngValue]="null" disabled>-- Sélectionnez une direction ODC --</option>
-              <option *ngFor="let dir of odcDirections" [value]="dir.id">{{dir.nom}}</option>
-            </select>
-            @if (!register.get('entite')?.valid && register.get('entite')?.touched) {
-              <small class="form-text text-danger">L'entité est obligatoire</small>
-            }
-          </div>
-          
+          @if (odcDirections.length === 0) {
+            <div class="col-12 mb-2">
+              <div class="alert alert-warning mb-0">
+                Aucune direction ODC reconnue dans les entités (nom contenant par ex. Kalanso, Multimedia, FabLab, « Orange Digital Center », ODC…).
+                Créez ou renommez une entité de type Direction, ou contactez l’administrateur.
+              </div>
+            </div>
+          } @else {
+            <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
+              <label for="odcDirectionId">Direction ODC d'émission <span class="text-danger">*</span></label>
+              <select id="odcDirectionId" class="form-select" formControlName="odcDirectionId">
+                <option [ngValue]="null" disabled>Choisir une direction</option>
+                <option *ngFor="let d of odcDirections" [ngValue]="d.id">{{ d.nom }}</option>
+              </select>
+              @if (register.get('odcDirectionId')?.touched && register.get('odcDirectionId')?.invalid) {
+                <small class="form-text text-danger">La direction ODC est obligatoire</small>
+              }
+            </div>
+          }
+
           <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
             <label for="fichier">Fichier joint <span class="text-danger"></span>:</label>
             <input type="file" id="fichier" (change)="onFileSelectedCreation($event)" 
@@ -480,7 +456,7 @@
         </div>
 
         <div class="modal-footer">
-          <button type="submit" class="btn btn-warning" [disabled]="!register.valid || loadingIndicator">
+          <button type="submit" class="btn btn-warning" [disabled]="!register.valid || loadingIndicator || odcDirections.length === 0">
             <span *ngIf="loadingIndicator" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
             {{ loadingIndicator ? 'Chargement...' : 'Enregistre' }}
           </button>
@@ -522,14 +498,14 @@
     </div>
   </ng-template>
 
-  <!-- Transmettre vers ODC (DCIRE) -->
+  <!-- Transmettre vers ODC -->
   <ng-template #transmitOdcModal let-modal>
     <div class="modal-header">
       <h5 class="modal-title">Transmettre à l’ODC</h5>
       <button type="button" class="btn-close" (click)="modal.dismiss()"></button>
     </div>
     <div class="modal-body">
-      <p class="small text-muted">Choisissez la direction ODC qui recevra le courrier après passage DCIRE.</p>
+      <p class="small text-muted">Choisissez la direction ODC qui prendra le relais sur ce courrier.</p>
       <label class="form-label">Direction ODC</label>
       <select class="form-select" [(ngModel)]="transmitOdcDirectionId">
         <option [ngValue]="null" disabled>-- Direction --</option>
@@ -542,10 +518,10 @@
     </div>
   </ng-template>
 
-  <!-- Réception courrier hors ODC (DCIRE) -->
+  <!-- Réception courrier hors périmètre ODC -->
   <ng-template #addDcireExterne let-modal>
     <div class="modal-header">
-      <h5 class="modal-title">Réception à la DCIRE (hors ODC)</h5>
+      <h5 class="modal-title">Réception d’un courrier externe</h5>
       <button type="button" class="btn-close" (click)="modal.dismiss()"></button>
     </div>
     <div class="modal-body">

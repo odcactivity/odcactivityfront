@@ -86,15 +86,17 @@ export class AuthService {
           if (response && response.token) {
             /*const user = response.user;*/
             const decoded = this.decodeJwt(response.token);
-            localStorage.setItem('bearerid',decoded.id);
+            if (!decoded) {
+              return response;
+            }
+            localStorage.setItem('bearerid', String(decoded.id));
             const user: Utilisateur = {
               id: decoded.id,
               prenom: decoded.prenom,
               nom: decoded.nom,
               email: decoded.sub,
             };
-            const rawRole = decoded && decoded.role != null ? String(decoded.role).trim() : '';
-            const roles = canonicalizeAppRoles(rawRole ? [rawRole] : []);
+            const roles = rolesFromJwtPayload(decoded as Record<string, unknown>);
 
             const currentUserWithRoles = { ...user, bearer: response.token, roles };
 
