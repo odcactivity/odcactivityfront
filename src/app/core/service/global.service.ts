@@ -115,6 +115,37 @@ export class GlobalService {
       .post(`${this.baseUrl}/api/courriers/dcire/${courrierId}/transmettre-odc`, {}, { params })
       .pipe(catchError(this.handleError.bind(this)));
   }
+
+  getStructureCourriersTableau(): Observable<Record<string, unknown[]>> {
+    return this.http
+      .get<Record<string, unknown[]>>(`${this.baseUrl}/api/courriers/structure-directeur/tableau`)
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  postStructureValiderReceptionCourrier(courrierId: number): Observable<any> {
+    return this.http
+      .post(`${this.baseUrl}/api/courriers/structure-directeur/${courrierId}/valider-reception`, {})
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  postStructureAccuserReceptionCourrier(courrierId: number): Observable<any> {
+    return this.http
+      .post(`${this.baseUrl}/api/courriers/structure-directeur/${courrierId}/accuser-reception`, {})
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  getStructureCiblesInternes(): Observable<{ id: number; nom: string }[]> {
+    return this.http
+      .get<{ id: number; nom: string }[]>(`${this.baseUrl}/api/courriers/structure-directeur/cibles-internes`)
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  /** Réponse à un courrier (multipart, même contrat que l’écran Gestion des courriers). */
+  postCourrierReponseMultipart(formData: FormData): Observable<any> {
+    return this.http
+      .post(`${this.baseUrl}/api/courriers/reponse`, formData)
+      .pipe(catchError(this.handleError.bind(this)));
+  }
   /**
      * Met à jour un objet dans la collection spécifiée.
      *

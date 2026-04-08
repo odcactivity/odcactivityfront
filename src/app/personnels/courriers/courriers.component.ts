@@ -68,7 +68,7 @@ loading = false;
   Activitys: Activity[] = [];
   ActivitySupport: ActivitySupports[] = [];
   Courriers: any[] = [];
-  typeliste: string = "actifs";
+  typeliste: string = 'tous';
   ActivitySupportOnglets: any[] = [];
   Utilisateurs: Utilisateur[] = [];
   selectedFile: File | null = null;
@@ -177,6 +177,8 @@ loading = false;
       expediteur: ['', [Validators.required]],
       fichier: [''],
       odcDirectionId: [null as number | null],
+      destinataireOdc: ['EXTERNE'],
+      externePrecision: [''],
     });
 
     this.registerExterne = this.fb.group({
@@ -370,6 +372,10 @@ loading = false;
         return 'ARCHIVES';
       case 'envoyes':
         return 'REPONDUS';
+      case 'tous':
+        return 'TOUS';
+      case 'actifs':
+        return 'OPERATIONNEL';
       default:
         return 'OPERATIONNEL';
     }
@@ -377,12 +383,16 @@ loading = false;
 
   private applyDcireTabFilter(bruts: any[]): any[] {
     switch (this.typeliste) {
+      case 'tous':
+        return [...bruts];
       case 'archives':
         return bruts.filter((c) => c.statut === 'ARCHIVER');
       case 'envoyes':
         return bruts.filter((c) => c.statut === 'REPONDU');
       case 'validation':
         return [];
+      case 'actifs':
+        return bruts.filter((c) => c.statut !== 'ARCHIVER' && c.statut !== 'REPONDU');
       default:
         return bruts.filter((c) => c.statut !== 'ARCHIVER' && c.statut !== 'REPONDU');
     }
@@ -792,6 +802,12 @@ loading = false;
     fd.append("objet", form.value.objet);
     fd.append("expediteur", form.value.expediteur);
     fd.append("odcDirectionId", String(dirId));
+    const dest = (form.value.destinataireOdc || 'EXTERNE').toString().trim().toUpperCase();
+    fd.append('destinataireOdc', dest || 'EXTERNE');
+    const prec = (form.value.externePrecision || '').toString().trim();
+    if (prec) {
+      fd.append('externePrecision', prec);
+    }
     if (form.value.fichier) {
       fd.append("fichier", form.value.fichier);
     }
@@ -802,6 +818,7 @@ loading = false;
         
         // Réinitialiser le formulaire complètement
         form.reset();
+        form.patchValue({ destinataireOdc: 'EXTERNE', externePrecision: '' });
         this.patchRegisterOdcDirectionDefaults();
         this.selectedFile = null;
         

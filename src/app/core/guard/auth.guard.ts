@@ -86,6 +86,33 @@ export class AuthGuard implements CanActivate {
       }
     }
 
+    if (state.url.startsWith('/structure')) {
+      const adminOk =
+        effectiveRoles.includes('SUPERADMIN') || effectiveRoles.includes('ADMIN');
+      let segmentOk = true;
+      if (state.url.includes('/structure/fondation/')) {
+        segmentOk = adminOk || effectiveRoles.includes('DIRECTEUR_FONDATION');
+      } else if (state.url.includes('/structure/rse/')) {
+        segmentOk = adminOk || effectiveRoles.includes('DIRECTEUR_RSE');
+      } else if (state.url.includes('/structure/dci/')) {
+        segmentOk = adminOk || effectiveRoles.includes('DIRECTEUR_DCI');
+      }
+      const genericOk =
+        adminOk ||
+        effectiveRoles.includes('DIRECTEUR_FONDATION') ||
+        effectiveRoles.includes('DIRECTEUR_RSE') ||
+        effectiveRoles.includes('DIRECTEUR_DCI');
+      const pathIsSegmented =
+        state.url.includes('/structure/fondation/') ||
+        state.url.includes('/structure/rse/') ||
+        state.url.includes('/structure/dci/');
+      const ok = pathIsSegmented ? segmentOk : genericOk;
+      if (!ok) {
+        this.router.navigate([isPersonnel ? '/dashboardActivite' : '/dashboard/main'], { replaceUrl: true });
+        return false;
+      }
+    }
+
     if (isRestricted && isPersonnel) {
       this.router.navigate(['/dashboardActivite'], { replaceUrl: true });
       return false;

@@ -59,6 +59,32 @@ export const APP_ROUTE: Route[] = [
       { path: 'directeur-odc/validation-courriers', loadComponent: () => import('./directeur-odc/validation-courriers-directeur/validation-courriers-directeur.component').then(c => c.ValidationCourriersDirecteurComponent) },
       { path: 'directeur-odc/rapport-global', loadComponent: () => import('./directeur-odc/rapport-global/rapport-global.component').then(c => c.RapportGlobalComponent) },
 
+      {
+        path: 'structure/fondation/courriers',
+        loadComponent: () =>
+          import('./structure/structure-courriers/structure-courriers.component').then(
+            (c) => c.StructureCourriersComponent
+          ),
+        data: { structureLabel: 'Fondation', structureRole: 'DIRECTEUR_FONDATION' },
+      },
+      {
+        path: 'structure/rse/courriers',
+        loadComponent: () =>
+          import('./structure/structure-courriers/structure-courriers.component').then(
+            (c) => c.StructureCourriersComponent
+          ),
+        data: { structureLabel: 'RSE', structureRole: 'DIRECTEUR_RSE' },
+      },
+      {
+        path: 'structure/dci/courriers',
+        loadComponent: () =>
+          import('./structure/structure-courriers/structure-courriers.component').then(
+            (c) => c.StructureCourriersComponent
+          ),
+        data: { structureLabel: 'DCI', structureRole: 'DIRECTEUR_DCI' },
+      },
+      { path: 'structure/courriers', loadComponent: () => import('./structure/structure-courriers/structure-courriers.component').then(c => c.StructureCourriersComponent) },
+
       { path: 'profile', loadComponent: () => import('./profile/profile.component').then(c => c.ProfileComponent) }
     ]
   },

@@ -14,9 +14,9 @@
 
   <p class="odl-page-subtitle">
     @if (isDcireRole) {
-      Réception des courriers externes et suivi. Vous pouvez transmettre un dossier vers l’ODC si nécessaire.
+      Vous ne voyez que les courriers dont le détenteur actuel est la <strong>DCIRE</strong> (réception, transmission vers l’ODC). Les flux internes Fondation / RSE / DCI / ODC sans passage par la DCIRE n’apparaissent pas ici.
     } @else {
-      Création des courriers par l’administrateur. Le <strong>directeur ODC</strong> est notifié par e-mail pour valider le contenu ou demander des corrections avant envoi au destinataire.
+      Courriers liés au <strong>périmètre ODC</strong> (création, validation, envoi vers une autre structure ou la DCIRE). Les échanges strictement internes entre Fondation, RSE et DCI ne sont pas listés ici.
     }
   </p>
 
@@ -63,11 +63,17 @@
             </div>
 
             <!-- Section Boutons de filtre (Actifs/Archives/Envoyés) -->
-            @if(isDcireRole || idEntite) {
+            @if(isDcireRole || idEntite || isSuperAdminRole) {
               <div class="row mb-4">
                 <div class="col-12">
                   <div class="d-flex flex-wrap gap-2 align-items-center">
                     <span class="me-2 fw-semibold text-muted">Affichage :</span>
+
+                    <button [class]="typeliste ==='tous' ? 'btn btn-warning' : 'btn btn shadow-sm btn-dark'"
+                            (click)="handleList('tous')" style="min-width: 100px;">
+                      <i class="fas fa-list me-1"></i>
+                      TOUT
+                    </button>
 
                     <button [class]="typeliste ==='actifs' ? 'btn btn-warning' : 'btn btn shadow-sm btn-dark'"
                             (click)="handleList('actifs')" style="min-width: 100px;">
@@ -445,6 +451,25 @@
               @if (register.get('odcDirectionId')?.touched && register.get('odcDirectionId')?.invalid) {
                 <small class="form-text text-danger">La direction ODC est obligatoire</small>
               }
+            </div>
+          }
+
+          <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
+            <label for="destinataireOdc">Destinataire (après validation directeur ODC)</label>
+            <select id="destinataireOdc" class="form-select" formControlName="destinataireOdc">
+              <option value="EXTERNE">Externe / hors division → DCIRE</option>
+              <option value="FONDATION">Fondation (interne)</option>
+              <option value="RSE">RSE (interne)</option>
+              <option value="DCI">DCI (interne)</option>
+            </select>
+            <small class="text-muted">Les cibles internes exigent une entité Direction dont le nom contient le libellé correspondant.</small>
+          </div>
+
+          @if ((register.get('destinataireOdc')?.value || 'EXTERNE') === 'EXTERNE') {
+            <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
+              <label for="externePrecision">Précision destinataire externe (facultatif)</label>
+              <input type="text" id="externePrecision" class="form-control" formControlName="externePrecision"
+                     placeholder="Structure, contact, référence…" />
             </div>
           }
 

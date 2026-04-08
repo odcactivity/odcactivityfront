@@ -1,0 +1,215 @@
+<section class="main-content p-4 structure-courriers-dash">
+  <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-3">
+    <div>
+      <h4 class="mb-1">Tableau de bord courriers — {{ structureLabel }}</h4>
+      <p class="text-muted mb-0 small">
+        Votre structure <strong>reçoit</strong> des courriers (y compris depuis l’ODC ou d’autres directions) et peut
+        <strong>en émettre</strong> vers une autre direction de la division (Fondation, RSE, DCI, piliers ODC), sans passer par la DCIRE.
+        L’onglet <strong>Tout</strong> liste l’historique complet (validés, archivés, en cours, etc.) pour la transparence.
+      </p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <button type="button" class="btn btn-outline-primary btn-sm" (click)="openInterneModal(interneTpl)">
+        Nouveau courrier interne
+      </button>
+      <button type="button" class="btn btn-outline-secondary btn-sm" (click)="load()" [disabled]="loading">
+        Actualiser
+      </button>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <button
+        type="button"
+        class="structure-dash-card w-100 text-start border-0"
+        [class.structure-dash-card--active]="onglet === 'tout'"
+        (click)="setOnglet('tout')">
+        <div class="structure-dash-card__kpi text-dark">{{ tout.length }}</div>
+        <div class="structure-dash-card__title">Tout</div>
+        <div class="structure-dash-card__hint">Vue complète — rien n’est masqué</div>
+      </button>
+    </div>
+    <div class="col-md-3">
+      <button
+        type="button"
+        class="structure-dash-card w-100 text-start border-0"
+        [class.structure-dash-card--active]="onglet === 'attente'"
+        (click)="setOnglet('attente')">
+        <div class="structure-dash-card__kpi text-warning">{{ enAttente.length }}</div>
+        <div class="structure-dash-card__title">En attente</div>
+        <div class="structure-dash-card__hint">À valider par vous avant circulation</div>
+      </button>
+    </div>
+    <div class="col-md-3">
+      <button
+        type="button"
+        class="structure-dash-card w-100 text-start border-0"
+        [class.structure-dash-card--active]="onglet === 'recus'"
+        (click)="setOnglet('recus')">
+        <div class="structure-dash-card__kpi text-primary">{{ recus.length }}</div>
+        <div class="structure-dash-card__title">Reçus</div>
+        <div class="structure-dash-card__hint">En traitement sur votre direction</div>
+      </button>
+    </div>
+    <div class="col-md-3">
+      <button
+        type="button"
+        class="structure-dash-card w-100 text-start border-0"
+        [class.structure-dash-card--active]="onglet === 'emis'"
+        (click)="setOnglet('emis')">
+        <div class="structure-dash-card__kpi text-success">{{ emis.length }}</div>
+        <div class="structure-dash-card__title">Émis</div>
+        <div class="structure-dash-card__hint">Partis de votre structure</div>
+      </button>
+    </div>
+  </div>
+
+  <ul class="nav nav-tabs mb-3 flex-wrap">
+    <li class="nav-item">
+      <button type="button" class="nav-link" [class.active]="onglet === 'tout'" (click)="setOnglet('tout')">
+        Tout <span class="badge bg-secondary ms-1">{{ tout.length }}</span>
+      </button>
+    </li>
+    <li class="nav-item">
+      <button type="button" class="nav-link" [class.active]="onglet === 'attente'" (click)="setOnglet('attente')">
+        En attente <span class="badge bg-secondary ms-1">{{ enAttente.length }}</span>
+      </button>
+    </li>
+    <li class="nav-item">
+      <button type="button" class="nav-link" [class.active]="onglet === 'recus'" (click)="setOnglet('recus')">
+        Reçus <span class="badge bg-secondary ms-1">{{ recus.length }}</span>
+      </button>
+    </li>
+    <li class="nav-item">
+      <button type="button" class="nav-link" [class.active]="onglet === 'emis'" (click)="setOnglet('emis')">
+        Émis <span class="badge bg-secondary ms-1">{{ emis.length }}</span>
+      </button>
+    </li>
+  </ul>
+
+  @if (loading) {
+    <p>Chargement…</p>
+  } @else if (rowsCourants().length === 0) {
+    <p class="text-muted">Aucun courrier dans cette catégorie pour le moment.</p>
+  } @else {
+    <div class="table-responsive mb-4">
+      <table class="table table-hover align-middle">
+        <thead>
+          <tr>
+            <th>N°</th>
+            <th>Objet</th>
+            <th>Étape</th>
+            @if (onglet === 'emis' || onglet === 'tout') {
+              <th>Statut</th>
+            }
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of rowsCourants(); track $any(r).id) {
+            <tr
+              [class.table-active]="selected && $any(r).id === selected['id']"
+              (click)="selectRow(r)">
+              <td>{{ $any(r).numero }}</td>
+              <td>{{ $any(r).objet }}</td>
+              <td>{{ libelleEtapeCourrier($any(r)) }}</td>
+              @if (onglet === 'emis' || onglet === 'tout') {
+                <td><code class="small">{{ $any(r).statut }}</code></td>
+              }
+              <td>
+                <button type="button" class="btn btn-sm btn-outline-secondary me-1" (click)="openPiece($any(r)); $event.stopPropagation()">
+                  Pièce jointe
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  @if (selected && onglet === 'attente' && $any(selected).statut === 'ATTENTE_VALIDATION_DIRECTEUR_STRUCTURE') {
+    <div class="card p-3 border-warning mb-3">
+      <h6 class="mb-2">Courrier {{ $any(selected).numero }}</h6>
+      <p class="small text-muted mb-3">
+        Après validation, le courrier sera <strong>reçu</strong> sur votre structure. Vous pourrez ensuite accuser réception opérationnelle ou répondre.
+      </p>
+      <button type="button" class="btn btn-success" (click)="validerReception()">Valider la réception</button>
+    </div>
+  }
+
+  @if (selected && (onglet === 'recus' || onglet === 'tout') && peutAccuserReception(selected)) {
+    <div class="card p-3 border-primary mb-3">
+      <h6 class="mb-2">Prise en charge — {{ $any(selected).numero }}</h6>
+      <p class="small text-muted mb-2">
+        Confirmez la prise en charge : le statut passe en <strong>EN COURS</strong> et reste visible pour l’expéditeur (ex. ODC) dans ses listes.
+      </p>
+      <button type="button" class="btn btn-primary" (click)="accuserReceptionOp()">Accuser réception / prise en charge</button>
+    </div>
+  }
+
+  @if (selected && (onglet === 'recus' || onglet === 'tout') && peutRepondre(selected)) {
+    <div class="card p-3 border-success mb-3">
+      <h6 class="mb-2">Répondre au courrier {{ $any(selected).numero }}</h6>
+      <p class="small text-muted mb-3">Votre e-mail de compte est utilisé comme expéditeur de la réponse.</p>
+      <div class="mb-2">
+        <label class="form-label">Objet de la réponse</label>
+        <input class="form-control" [(ngModel)]="replyObjet" name="replyObjet" />
+      </div>
+      <div class="mb-2">
+        <label class="form-label">Message</label>
+        <textarea class="form-control" rows="4" [(ngModel)]="replyMessage" name="replyMessage"></textarea>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Pièce jointe (facultatif)</label>
+        <input type="file" class="form-control" (change)="onReplyFile($event)" />
+      </div>
+      <button type="button" class="btn btn-success" (click)="envoyerReponse()">Envoyer la réponse</button>
+    </div>
+  }
+</section>
+
+<ng-template #interneTpl let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Courrier interne (division)</h5>
+    <button type="button" class="btn-close" aria-label="Fermer" (click)="modal.dismiss()"></button>
+  </div>
+  <div class="modal-body">
+    <p class="small text-muted">
+      Envoi direct vers une autre direction de la division (hors DCIRE). Règles métier identiques à l’écran admin « courrier interne division ».
+    </p>
+    @if (ciblesInternes.length === 0) {
+      <div class="alert alert-warning">Aucune direction cible disponible (vérifiez les entités en base).</div>
+    }
+    <div class="mb-2">
+      <label class="form-label">Direction cible <span class="text-danger">*</span></label>
+      <select class="form-select" [(ngModel)]="interne.cibleDirectionId" name="cibleInterne">
+        <option [ngValue]="null" disabled>Choisir…</option>
+        @for (c of ciblesInternes; track c.id) {
+          <option [ngValue]="c.id">{{ c.nom }}</option>
+        }
+      </select>
+    </div>
+    <div class="mb-2">
+      <label class="form-label">Numéro <span class="text-danger">*</span></label>
+      <input class="form-control" [(ngModel)]="interne.numero" name="numeroInterne" />
+    </div>
+    <div class="mb-2">
+      <label class="form-label">Objet <span class="text-danger">*</span></label>
+      <input class="form-control" [(ngModel)]="interne.objet" name="objetInterne" />
+    </div>
+    <div class="mb-2">
+      <label class="form-label">Expéditeur (libellé) <span class="text-danger">*</span></label>
+      <input class="form-control" [(ngModel)]="interne.expediteur" name="expInterne" />
+    </div>
+    <div class="mb-2">
+      <label class="form-label">Fichier</label>
+      <input type="file" class="form-control" (change)="onInterneFile($event)" />
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-primary" (click)="saveInterne(modal)">Enregistrer</button>
+    <button type="button" class="btn btn-secondary" (click)="modal.dismiss()">Annuler</button>
+  </div>
+</ng-template>

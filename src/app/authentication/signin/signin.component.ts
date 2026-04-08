@@ -94,7 +94,19 @@ export class SigninComponent implements OnInit {
           const roles = currentUserWithRoles.roles;
 
           // Redirection en fonction du rôle
-          if (roles?.includes('SUPERADMIN') || roles?.includes('ADMIN') || roles?.includes('DIRECTEUR') || roles?.includes('DIRECTEUR_ODC')) {
+          if (roles?.includes('DIRECTEUR_FONDATION')) {
+            this.router.navigateByUrl('/structure/fondation/courriers').then(() => {
+              this.cdRef.detectChanges();
+            });
+          } else if (roles?.includes('DIRECTEUR_RSE')) {
+            this.router.navigateByUrl('/structure/rse/courriers').then(() => {
+              this.cdRef.detectChanges();
+            });
+          } else if (roles?.includes('DIRECTEUR_DCI')) {
+            this.router.navigateByUrl('/structure/dci/courriers').then(() => {
+              this.cdRef.detectChanges();
+            });
+          } else if (roles?.includes('SUPERADMIN') || roles?.includes('ADMIN') || roles?.includes('DIRECTEUR') || roles?.includes('DIRECTEUR_ODC')) {
             this.router.navigateByUrl('/dashboard/main').then(() => {
               this.cdRef.detectChanges();
             });

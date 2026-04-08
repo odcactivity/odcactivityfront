@@ -58,6 +58,57 @@
       ]
     },
     {
+      "path": "",
+      "title": "Fondation",
+      "iconType": "feather",
+      "icon": "heart",
+      "class": "",
+      "groupTitle": false,
+      "roles": ["DIRECTEUR_FONDATION"],
+      "submenu": [
+        {
+          "path": "/structure/fondation/courriers",
+          "title": "Tableau de bord courriers",
+          "submenu": [],
+          "roles": ["DIRECTEUR_FONDATION"]
+        }
+      ]
+    },
+    {
+      "path": "",
+      "title": "RSE",
+      "iconType": "feather",
+      "icon": "users",
+      "class": "",
+      "groupTitle": false,
+      "roles": ["DIRECTEUR_RSE"],
+      "submenu": [
+        {
+          "path": "/structure/rse/courriers",
+          "title": "Tableau de bord courriers",
+          "submenu": [],
+          "roles": ["DIRECTEUR_RSE"]
+        }
+      ]
+    },
+    {
+      "path": "",
+      "title": "DCI",
+      "iconType": "feather",
+      "icon": "briefcase",
+      "class": "",
+      "groupTitle": false,
+      "roles": ["DIRECTEUR_DCI"],
+      "submenu": [
+        {
+          "path": "/structure/dci/courriers",
+          "title": "Tableau de bord courriers",
+          "submenu": [],
+          "roles": ["DIRECTEUR_DCI"]
+        }
+      ]
+    },
+    {
       "path": "/utilisateur",
       "title": "Personnel",
       "iconType": "feather",
