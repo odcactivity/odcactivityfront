@@ -18,7 +18,13 @@ export class SidebarService {
    */
   getRouteInfo(): Observable<RouteInfo[]> {
     return this.http.get<{ routes: RouteInfo[] }>('assets/data/routes.json').pipe(
-      map((response) => response?.routes ?? this.embeddedRoutes),
+      map((response) => {
+        const r = response?.routes;
+        if (Array.isArray(r) && r.length > 0) {
+          return r;
+        }
+        return this.embeddedRoutes;
+      }),
       catchError(() => of(this.embeddedRoutes))
     );
   }

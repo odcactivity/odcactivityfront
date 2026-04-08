@@ -213,7 +213,7 @@ loading = false;
       next: (value: Entite[]) => {
         this.entites = value;
         this.directions = value.filter((e) => this.isDirectionEntiteType(e.type));
-        this.services = value.filter((e) => String(e?.type || '').toUpperCase() === 'SERVICE');
+        this.services = value.filter((e) => this.isServiceEntiteType(e.type));
 
         this.odcDirections = this.directions.filter(
           (e) => this.isOdcDirectionName(e.nom) && !this.isDcireDirectionName(e.nom)
@@ -224,17 +224,28 @@ loading = false;
         const dc = this.directions.find((e) => this.isDcireDirectionName(e.nom));
         this.dcireDirectionId = dc?.id ?? null;
 
-        this.patchRegisterOdcDirectionDefaults();
-
-        this.loadingIndicator = false;
-        if (this.isDcireRole) {
-          this.refreshCourriersDcire();
-        } else {
-          this.loadOdcCourriersMerged();
-        }
-        setTimeout(() => {
+        const finishEntiteLoad = () => {
+          this.patchRegisterOdcDirectionDefaults();
           this.loadingIndicator = false;
-        }, 500);
+          if (this.isDcireRole) {
+            this.refreshCourriersDcire();
+          } else {
+            this.loadOdcCourriersMerged();
+          }
+          setTimeout(() => {
+            this.loadingIndicator = false;
+          }, 500);
+        };
+
+        this.glogalService
+          .get('api/courriers/odc/directions-emission')
+          .pipe(catchError(() => of([])))
+          .subscribe((list: Entite[]) => {
+            if (Array.isArray(list) && list.length > 0) {
+              this.odcDirections = list;
+            }
+            finishEntiteLoad();
+          });
       }
     });
   }
@@ -277,8 +288,23 @@ loading = false;
     });
   }
 
-  private isDirectionEntiteType(type: string | undefined): boolean {
-    return String(type ?? '').toUpperCase() === 'DIRECTION';
+  /** JSON enum Spring peut être une chaîne ou { name: "DIRECTION" }. */
+  private entiteTypeString(type: unknown): string {
+    if (typeof type === 'string') {
+      return type.trim().toUpperCase();
+    }
+    if (type != null && typeof type === 'object' && 'name' in (type as object)) {
+      return String((type as { name?: string }).name ?? '').trim().toUpperCase();
+    }
+    return String(type ?? '').trim().toUpperCase();
+  }
+
+  private isDirectionEntiteType(type: unknown): boolean {
+    return this.entiteTypeString(type) === 'DIRECTION';
+  }
+
+  private isServiceEntiteType(type: unknown): boolean {
+    return this.entiteTypeString(type) === 'SERVICE';
   }
 
   /** Règle alignée avec le backend (CourrierService.estDirectionOdc). */

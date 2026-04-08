@@ -31,17 +31,30 @@ export function rolesFromJwtPayload(payload: Record<string, unknown> | null | un
     return [];
   }
   const r = payload['role'];
-  if (r == null) {
-    return [];
-  }
-  if (typeof r === 'object' && r !== null && !Array.isArray(r)) {
-    const o = r as Record<string, unknown>;
-    if (typeof o['nom'] === 'string') {
-      return canonicalizeAppRoles([o['nom']]);
+  if (r != null) {
+    if (typeof r === 'object' && r !== null && !Array.isArray(r)) {
+      const o = r as Record<string, unknown>;
+      if (typeof o['nom'] === 'string') {
+        return canonicalizeAppRoles([o['nom']]);
+      }
     }
+    if (Array.isArray(r)) {
+      return canonicalizeAppRoles(r);
+    }
+    return canonicalizeAppRoles([String(r)]);
   }
-  if (Array.isArray(r)) {
-    return canonicalizeAppRoles(r);
+  const auth = payload['authorities'];
+  if (Array.isArray(auth)) {
+    const names = auth.map((a) => {
+      if (typeof a === 'string') {
+        return a.replace(/^ROLE_/i, '');
+      }
+      if (a && typeof a === 'object' && 'authority' in (a as object)) {
+        return String((a as { authority?: string }).authority || '').replace(/^ROLE_/i, '');
+      }
+      return String(a);
+    });
+    return canonicalizeAppRoles(names);
   }
-  return canonicalizeAppRoles([String(r)]);
+  return [];
 }

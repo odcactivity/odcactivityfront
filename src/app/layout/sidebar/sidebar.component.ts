@@ -40,6 +40,7 @@ export class SidebarComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.refreshSidebarMenu();
     this.authService.currentUser
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.refreshSidebarMenu());
