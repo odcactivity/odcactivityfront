@@ -1,0 +1,645 @@
+/**
+ * Thème ODL (Orange Digital) - Même design que le projet ODL
+ * Couleurs: #FF7900 (Orange Digital), blanc, noir, gris
+ * À importer en dernier pour surcharger le thème existant.
+ */
+
+/* Variables CSS ODL - charte Orange Mali */
+:root {
+  --odl-primary: #FF7900;
+  --odl-primary-foreground: #FFFFFF;
+  --odl-primary-light: #ffa64d;
+  --odl-background: #FFFFFF;
+  --odl-foreground: #000000;
+  --odl-muted: #525252;
+  --odl-muted-bg: #F5F5F5;
+  --odl-border: #E5E5E5;
+  --odl-input: #E5E5E5;
+  --odl-sidebar-bg: #FFFFFF;
+  /* Texte et icônes du sidebar en gris (ODL) */
+  --odl-sidebar-text: #6B7280;
+  --odl-sidebar-icon: #6B7280;
+  --odl-sidebar-active-bg: #FF7900;
+  --odl-sidebar-active-fg: #FFFFFF;
+  --odl-sidebar-hover-bg: rgba(255, 121, 0, 0.08);
+  --odl-sidebar-width: 260px;
+  --odl-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --odl-radius: 0.75rem;
+  --odl-font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --odl-font-size-base: 1rem;   /* 16px par défaut, légèrement augmenté via html */
+  --odl-font-size-sm: 0.9375rem;
+  --odl-font-size-lg: 1.0625rem;
+}
+
+/* Fond global blanc comme ODL + éviter débordement horizontal */
+html {
+  overflow-x: hidden;
+  width: 100%;
+  font-size: 17px; /* Légère augmentation de la taille des écritures de l'appli */
+}
+body {
+  background-color: var(--odl-background) !important;
+  color: var(--odl-foreground);
+  font-family: var(--odl-font-sans);
+  font-size: 1rem;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Boutons primaires orange ODL */
+.btn-primary,
+.btn-warning.auth-form-btn,
+.bg-warning,
+button.btn-icon.bg-warning {
+  background-color: var(--odl-primary) !important;
+  border-color: var(--odl-primary) !important;
+  color: var(--odl-primary-foreground) !important;
+}
+.btn-primary:hover,
+.btn-warning.auth-form-btn:hover {
+  background-color: var(--odl-primary-light) !important;
+  border-color: var(--odl-primary-light) !important;
+  color: var(--odl-primary-foreground) !important;
+}
+
+/* Palette unique (Orange / Blanc / Noir) pour les actions */
+.btn-dark,
+.btn-secondary {
+  background-color: #111827 !important;
+  border-color: #111827 !important;
+  color: #FFFFFF !important;
+}
+.btn-dark:hover,
+.btn-secondary:hover {
+  background-color: #0b1220 !important;
+  border-color: #0b1220 !important;
+}
+.btn-outline-dark,
+.btn-outline-secondary {
+  border-color: #111827 !important;
+  color: #111827 !important;
+}
+.btn-outline-dark:hover,
+.btn-outline-secondary:hover {
+  background-color: #111827 !important;
+  color: #FFFFFF !important;
+}
+
+/* Danger: garder lisible mais éviter le rouge agressif (reste destructif) */
+.btn-danger {
+  background-color: #DC2626 !important;
+  border-color: #DC2626 !important;
+}
+.btn-danger:hover {
+  background-color: #B91C1C !important;
+  border-color: #B91C1C !important;
+}
+
+/* ========== Sidebar ODL (adapté d'ODL : couleurs + disposition 2e image) ========== */
+.main-sidebar.sidebar,
+.sidebar.main-sidebar {
+  background: var(--odl-sidebar-bg) !important;
+  border-right: 1px solid var(--odl-border);
+  box-shadow: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100vh !important;
+}
+/* Panneau utilisateur fixe en haut (comme la navbar : ne disparaît pas au scroll) */
+.sidebar-user-panel,
+.sidebar-user-panel--fixed {
+  flex-shrink: 0 !important;
+  padding: 1rem 1rem 1.25rem !important;
+  border-bottom: 1px solid var(--odl-border) !important;
+  text-align: center;
+  background: var(--odl-sidebar-bg) !important;
+}
+.sidebar .menu.menu--scroll {
+  flex: 1 !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding-left: 0 !important;
+}
+.sidebar .menu.menu--scroll ng-scrollbar {
+  flex: 1 !important;
+  min-height: 0 !important;
+}
+/* Liste menu : pas de padding gauche pour que l’item actif soit bien délimité à gauche (comme ODL) */
+.sidebar.main-sidebar .menu.menu--scroll .list {
+  padding-left: 0 !important;
+}
+.sidebar.main-sidebar .menu .list > li {
+  padding: 0 !important;
+}
+/* Panneau utilisateur : style ODL (icône carrée arrondie, texte en gris) */
+.sidebar-user-panel .user-panel,
+.sidebar-user-panel--fixed .user-panel {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+.sidebar-user-panel .user-panel .image img,
+.sidebar-user-panel--fixed .user-panel .image img,
+.sidebar .user-info .image img {
+  border: 2px solid var(--odl-border) !important;
+  border-radius: 12px !important;
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+}
+.profile-usertitle,
+.sidebar-user-panel .profile-usertitle-job,
+.sidebar-userpic-name,
+.sidebar .user-info .name,
+.sidebar .user-info .email {
+  color: var(--odl-sidebar-text) !important;
+  font-size: 0.875rem !important;
+}
+.sidebar-userpic-name {
+  font-weight: 600;
+  color: var(--odl-foreground) !important;
+}
+.profile-usertitle-job {
+  font-size: 0.75rem !important;
+  margin-top: 0.15rem;
+}
+/* Items menu : épaisseur comme ODL (fine), délimité à gauche (coins arrondis à droite seulement) */
+.sidebar.main-sidebar .menu .list > li > a.menu-top {
+  padding: 6px 12px 6px 14px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-size: 0.9375rem !important;
+  border-radius: 0 8px 8px 0 !important;
+  margin: 0 10px 2px 0 !important;
+  margin-left: 0 !important;
+}
+.sidebar.main-sidebar .menu .list > li > a.menu-top .sidebarIcon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+}
+.sidebar.main-sidebar .menu .list > li > a.menu-top .hide-menu {
+  flex: 1;
+}
+/* Chevron ODL : gris, pointe vers le haut quand ouvert (comme image 2) */
+.sidebar.main-sidebar .menu .list li > a.menu-top .chevron {
+  color: var(--odl-sidebar-icon) !important;
+  font-size: 0.75rem !important;
+  display: inline-block;
+  transition: transform 0.2s ease;
+  margin-left: auto;
+}
+.sidebar.main-sidebar .menu .list li > a.menu-top .chevron.open {
+  transform: rotate(-90deg); /* ▸ → ↑ (caret vers le haut quand ouvert) */
+}
+.sidebar.main-sidebar .menu .list li.active .menu-top .chevron,
+.sidebar.main-sidebar .menu .list li.active-top .menu-top .chevron {
+  color: var(--odl-sidebar-active-fg) !important;
+}
+/*
+ * Texte inactif : UNIQUEMENT hors .active / .active-top.
+ * (L’ancienne règle ciblait tous les li a.menu-top avec body… et battait la couleur « actif »
+ * à cause d’une spécificité plus forte sur le span .hide-menu.)
+ */
+body .sidebar.main-sidebar .menu .list li:not(.active):not(.active-top) > a.menu-top,
+body .menu_dark .sidebar .menu .list li:not(.active):not(.active-top) > a.menu-top,
+body .sidebar.main-sidebar .menu .list li:not(.active):not(.active-top) > a.menu-top .hide-menu,
+body .sidebar.main-sidebar .menu .list li .ml-menu li:not(.active) > a {
+  color: var(--odl-sidebar-text) !important;
+}
+body .sidebar.main-sidebar .menu .list li:not(.active):not(.active-top) > a.menu-top:hover {
+  background-color: var(--odl-sidebar-hover-bg) !important;
+  color: var(--odl-sidebar-text) !important;
+}
+body .sidebar.main-sidebar .menu .list li:not(.active):not(.active-top) > a.menu-top:hover .hide-menu {
+  color: var(--odl-sidebar-text) !important;
+}
+/* Item actif : fond orange sur le lien, libellé en blanc (sans fond sur le span) */
+body .sidebar.main-sidebar .menu .list li.active > a.menu-top,
+body .sidebar.main-sidebar .menu .list li.active-top > a.menu-top {
+  background-color: var(--odl-sidebar-active-bg) !important;
+  color: #ffffff !important;
+}
+body .sidebar.main-sidebar .menu .list li.active > a.menu-top .hide-menu,
+body .sidebar.main-sidebar .menu .list li.active-top > a.menu-top .hide-menu {
+  color: #ffffff !important;
+  background-color: transparent !important;
+}
+body .sidebar.main-sidebar .menu .list li .ml-menu li.active > a {
+  background-color: var(--odl-sidebar-active-bg) !important;
+  color: #ffffff !important;
+}
+body .sidebar.main-sidebar .menu .list li .ml-menu li.active > a span {
+  color: #ffffff !important;
+}
+.main-sidebar .sidebar-menu > li.active > a,
+.sidebar .menu .list li.active .menu-top,
+.sidebar .menu .list li.active-top .menu-top,
+.sidebar .menu .list li .ml-menu li.active a {
+  background-color: var(--odl-sidebar-active-bg) !important;
+  color: #ffffff !important;
+}
+.sidebar .menu .list li.active .menu-top .hide-menu,
+.sidebar .menu .list li.active-top .menu-top .hide-menu,
+.sidebar .menu .list li .ml-menu li.active a {
+  color: #ffffff !important;
+}
+/* Force texte + icone en blanc sur item actif */
+.sidebar .menu .list li.active > a.menu-top span,
+.sidebar .menu .list li.active-top > a.menu-top span,
+.sidebar .menu .list li.active > a.menu-top i,
+.sidebar .menu .list li.active-top > a.menu-top i,
+.sidebar .menu .list li .ml-menu li.active > a span,
+.sidebar .menu .list li .ml-menu li.active > a i {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+}
+/* Icônes : gris inactif ; item actif = blanc sur orange (ODL) */
+body .sidebar.main-sidebar .sidebarIcon,
+body .menu_dark .sidebar .sidebarIcon {
+  color: var(--odl-sidebar-icon) !important;
+  fill: var(--odl-sidebar-icon) !important;
+}
+body .sidebar.main-sidebar .menu .list li.active .sidebarIcon,
+body .sidebar.main-sidebar .menu .list li.active-top .sidebarIcon,
+body .sidebar.main-sidebar .menu .list li .ml-menu li.active a .sidebarIcon {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+  stroke: #ffffff !important;
+}
+.sidebar .user-panel,
+.sidebar .user-info {
+  border-bottom: 1px solid var(--odl-border);
+}
+/* Sous-menus ODL : trait vertical gris à gauche, indentation (disposition image 2) */
+.sidebar .menu .list li .ml-menu {
+  background: transparent !important;
+  padding-left: 0 !important;
+  margin-left: 18px !important;
+  border-left: 2px solid var(--odl-border) !important;
+  list-style: none !important;
+}
+.sidebar .menu .list li .ml-menu li:not(.active) > a {
+  color: var(--odl-sidebar-text) !important;
+  padding-left: 14px !important;
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+  font-size: 0.9375rem !important;
+  border-radius: 0 6px 6px 0 !important;
+  margin: 1px 10px 1px 0 !important;
+  display: block !important;
+}
+/* Cacher la flèche Font Awesome des sous-items pour garder uniquement le trait vertical ODL */
+.sidebar.main-sidebar .menu .list li .ml-menu li a::before {
+  content: none !important;
+}
+.sidebar .menu .list li .ml-menu li:not(.active) > a:hover {
+  background-color: var(--odl-sidebar-hover-bg) !important;
+}
+.sidebar .menu .list li .ml-menu li.active a {
+  color: var(--odl-sidebar-active-fg) !important;
+  background-color: var(--odl-sidebar-active-bg) !important;
+}
+/* Titre de groupe (header) si utilisé */
+.sidebar .menu .list .header {
+  color: var(--odl-sidebar-text) !important;
+  font-size: 0.7rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  padding: 12px 18px 6px !important;
+}
+
+/* Navbar / Header style ODL: fond blanc, pas de dégradé */
+.main-navbar.navbar,
+.navbar.main-navbar,
+.main-navbar.sticky,
+.main-navbar.navbar.sticky {
+  background: var(--odl-background) !important;
+  background-image: none !important;
+  border-bottom: 1px solid var(--odl-border);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+.main-navbar .nav-link,
+.main-navbar .navbar-nav .nav-link,
+.main-navbar .nav-link.nav-link-lg {
+  color: var(--odl-foreground) !important;
+}
+.main-navbar .nav-link:hover {
+  color: var(--odl-primary) !important;
+}
+.main-navbar .headbar-brand a,
+.main-navbar .logo-name {
+  color: var(--odl-foreground) !important;
+}
+
+/* Cartes style ODL: fond blanc, bordure légère, ombre légère */
+.card {
+  background: var(--odl-background);
+  border: 1px solid var(--odl-border);
+  border-radius: var(--odl-radius);
+  box-shadow: var(--odl-card-shadow);
+}
+
+/* Section body fond clair */
+.section-body {
+  background-color: #fafafa;
+}
+
+/* Liens et texte primary */
+.text-primary,
+a.text-primary,
+.bcrumb-1 a {
+  color: var(--odl-primary) !important;
+}
+.bg-primary {
+  background-color: var(--odl-primary) !important;
+}
+
+/* ========== Dashboard & pages (style ODL) ========== */
+/* Filtres Semaine / Mois / Année : surcharger .btn.light.active (Bootstrap = gris/bleuté) */
+.odl-period-switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.odl-period-switch .btn.btn-light {
+  border: 1px solid #d1d5db;
+  background: #fff !important;
+  color: #374151 !important;
+  font-weight: 600;
+  border-radius: 8px;
+  min-width: 84px;
+  height: 34px;
+  padding: 0 14px;
+  font-size: 0.95rem;
+  --bs-btn-active-bg: #ff7900;
+  --bs-btn-active-border-color: #ff7900;
+  --bs-btn-active-color: #fff;
+}
+.odl-period-switch .btn.btn-light.active,
+.odl-period-switch .btn.btn-light.active:focus,
+.odl-period-switch .btn.btn-light.active:hover {
+  background: #ff7900 !important;
+  border-color: #ff7900 !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+/* IMPORTANT: décaler le contenu à droite du sidebar pour qu'il ne soit jamais masqué */
+.main-content {
+  background-color: #fafafa;
+  margin-left: var(--odl-sidebar-width) !important;
+  width: calc(100vw - var(--odl-sidebar-width)) !important;
+  max-width: calc(100vw - var(--odl-sidebar-width)) !important;
+  padding: 1.5rem !important;
+  padding-top: 90px !important;
+  min-height: calc(100vh - 60px);
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+/* Sidebar réduite (60px) */
+body.side-closed .main-content {
+  margin-left: 60px !important;
+  width: calc(100vw - 60px) !important;
+  max-width: calc(100vw - 60px) !important;
+}
+/* Mobile : sidebar masquée */
+body.sidebar-gone .main-content {
+  margin-left: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Breadcrumb ODL */
+.breadcrumb-style,
+.breadcrumb {
+  background: transparent !important;
+  padding: 0 0 1rem 0;
+  margin: 0.75rem 0 1rem 0; /* petit espace sous la navbar */
+  border-bottom: 1px solid var(--odl-border);
+  font-size: 0.875rem;
+}
+
+/* Sous-titre de page (après le breadcrumb) */
+.odl-page-subtitle {
+  margin: 0 0 1rem 0;
+  color: var(--odl-muted);
+  font-size: 0.95rem;
+}
+
+/* Séparer visuellement les sections */
+.section-body > .card,
+.section-body > .row > [class*="col-"] > .card {
+  margin-bottom: 1rem;
+}
+.breadcrumb-item .page-title,
+.breadcrumb-style .page-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--odl-foreground);
+  margin: 0;
+}
+.breadcrumb-item a {
+  color: var(--odl-muted);
+  text-decoration: none;
+}
+.breadcrumb-item a:hover {
+  color: var(--odl-primary);
+}
+.breadcrumb-item + .breadcrumb-item::before {
+  color: var(--odl-muted);
+}
+
+/* Cartes stats dashboard ODL */
+.card-statistic-4,
+.card-content h6 {
+  color: var(--odl-muted) !important;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+.card-statistic-4 .card-content h2,
+.card-content h2.font-18 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--odl-foreground) !important;
+}
+.card-statistic-4 .banner-img img {
+  max-height: 48px;
+  opacity: 0.9;
+}
+.card-header {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--odl-foreground);
+  border-bottom: 1px solid var(--odl-border);
+  padding: 1rem 1.25rem;
+  background: #fff;
+}
+.card-body {
+  background: #fff;
+  color: var(--odl-foreground);
+}
+
+/* Formulaires ODL (select, input) */
+.form-label,
+label.form-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--odl-foreground);
+}
+.form-control,
+.form-select {
+  border: 1px solid var(--odl-input);
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  padding: 0.5rem 0.75rem;
+  background: #fff;
+}
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--odl-primary);
+  box-shadow: 0 0 0 2px rgba(255, 121, 0, 0.15);
+  outline: none;
+}
+
+/* Boutons Ajouter / actions ODL (style ODL cohérent) */
+.rounded-button,
+.btn.bg-warning.rounded-button,
+button.bg-warning.rounded-pill,
+.btn-icon.bg-warning,
+.tbl-btn-style .btn.bg-warning {
+  background-color: var(--odl-primary) !important;
+  border: none !important;
+  color: #fff !important;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+.rounded-button:hover,
+.btn.bg-warning.rounded-button:hover,
+.btn-icon.bg-warning:hover {
+  background-color: var(--odl-primary-light) !important;
+  color: #fff !important;
+}
+.px-3.py-1.bg-warning,
+.rounded-pill.bg-warning {
+  background-color: var(--odl-primary) !important;
+  color: #fff !important;
+}
+/* Boutons d’action tableau (edit/delete) cohérents */
+.btn-tbl-edit,
+.btn-tbl-delete {
+  border-radius: 8px;
+  padding: 0.4rem 0.6rem;
+}
+
+/* Cartes entités (directions/services) - garder contraste avec accent orange */
+.card-body.bg-dark {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%) !important;
+  border-radius: 0 0 var(--odl-radius) var(--odl-radius);
+}
+.card-body.bg-dark .text-warning,
+.card-body.bg-dark .fa-arrow-right {
+  color: var(--odl-primary) !important;
+}
+
+/* Tables / listes ODL: fond clair, lignes claires, texte gris (pas de fond sombre) */
+.table,
+.ngx-datatable,
+.ngx-datatable.material {
+  font-size: 0.875rem;
+  background: var(--odl-background) !important;
+  border: 1px solid var(--odl-border);
+  border-radius: var(--odl-radius);
+  box-shadow: var(--odl-card-shadow);
+}
+.table thead th,
+.ngx-datatable .datatable-header .datatable-header-cell {
+  font-weight: 600;
+  color: var(--odl-foreground);
+  border-bottom: 2px solid var(--odl-border);
+  background: var(--odl-muted-bg) !important;
+}
+.table td,
+.table th,
+.ngx-datatable .datatable-body .datatable-body-row .datatable-body-cell {
+  border-color: var(--odl-border);
+  padding: 0.75rem 1rem;
+  background: var(--odl-background) !important;
+  color: var(--odl-foreground) !important;
+}
+.ngx-datatable .datatable-body .datatable-body-row:hover .datatable-body-cell {
+  background: var(--odl-muted-bg) !important;
+  color: var(--odl-foreground) !important;
+}
+.ngx-datatable .datatable-footer {
+  background: var(--odl-muted-bg) !important;
+  border-top: 1px solid var(--odl-border);
+  color: var(--odl-foreground);
+}
+
+/* Bordures uniquement sur les images des cartes entités (Divisions / DCIRE) – pas ailleurs */
+app-entite .card-img-top,
+.main-content app-entite .card .card-img-top {
+  border: 1px solid var(--odl-border);
+  border-radius: 4px;
+}
+
+/* Texte gris sur toute la plateforme (lisibilité, cohérence ODL) */
+body,
+.section-body,
+.card-body,
+.page-title,
+.form-label,
+.table,
+.ngx-datatable .datatable-body-cell,
+.name-col-style {
+  color: var(--odl-foreground) !important;
+}
+.card-content h6,
+.breadcrumb-item {
+  color: var(--odl-muted) !important;
+}
+
+/* Badge / statut Actif style ODL */
+.badge.bg-success,
+.rounded-pill.bg-success,
+.badge-success {
+  background-color: var(--odl-primary) !important;
+  color: #fff !important;
+  padding: 0.25rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Pagination ODL */
+.pagination .page-link {
+  border-color: var(--odl-border);
+  color: var(--odl-foreground);
+}
+.pagination .page-item.active .page-link {
+  background-color: var(--odl-primary);
+  border-color: var(--odl-primary);
+  color: #fff;
+}
+.pagination .page-link:hover {
+  background-color: var(--odl-muted-bg);
+  color: var(--odl-primary);
+}
