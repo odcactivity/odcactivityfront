@@ -74,6 +74,8 @@ export class MainComponent implements OnInit {
   private static readonly COURRIER_COLORS = ['#0d9488', '#16a34a', '#d97706', '#2563eb', '#7c3aed'];
   /** Buckets série courriers (copie pour l’infobulle — évite décalage série / détail). */
   private courrierLineBuckets: any[] = [];
+  /** Dernière erreur de chargement de la série « évolution des courriers » (si applicable). */
+  private lastCourrierSerieLoadError: string | null = null;
 
   nombreUtilisateurs: number | undefined;
   nombreActivite: number = 0;
@@ -283,8 +285,15 @@ export class MainComponent implements OnInit {
     this.globalService
       .getCourrierDashboardSerie(this.selectedCourrierPeriod, this.selectedCourrierStructureId)
       .subscribe({
-        next: (r: any) => this.buildCourrierLineChart(r),
-        error: () => this.buildCourrierLineChart({ buckets: [] })
+        next: (r: any) => {
+          this.lastCourrierSerieLoadError = null;
+          this.buildCourrierLineChart(r);
+        },
+        error: (err: any) => {
+          const msg = String(err?.error?.message || err?.message || '').trim();
+          this.lastCourrierSerieLoadError = msg || 'Erreur de chargement de la série.';
+          this.buildCourrierLineChart({ buckets: [] });
+        }
       });
   }
 
@@ -477,7 +486,11 @@ export class MainComponent implements OnInit {
           }
           const catLabel = labels[si] ?? '';
           if (!hasBuckets || that.courrierLineBuckets.length === 0) {
-            return `<div class="odl-tooltip"><div class="odl-tooltip-head"><strong>${that.escapeHtml(catLabel)}</strong></div><div class="odl-tooltip-list text-muted">Aucune donnée pour cette période.</div></div>`;
+            const errMsg = that.lastCourrierSerieLoadError;
+            const hint = errMsg
+              ? `Chargement impossible : ${that.escapeHtml(errMsg)}`
+              : 'Aucune donnée pour cette période (dates de réception manquantes ou hors période).';
+            return `<div class="odl-tooltip"><div class="odl-tooltip-head"><strong>${that.escapeHtml(catLabel)}</strong></div><div class="odl-tooltip-list text-muted">${hint}</div></div>`;
           }
           const j = that.resolveCourrierApexDataPointIndex(opts);
           if (j < 0 || j >= that.courrierLineBuckets.length) {
