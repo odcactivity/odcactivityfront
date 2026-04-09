@@ -334,14 +334,49 @@ export class MainComponent implements OnInit {
   }
 
   /** Libellés axe X si l’API ne renvoie pas de buckets (erreur réseau / réponse vide). */
-  /** Index colonne (créneau) fiable pour ApexCharts 4 (tooltip). */
-  private resolveCourrierApexDataPointIndex(opts: {
-    dataPointIndex?: number;
-    w?: { globals?: { capturedDataPointIndex?: number } };
-  }): number {
-    const raw = opts.dataPointIndex ?? opts.w?.globals?.capturedDataPointIndex;
-    const n = Number(raw);
-    return Number.isInteger(n) && n >= 0 ? n : -1;
+
+  /** Index du créneau (colonne) : indices Apex, puis position souris sur la grille. */
+  private resolveCourrierApexDataPointIndex(opts: any): number {
+    const nb = this.courrierLineBuckets.length;
+    const g = opts?.w?.globals;
+    const candidates = [opts?.dataPointIndex, opts?.j, g?.capturedDataPointIndex];
+    for (const raw of candidates) {
+      if (raw === undefined || raw === null || raw === '') {
+        continue;
+      }
+      const n = Number(raw);
+      if (Number.isInteger(n) && n >= 0) {
+        return nb > 0 ? Math.min(nb - 1, n) : n;
+      }
+    }
+    return this.inferCourrierBucketIndexFromHover(opts);
+  }
+
+  /** Quand Apex ne fournit pas dataPointIndex, déduit le bucket depuis la souris (grille). */
+  private inferCourrierBucketIndexFromHover(opts: any): number {
+    const w = opts?.w?.globals;
+    const nBuckets = this.courrierLineBuckets.length;
+    if (!w || nBuckets <= 0) {
+      return -1;
+    }
+    const clientX = w.clientX;
+    const gridW = w.gridWidth;
+    if (clientX == null || gridW == null || !(gridW > 0)) {
+      return -1;
+    }
+    const elGrid = w.dom?.elGrid as HTMLElement | undefined;
+    if (!elGrid?.getBoundingClientRect) {
+      return -1;
+    }
+    const pad = Number(w.barPadForNumericAxis) || 0;
+    const bound = elGrid.getBoundingClientRect();
+    const hoverX = clientX - bound.left - pad;
+    if (hoverX < 0 || hoverX > gridW) {
+      return -1;
+    }
+    const slotW = gridW / nBuckets;
+    const j = Math.min(nBuckets - 1, Math.max(0, Math.floor(hoverX / slotW)));
+    return j;
   }
 
   /** Extrait la clé de catégorie renvoyée par l’API (camelCase, snake_case ou wrapper JSON). */
@@ -429,21 +464,26 @@ export class MainComponent implements OnInit {
         }
       },
       tooltip: {
-        custom: (opts: {
-          seriesIndex?: number;
-          dataPointIndex?: number;
-          w?: { globals?: { series?: number[][]; capturedDataPointIndex?: number } };
-        }) => {
-          const j = that.resolveCourrierApexDataPointIndex(opts);
-          const si = Number(opts.seriesIndex);
+        /* Évite que le tooltip natif (shared + printLabels) masque le HTML custom quand y > 0. */
+        shared: false,
+        intersect: false,
+        hideEmptySeries: false,
+        followCursor: false,
+        x: { show: false },
+        custom: (opts: any) => {
+          const si = Number(opts?.seriesIndex);
           if (!Number.isInteger(si) || si < 0 || si >= keys.length) {
-            return '';
+            return '<div class="odl-tooltip"><div class="odl-tooltip-list text-muted">—</div></div>';
           }
-          if (!hasBuckets || j < 0 || j >= that.courrierLineBuckets.length) {
-            return '';
+          const catLabel = labels[si] ?? '';
+          if (!hasBuckets || that.courrierLineBuckets.length === 0) {
+            return `<div class="odl-tooltip"><div class="odl-tooltip-head"><strong>${that.escapeHtml(catLabel)}</strong></div><div class="odl-tooltip-list text-muted">Aucune donnée pour cette période.</div></div>`;
+          }
+          const j = that.resolveCourrierApexDataPointIndex(opts);
+          if (j < 0 || j >= that.courrierLineBuckets.length) {
+            return `<div class="odl-tooltip"><div class="odl-tooltip-head"><strong>${that.escapeHtml(catLabel)}</strong></div><div class="odl-tooltip-list text-muted">Survolez un créneau du graphique (axe des dates).</div></div>`;
           }
           const key = keys[si];
-          const catLabel = labels[si] ?? '';
           const b = that.courrierLineBuckets[j];
           const details = Array.isArray(b?.details) ? b.details : [];
           let rows = details.filter((d: CourrierDashboardDetailRow) =>
