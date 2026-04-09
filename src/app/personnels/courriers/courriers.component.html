@@ -502,14 +502,17 @@
           }
 
           <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
-            <label for="destinataireOdc">Destinataire (après validation)</label>
+            <label for="destinataireOdc">Destinataire (après validation du directeur)</label>
             <select id="destinataireOdc" class="form-select" formControlName="destinataireOdc">
-              <option value="EXTERNE">Externe</option>
-              <option value="FONDATION">Interne — correspondance A</option>
-              <option value="RSE">Interne — correspondance B</option>
-              <option value="DCI">Interne — correspondance C</option>
+              <option value="EXTERNE">Externe — passage par la DCIRE, puis destination finale</option>
+              <option value="FONDATION">Fondation</option>
+              <option value="RSE">RSE</option>
+              <option value="DCI">DCI</option>
             </select>
-            <small class="text-muted">Pour les cibles internes, l’entité correspondante doit exister en base.</small>
+            <small class="text-muted">
+              Externe : après validation côté ODC, le courrier est envoyé à la DCIRE ; après validation DCIRE, il rejoint la destination visée.
+              Fondation, RSE et DCI : échange interne au sein de la division (sans hub DCIRE).
+            </small>
           </div>
 
           @if ((register.get('destinataireOdc')?.value || 'EXTERNE') === 'EXTERNE') {

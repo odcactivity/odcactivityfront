@@ -291,7 +291,7 @@ export class MainComponent implements OnInit {
   private initCourrierCharts(): void {
     this.courrierPieOptions = {
       series: [0, 0, 0, 0, 0],
-      chart: { type: 'donut', height: 340, toolbar: { show: false } },
+      chart: { type: 'donut', height: 320, toolbar: { show: false } },
       labels: [...MainComponent.COURRIER_CHART_LABELS],
       colors: [...MainComponent.COURRIER_COLORS],
       legend: { position: 'bottom', fontSize: '13px' },
@@ -301,7 +301,7 @@ export class MainComponent implements OnInit {
     };
     this.courrierLineOptions = {
       series: MainComponent.COURRIER_CHART_LABELS.map((name) => ({ name, data: [] })),
-      chart: { type: 'area', height: 380, toolbar: { show: false }, zoom: { enabled: false } },
+      chart: { type: 'area', height: 340, toolbar: { show: false }, zoom: { enabled: false } },
       xaxis: { categories: [] },
       stroke: { curve: 'smooth', width: 2 },
       fill: { type: 'gradient', gradient: { opacityFrom: 0.35, opacityTo: 0.05 } },
@@ -333,22 +333,42 @@ export class MainComponent implements OnInit {
     };
   }
 
+  /** Libellés axe X si l’API ne renvoie pas de buckets (erreur réseau / réponse vide). */
+  private defaultCourrierCategories(): string[] {
+    const p = this.selectedCourrierPeriod;
+    if (p === 'mois') {
+      const now = new Date();
+      const last = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+      return Array.from({ length: last }, (_, i) => String(i + 1));
+    }
+    if (p === 'annee') {
+      return [...MainComponent.MONTH_LABELS];
+    }
+    return [...MainComponent.WEEKDAY_LABELS];
+  }
+
   private buildCourrierLineChart(r: any): void {
-    const buckets: any[] = Array.isArray(r?.buckets) ? r.buckets : [];
-    const categories = buckets.map((b) => String(b.label ?? ''));
+    const rawBuckets: any[] = Array.isArray(r?.buckets) ? r.buckets : [];
+    const fallbackCats = this.defaultCourrierCategories();
+    const hasBuckets = rawBuckets.length > 0;
+    const categories = hasBuckets ? rawBuckets.map((b) => String(b.label ?? '')) : fallbackCats;
     const keys = MainComponent.COURRIER_CAT_KEYS;
     const labels = MainComponent.COURRIER_CHART_LABELS;
 
-    this.courrierLineTooltip = keys.map((key) =>
-      buckets.map((b) => {
-        const details = Array.isArray(b.details) ? b.details : [];
-        return details.filter((d: CourrierDashboardDetailRow) => d.categorie === key);
-      })
-    );
+    this.courrierLineTooltip = hasBuckets
+      ? keys.map((key) =>
+          rawBuckets.map((b) => {
+            const details = Array.isArray(b.details) ? b.details : [];
+            return details.filter((d: CourrierDashboardDetailRow) => d.categorie === key);
+          })
+        )
+      : keys.map(() => categories.map(() => []));
 
     const series = keys.map((key, si) => ({
       name: labels[si],
-      data: buckets.map((b) => Number(b[key]) || 0)
+      data: hasBuckets
+        ? rawBuckets.map((b) => Number(b[key]) || 0)
+        : new Array(categories.length).fill(0)
     }));
 
     const that = this;
@@ -376,9 +396,13 @@ export class MainComponent implements OnInit {
           dataPointIndex: number;
         }) => {
           const rows = that.courrierLineTooltip[seriesIndex]?.[dataPointIndex] ?? [];
-          const b = buckets[dataPointIndex];
-          const plage = b ? `${that.escapeHtml(String(b.debut))} → ${that.escapeHtml(String(b.fin))}` : '';
+          const b = hasBuckets ? rawBuckets[dataPointIndex] : undefined;
+          const plageRaw =
+            b && String(b.debut || '').trim() && String(b.fin || '').trim()
+              ? `${that.escapeHtml(String(b.debut))} → ${that.escapeHtml(String(b.fin))}`
+              : '';
           const catLabel = labels[seriesIndex] ?? '';
+          const headPlage = plageRaw ? ` · ${plageRaw}` : '';
           const lines =
             rows.length > 0
               ? rows
@@ -389,7 +413,7 @@ export class MainComponent implements OnInit {
                   .join('')
               : `<div class="odl-tooltip-row text-muted">Aucun courrier pour « ${that.escapeHtml(catLabel)} » sur ce créneau.</div>`;
           return `<div class="odl-tooltip">
-            <div class="odl-tooltip-head"><strong>${that.escapeHtml(catLabel)}</strong> · ${plage}</div>
+            <div class="odl-tooltip-head"><strong>${that.escapeHtml(catLabel)}</strong>${headPlage}</div>
             <div class="odl-tooltip-list">${lines}</div>
           </div>`;
         }
@@ -402,7 +426,7 @@ export class MainComponent implements OnInit {
       series: [0, 0, 0],
       chart: {
         type: 'pie',
-        height: 360,
+        height: 320,
         toolbar: { show: false },
         zoom: { enabled: false },
         pan: { enabled: false }
@@ -438,7 +462,7 @@ export class MainComponent implements OnInit {
       series: this.entitySlots.map((s) => ({ name: s.labelShort, data: new Array(xLen).fill(0) })),
       chart: {
         type: 'area',
-        height: 360,
+        height: 320,
         toolbar: { show: false },
         zoom: { enabled: false },
         pan: { enabled: false }
@@ -496,7 +520,7 @@ export class MainComponent implements OnInit {
       series,
       chart: {
         type: 'area',
-        height: 380,
+        height: 320,
         toolbar: { show: false },
         zoom: { enabled: false },
         pan: { enabled: false }

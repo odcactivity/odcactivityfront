@@ -411,8 +411,13 @@ loading = false;
       .trim();
   }
 
+  /** Aligné avec le backend : « DCIRE » ou variante « DCI RE » (espace / tiret). */
   private isDcireDirectionName(nom: string | undefined): boolean {
-    return this.normalizeNomCourrier(nom).includes('DCIRE');
+    const n = this.normalizeNomCourrier(nom);
+    if (n.includes('DCIRE')) {
+      return true;
+    }
+    return n.replace(/-/g, ' ').includes('DCI RE');
   }
 
   private isOdcDirectionName(nom: string | undefined): boolean {
