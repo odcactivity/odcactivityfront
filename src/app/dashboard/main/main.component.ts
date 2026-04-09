@@ -72,8 +72,8 @@ export class MainComponent implements OnInit {
   private static readonly COURRIER_CAT_KEYS = ['emis', 'repondu', 'enAttente', 'recu', 'valide'] as const;
   private static readonly COURRIER_CHART_LABELS = ['Émis', 'Répondu', 'En attente', 'Reçu', 'Validé'];
   private static readonly COURRIER_COLORS = ['#0d9488', '#16a34a', '#d97706', '#2563eb', '#7c3aed'];
-  /** [série][bucket] → lignes détail pour infobulle */
-  private courrierLineTooltip: CourrierDashboardDetailRow[][][] = [];
+  /** Buckets série courriers (copie pour l’infobulle — évite décalage série / détail). */
+  private courrierLineBuckets: any[] = [];
 
   nombreUtilisateurs: number | undefined;
   nombreActivite: number = 0;
@@ -334,6 +334,49 @@ export class MainComponent implements OnInit {
   }
 
   /** Libellés axe X si l’API ne renvoie pas de buckets (erreur réseau / réponse vide). */
+  /** Index colonne (créneau) fiable pour ApexCharts 4 (tooltip). */
+  private resolveCourrierApexDataPointIndex(opts: {
+    dataPointIndex?: number;
+    w?: { globals?: { capturedDataPointIndex?: number } };
+  }): number {
+    const raw = opts.dataPointIndex ?? opts.w?.globals?.capturedDataPointIndex;
+    const n = Number(raw);
+    return Number.isInteger(n) && n >= 0 ? n : -1;
+  }
+
+  /** Extrait la clé de catégorie renvoyée par l’API (camelCase, snake_case ou wrapper JSON). */
+  private categorieCleFromDetail(d: CourrierDashboardDetailRow | Record<string, unknown>): string {
+    const o = d as Record<string, unknown>;
+    const raw = o['categorie'] ?? o['Categorie'];
+    if (raw == null) {
+      return '';
+    }
+    if (typeof raw === 'object' && raw !== null && 'name' in raw) {
+      return String((raw as { name: string }).name ?? '').trim();
+    }
+    return String(raw).trim();
+  }
+
+  private detailMatchesCourrierSeries(
+    d: CourrierDashboardDetailRow | Record<string, unknown>,
+    key: string,
+    libelleAttendu: string
+  ): boolean {
+    const cat = this.categorieCleFromDetail(d);
+    if (cat && (cat === key || cat.toLowerCase() === key.toLowerCase())) {
+      return true;
+    }
+    const snake = cat.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '');
+    if (snake && (snake === key.toLowerCase() || snake.replace(/_/g, '') === key.toLowerCase())) {
+      return true;
+    }
+    const lib = String((d as CourrierDashboardDetailRow).libelle ?? '').trim();
+    if (lib && libelleAttendu && lib === libelleAttendu) {
+      return true;
+    }
+    return false;
+  }
+
   private defaultCourrierCategories(): string[] {
     const p = this.selectedCourrierPeriod;
     if (p === 'mois') {
@@ -355,14 +398,12 @@ export class MainComponent implements OnInit {
     const keys = MainComponent.COURRIER_CAT_KEYS;
     const labels = MainComponent.COURRIER_CHART_LABELS;
 
-    this.courrierLineTooltip = hasBuckets
-      ? keys.map((key) =>
-          rawBuckets.map((b) => {
-            const details = Array.isArray(b.details) ? b.details : [];
-            return details.filter((d: CourrierDashboardDetailRow) => d.categorie === key);
-          })
-        )
-      : keys.map(() => categories.map(() => []));
+    this.courrierLineBuckets = hasBuckets
+      ? rawBuckets.map((b) => ({
+          ...b,
+          details: Array.isArray(b.details) ? b.details : []
+        }))
+      : [];
 
     const series = keys.map((key, si) => ({
       name: labels[si],
@@ -388,30 +429,52 @@ export class MainComponent implements OnInit {
         }
       },
       tooltip: {
-        custom: ({
-          seriesIndex,
-          dataPointIndex
-        }: {
-          seriesIndex: number;
-          dataPointIndex: number;
+        custom: (opts: {
+          seriesIndex?: number;
+          dataPointIndex?: number;
+          w?: { globals?: { series?: number[][]; capturedDataPointIndex?: number } };
         }) => {
-          const rows = that.courrierLineTooltip[seriesIndex]?.[dataPointIndex] ?? [];
-          const b = hasBuckets ? rawBuckets[dataPointIndex] : undefined;
+          const j = that.resolveCourrierApexDataPointIndex(opts);
+          const si = Number(opts.seriesIndex);
+          if (!Number.isInteger(si) || si < 0 || si >= keys.length) {
+            return '';
+          }
+          if (!hasBuckets || j < 0 || j >= that.courrierLineBuckets.length) {
+            return '';
+          }
+          const key = keys[si];
+          const catLabel = labels[si] ?? '';
+          const b = that.courrierLineBuckets[j];
+          const details = Array.isArray(b?.details) ? b.details : [];
+          let rows = details.filter((d: CourrierDashboardDetailRow) =>
+            that.detailMatchesCourrierSeries(d, key, catLabel)
+          );
+          const countBucket = Number(b?.[key]) || 0;
+          const ySerie = opts.w?.globals?.series?.[si]?.[j];
+          const countChart = typeof ySerie === 'number' && !Number.isNaN(ySerie) ? ySerie : countBucket;
+          if (rows.length === 0 && countChart > 0 && details.length > 0) {
+            rows = details.filter((d: CourrierDashboardDetailRow) =>
+              that.categorieCleFromDetail(d) === key || String(d.libelle ?? '').trim() === catLabel
+            );
+          }
           const plageRaw =
             b && String(b.debut || '').trim() && String(b.fin || '').trim()
               ? `${that.escapeHtml(String(b.debut))} → ${that.escapeHtml(String(b.fin))}`
               : '';
-          const catLabel = labels[seriesIndex] ?? '';
           const headPlage = plageRaw ? ` · ${plageRaw}` : '';
-          const lines =
-            rows.length > 0
-              ? rows
-                  .map(
-                    (row) =>
-                      `<div class="odl-tooltip-row"><strong>${that.escapeHtml(row.structure)}</strong> · ${that.escapeHtml(row.libelle)} · <span class="text-muted">${that.escapeHtml(row.date)}</span></div>`
-                  )
-                  .join('')
-              : `<div class="odl-tooltip-row text-muted">Aucun courrier pour « ${that.escapeHtml(catLabel)} » sur ce créneau.</div>`;
+          let lines: string;
+          if (rows.length > 0) {
+            lines = rows
+              .map(
+                (row) =>
+                  `<div class="odl-tooltip-row"><strong>${that.escapeHtml(row.structure)}</strong> · ${that.escapeHtml(row.libelle)} · <span class="text-muted">${that.escapeHtml(row.date)}</span></div>`
+              )
+              .join('');
+          } else if (countChart > 0) {
+            lines = `<div class="odl-tooltip-row text-muted">${countChart} courrier(s) « ${that.escapeHtml(catLabel)} » sur ce créneau.</div>`;
+          } else {
+            lines = `<div class="odl-tooltip-row text-muted">Aucun courrier pour « ${that.escapeHtml(catLabel)} » sur ce créneau.</div>`;
+          }
           return `<div class="odl-tooltip">
             <div class="odl-tooltip-head"><strong>${that.escapeHtml(catLabel)}</strong>${headPlage}</div>
             <div class="odl-tooltip-list">${lines}</div>
