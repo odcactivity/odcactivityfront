@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/personnels/dashboard/dashboard.component.scss"],
+  "sourcesContent": [".card .card-statistic-4 .banner-img img {\r\n    /* max-width: 100%; */\r\n    float: right;\r\n    width: 100px;\r\n    height: 100px;\r\n}"],
+  "mappings": ";AAAA,CAAA,KAAA,CAAA,iBAAA,CAAA,WAAA;AAEI,SAAA;AACA,SAAA;AACA,UAAA;;",
+  "names": []
+}

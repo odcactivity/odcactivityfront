@@ -1,7 +1,7 @@
 <section class="main-content p-4">
   <h4 class="mb-3">Validation des courriers</h4>
   <p class="text-muted mb-4">
-    Les courriers créés par l’admin arrivent ici. Vous pouvez envoyer des suggestions à l’admin ou valider le contenu pour permettre l’envoi au destinataire.
+    Proposez des corrections ou validez le contenu avant envoi au destinataire.
   </p>
 
   @if (loading) {
@@ -38,6 +38,22 @@
   @if (selected) {
     <div class="card p-3">
       <h6 class="mb-2">Courrier {{ selected.numero }}</h6>
+      <div class="border rounded p-3 mb-3 bg-light">
+        <p class="small mb-1"><strong>Objet :</strong> {{ selected.objet || '—' }}</p>
+        <p class="small mb-1"><strong>Expéditeur (libellé) :</strong> {{ selected.expediteur || '—' }}</p>
+        @if (selected.destinataireOdc) {
+          <p class="small mb-1"><strong>Destinataire prévu :</strong> {{ selected.destinataireOdc }}</p>
+        }
+        @if (selected.externePrecision) {
+          <p class="small mb-0"><strong>Précision :</strong> {{ selected.externePrecision }}</p>
+        }
+        <button type="button" class="btn btn-sm btn-outline-primary mt-2" (click)="telechargerPieceValidation()">
+          Télécharger / consulter la pièce jointe
+        </button>
+        <p class="small text-muted mt-2 mb-0">
+          Consultez le contenu du courrier avant d’envoyer des suggestions ou de valider la transmission.
+        </p>
+      </div>
       @if (selected.suggestionDirecteur) {
         <p class="small text-muted mb-2">Dernière suggestion enregistrée : {{ selected.suggestionDirecteur }}</p>
       }

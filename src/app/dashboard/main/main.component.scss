@@ -55,6 +55,52 @@
   color: #4b5563;
 }
 
+/* Courriers — couleurs type dash structure (chiffres et pastilles) */
+.odl-stat-icon-courrier-emis {
+  background-color: rgba(13, 148, 136, 0.12);
+  color: #0d9488;
+}
+.odl-stat-value-courrier-emis {
+  color: #0d9488 !important;
+}
+
+.odl-stat-icon-courrier-repondu {
+  background-color: rgba(22, 163, 74, 0.12);
+  color: #16a34a;
+}
+.odl-stat-value-courrier-repondu {
+  color: #16a34a !important;
+}
+
+.odl-stat-icon-courrier-attente {
+  background-color: rgba(217, 119, 6, 0.12);
+  color: #d97706;
+}
+.odl-stat-value-courrier-attente {
+  color: #d97706 !important;
+}
+
+.odl-stat-icon-courrier-recu {
+  background-color: rgba(37, 99, 235, 0.1);
+  color: #2563eb;
+}
+.odl-stat-value-courrier-recu {
+  color: #2563eb !important;
+}
+
+.odl-stat-icon-courrier-valide {
+  background-color: rgba(124, 58, 237, 0.1);
+  color: #7c3aed;
+}
+.odl-stat-value-courrier-valide {
+  color: #7c3aed !important;
+}
+
+.odl-courrier-structure-select {
+  min-width: 200px;
+  max-width: min(100%, 280px);
+}
+
 .odl-stat-content {
   display: flex;
   flex-direction: column;

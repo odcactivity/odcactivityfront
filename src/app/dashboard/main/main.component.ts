@@ -1,4 +1,6 @@
+import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { NgApexchartsModule } from 'ng-apexcharts';
 import { RouterLink } from '@angular/router';
 import { GlobalService } from '@core/service/global.service';
@@ -37,15 +39,41 @@ interface CellStat {
   breakdown: ActivityBreakdownRow[];
 }
 
+interface CourrierDashboardDetailRow {
+  categorie: string;
+  libelle: string;
+  structure: string;
+  date: string;
+}
+
 @Component({
   selector: 'app-main',
   templateUrl: './main.component.html',
   styleUrls: ['./main.component.scss'],
-  imports: [RouterLink, NgApexchartsModule]
+  imports: [CommonModule, RouterLink, NgApexchartsModule, FormsModule]
 })
 export class MainComponent implements OnInit {
   public statusChartOptions: any;
   public entityChartOptions: any;
+  public courrierPieOptions: any;
+  public courrierLineOptions: any;
+
+  /** Courriers : cartes + graphes (rôles avec accès API dashboard). */
+  showCourrierDashboard = false;
+  courrierEmis = 0;
+  courrierRepondu = 0;
+  courrierEnAttente = 0;
+  courrierRecu = 0;
+  courrierValide = 0;
+  selectedCourrierPeriod: PeriodKey = 'semaine';
+  selectedCourrierStructureId: number | null = null;
+  structureOptionsCourrier: { id: number; nom: string }[] = [];
+
+  private static readonly COURRIER_CAT_KEYS = ['emis', 'repondu', 'enAttente', 'recu', 'valide'] as const;
+  private static readonly COURRIER_CHART_LABELS = ['Émis', 'Répondu', 'En attente', 'Reçu', 'Validé'];
+  private static readonly COURRIER_COLORS = ['#0d9488', '#16a34a', '#d97706', '#2563eb', '#7c3aed'];
+  /** [série][bucket] → lignes détail pour infobulle */
+  private courrierLineTooltip: CourrierDashboardDetailRow[][][] = [];
 
   nombreUtilisateurs: number | undefined;
   nombreActivite: number = 0;
@@ -100,7 +128,18 @@ export class MainComponent implements OnInit {
     this.getNombreActiviteEnAttente();
     this.getNombreActiviteTerminer();
     this.initEmptyCharts();
+    this.initCourrierCharts();
     this.loadDashboardData();
+  }
+
+  setCourrierPeriod(period: PeriodKey): void {
+    this.selectedCourrierPeriod = period;
+    this.loadCourrierSerie();
+  }
+
+  onCourrierStructureChange(): void {
+    this.loadCourrierTotaux();
+    this.loadCourrierSerie();
   }
 
   setPeriod(period: PeriodKey): void {
@@ -193,7 +232,169 @@ export class MainComponent implements OnInit {
 
       this.buildStatusChart();
       this.buildEntityChart();
+
+      this.structureOptionsCourrier = entiteList
+        .filter((e) => String(e.type || '').toUpperCase() === 'DIRECTION' && e.id != null)
+        .map((e) => ({ id: e.id as number, nom: String(e.nom || '—') }))
+        .sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
+      this.loadCourrierDashboardBlock();
     });
+  }
+
+  private loadCourrierDashboardBlock(): void {
+    if (!this.isDcireScope()) {
+      this.showCourrierDashboard = false;
+      return;
+    }
+    this.showCourrierDashboard = true;
+    this.loadCourrierTotaux();
+    this.loadCourrierSerie();
+  }
+
+  private loadCourrierTotaux(): void {
+    if (!this.showCourrierDashboard) {
+      return;
+    }
+    this.globalService
+      .getCourrierDashboardTotaux(this.selectedCourrierStructureId)
+      .subscribe({
+        next: (t: Record<string, number>) => {
+          this.courrierEmis = Number(t?.['emis']) || 0;
+          this.courrierRepondu = Number(t?.['repondu']) || 0;
+          this.courrierEnAttente = Number(t?.['enAttente']) || 0;
+          this.courrierRecu = Number(t?.['recu']) || 0;
+          this.courrierValide = Number(t?.['valide']) || 0;
+          this.buildCourrierPieChart();
+        },
+        error: () => {
+          this.courrierEmis = 0;
+          this.courrierRepondu = 0;
+          this.courrierEnAttente = 0;
+          this.courrierRecu = 0;
+          this.courrierValide = 0;
+        }
+      });
+  }
+
+  private loadCourrierSerie(): void {
+    if (!this.showCourrierDashboard) {
+      return;
+    }
+    this.globalService
+      .getCourrierDashboardSerie(this.selectedCourrierPeriod, this.selectedCourrierStructureId)
+      .subscribe({
+        next: (r: any) => this.buildCourrierLineChart(r),
+        error: () => this.buildCourrierLineChart({ buckets: [] })
+      });
+  }
+
+  private initCourrierCharts(): void {
+    this.courrierPieOptions = {
+      series: [0, 0, 0, 0, 0],
+      chart: { type: 'donut', height: 340, toolbar: { show: false } },
+      labels: [...MainComponent.COURRIER_CHART_LABELS],
+      colors: [...MainComponent.COURRIER_COLORS],
+      legend: { position: 'bottom', fontSize: '13px' },
+      plotOptions: { pie: { donut: { size: '58%' } } },
+      dataLabels: { enabled: true },
+      stroke: { width: 1, colors: ['#fff'] }
+    };
+    this.courrierLineOptions = {
+      series: MainComponent.COURRIER_CHART_LABELS.map((name) => ({ name, data: [] })),
+      chart: { type: 'area', height: 380, toolbar: { show: false }, zoom: { enabled: false } },
+      xaxis: { categories: [] },
+      stroke: { curve: 'smooth', width: 2 },
+      fill: { type: 'gradient', gradient: { opacityFrom: 0.35, opacityTo: 0.05 } },
+      colors: [...MainComponent.COURRIER_COLORS],
+      dataLabels: { enabled: false },
+      legend: { position: 'top', horizontalAlign: 'right', fontSize: '13px' },
+      grid: { borderColor: '#e5e7eb', strokeDashArray: 3 },
+      yaxis: { min: 0, decimalsInFloat: 0, title: { text: 'Nombre de courriers' } },
+      markers: { size: 4, strokeWidth: 2, hover: { size: 6 } }
+    };
+  }
+
+  private buildCourrierPieChart(): void {
+    const s = [
+      this.courrierEmis,
+      this.courrierRepondu,
+      this.courrierEnAttente,
+      this.courrierRecu,
+      this.courrierValide
+    ];
+    this.courrierPieOptions = {
+      ...this.courrierPieOptions,
+      series: s,
+      tooltip: {
+        y: {
+          formatter: (val: number) => `${val} courrier(s)`
+        }
+      }
+    };
+  }
+
+  private buildCourrierLineChart(r: any): void {
+    const buckets: any[] = Array.isArray(r?.buckets) ? r.buckets : [];
+    const categories = buckets.map((b) => String(b.label ?? ''));
+    const keys = MainComponent.COURRIER_CAT_KEYS;
+    const labels = MainComponent.COURRIER_CHART_LABELS;
+
+    this.courrierLineTooltip = keys.map((key) =>
+      buckets.map((b) => {
+        const details = Array.isArray(b.details) ? b.details : [];
+        return details.filter((d: CourrierDashboardDetailRow) => d.categorie === key);
+      })
+    );
+
+    const series = keys.map((key, si) => ({
+      name: labels[si],
+      data: buckets.map((b) => Number(b[key]) || 0)
+    }));
+
+    const that = this;
+    this.courrierLineOptions = {
+      ...this.courrierLineOptions,
+      series,
+      xaxis: {
+        categories,
+        labels: {
+          style: {
+            fontSize: this.selectedCourrierPeriod === 'mois' ? '10px' : '12px',
+            colors: '#6b7280'
+          },
+          rotate: this.selectedCourrierPeriod === 'mois' ? -45 : 0,
+          rotateAlways: this.selectedCourrierPeriod === 'mois',
+          hideOverlappingLabels: false
+        }
+      },
+      tooltip: {
+        custom: ({
+          seriesIndex,
+          dataPointIndex
+        }: {
+          seriesIndex: number;
+          dataPointIndex: number;
+        }) => {
+          const rows = that.courrierLineTooltip[seriesIndex]?.[dataPointIndex] ?? [];
+          const b = buckets[dataPointIndex];
+          const plage = b ? `${that.escapeHtml(String(b.debut))} → ${that.escapeHtml(String(b.fin))}` : '';
+          const catLabel = labels[seriesIndex] ?? '';
+          const lines =
+            rows.length > 0
+              ? rows
+                  .map(
+                    (row) =>
+                      `<div class="odl-tooltip-row"><strong>${that.escapeHtml(row.structure)}</strong> · ${that.escapeHtml(row.libelle)} · <span class="text-muted">${that.escapeHtml(row.date)}</span></div>`
+                  )
+                  .join('')
+              : `<div class="odl-tooltip-row text-muted">Aucun courrier pour « ${that.escapeHtml(catLabel)} » sur ce créneau.</div>`;
+          return `<div class="odl-tooltip">
+            <div class="odl-tooltip-head"><strong>${that.escapeHtml(catLabel)}</strong> · ${plage}</div>
+            <div class="odl-tooltip-list">${lines}</div>
+          </div>`;
+        }
+      }
+    };
   }
 
   private initEmptyCharts(): void {

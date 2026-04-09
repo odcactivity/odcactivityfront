@@ -14,9 +14,9 @@
 
   <p class="odl-page-subtitle">
     @if (isDcireRole) {
-      Vous ne voyez que les courriers dont le détenteur actuel est la <strong>DCIRE</strong> (réception, transmission vers l’ODC). Les flux internes Fondation / RSE / DCI / ODC sans passage par la DCIRE n’apparaissent pas ici.
+      Liste des courriers enregistrés sur votre périmètre (réception et transmission).
     } @else {
-      Courriers liés au <strong>périmètre ODC</strong> (création, validation, envoi vers une autre structure ou la DCIRE). Les échanges strictement internes entre Fondation, RSE et DCI ne sont pas listés ici.
+      Création, validation et suivi des courriers de votre périmètre.
     }
   </p>
 
@@ -43,7 +43,7 @@
                     <div class="d-flex gap-2">
                       @if (isDcireRole) {
                         <button class="btn btn-icon icon-left bg-warning text-white rounded-button"
-                                (click)="openDcireExterneModal()" title="Réception courrier (hors ODC)">
+                                (click)="openDcireExterneModal()" title="Réception courrier externe">
                           <i class="material-icons">add</i>
                         </button>
                       } @else {
@@ -110,7 +110,7 @@
               <ngx-datatable #table class="material" [rows]="Courriers" [loadingIndicator]="loadingIndicator"
                              columnMode="force" [headerHeight]="60" [footerHeight]="80" rowHeight="auto" [limit]="10"
                              [scrollbarH]="scrollBarHorizontal" [reorderable]="reorderable" [selected]="selected"
-                             [selectionType]="selection" (select)='onSelect($event)'>
+                             [selectionType]="selection" (select)='onSelect($event)' (activate)="onCourrierActivate($event)">
                 <ngx-datatable-column [width]="70" [sortable]="false" [draggable]="false" [resizeable]="false"
                                       [canAutoResize]="false" [headerCheckboxable]="true" [checkboxable]="true">
                 </ngx-datatable-column>
@@ -155,7 +155,7 @@
                         </span>
                       } @else if(row.statut === 'ATTENTE_VALIDATION_ODC' || row.statut === 'ATTENTE_VALIDATION_DIRECTEUR_ODC') {
                         <span class="badge bg-secondary">
-                          <i class="fas fa-hourglass-half me-1"></i>Attente directeur ODC
+                          <i class="fas fa-hourglass-half me-1"></i>Attente validation
                         </span>
                       } @else if(row.statut === 'EN_REVISION_ADMIN_COURRIER') {
                         <span class="badge bg-warning text-dark">
@@ -171,7 +171,7 @@
                         </span>
                       } @else if(row.statut === 'IMPUTER') {
                         <span class="badge bg-info">
-                          <i class="fas fa-share me-1"></i>Imputé
+                          <i class="fas fa-share me-1"></i>Transmis au service
                         </span>
                       } @else if(row.statut === 'EN_COURS') {
                         <span class="badge bg-primary">
@@ -190,22 +190,27 @@
                     <span>
                       @if(isSuperAdminRole && row.statut === 'EN_REVISION_ADMIN_COURRIER') {
                         <button class="btn btn-sm btn-primary h-auto me-1" (click)="resoumettreRevision(row)"
-                                title="Renvoyer au directeur ODC après corrections">
-                          <i class="fas fa-paper-plane me-1"></i>Renvoyer au directeur
+                                title="Renvoyer pour validation après corrections">
+                          <i class="fas fa-paper-plane me-1"></i>Renvoyer pour validation
                         </button>
                       }
                       @if(isDcireRole && isCourrierPhysiquementADcire(row) && row.statut !== 'ARCHIVER' && row.statut !== 'REPONDU' && row.statut !== 'ATTENTE_VALIDATION_ODC' && row.statut !== 'ATTENTE_VALIDATION_DIRECTEUR_ODC' && row.statut !== 'EN_REVISION_ADMIN_COURRIER') {
                         <button class="btn btn-sm btn-primary h-auto me-1" (click)="openTransmitToOdc(row)"
-                                title="Transmettre à une direction ODC">
-                          <i class="fas fa-share me-1"></i>Vers ODC
+                                title="Transmettre à une direction">
+                          <i class="fas fa-share me-1"></i>Transmettre
                         </button>
                       }
                       @if(row.statut !== 'ARCHIVER' && row.statut !== 'REPONDU' && row.statut !== 'ATTENTE_VALIDATION_ODC' && row.statut !== 'ATTENTE_VALIDATION_DIRECTEUR_ODC' && row.statut !== 'EN_REVISION_ADMIN_COURRIER') {
                         <button class="btn btn-tbl-edit h-auto" (click)='ImputeModal(row, rowIndex, "repondre")' title="répondre ce courrier">
                           <i class="fas fa-reply me-1"></i>
                         </button>
-                        <button class="btn btn-tbl-edit h-auto" (click)='ImputeModal(row, rowIndex, entiteCibleModal)' title="Imputer le courrier">
+                        <button class="btn btn-tbl-edit h-auto" (click)='ImputeModal(row, rowIndex, entiteCibleModal)' title="Transmettre le courrier à un service">
                           <i class="fas fa-edit"></i>
+                        </button>
+                      }
+                      @if(peutModifierMetadonneesCourrier(row)) {
+                        <button class="btn btn-tbl-edit h-auto" (click)="openEditCourrierMetaModal(row)" title="Modifier numéro, objet ou expéditeur">
+                          <i class="fas fa-pen"></i>
                         </button>
                       }
                       @if(row.statut !== 'ARCHIVER') {
@@ -226,6 +231,21 @@
                 </ngx-datatable-column>
               </ngx-datatable>
             </div>
+            @if (courrierReponsesDetail.length > 0 && lastDetailCourrierId) {
+              <div class="card mt-3 p-3">
+                <h6 class="mb-2">Réponses enregistrées (cliquez sur une ligne du tableau pour afficher l’historique)</h6>
+                @for (rep of courrierReponsesDetail; track rep.id) {
+                  <div class="border-bottom pb-2 mb-2">
+                    <p class="small mb-1"><strong>Objet :</strong> {{ rep.objet }}</p>
+                    <p class="small mb-1 text-muted">De : {{ rep.email }} — {{ rep.dateReponse | date: 'short' }}</p>
+                    <p class="small mb-1" style="white-space: pre-wrap">{{ rep.message }}</p>
+                    @if (rep.fichierJoint) {
+                      <p class="small mb-0 text-muted">Pièce : {{ rep.fichierJoint }}</p>
+                    }
+                  </div>
+                }
+              </div>
+            }
           </div>
         </div>
       </div>
@@ -337,6 +357,34 @@
 </ng-template>
 
 
+  <ng-template #editCourrierMetaTpl let-modal>
+    <div class="modal-header">
+      <h5 class="modal-title">Modifier le courrier</h5>
+      <button type="button" class="close" aria-label="Fermer" (click)="modal.dismiss()">
+        <span aria-hidden="true"><i class="material-icons">close</i></span>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p class="small text-muted">Mise à jour des métadonnées uniquement (le fichier joint n’est pas modifiable ici).</p>
+      <div class="mb-2">
+        <label class="form-label">Numéro</label>
+        <input class="form-control" [(ngModel)]="editCourrierMeta.numero" name="metaNumero" />
+      </div>
+      <div class="mb-2">
+        <label class="form-label">Objet</label>
+        <input class="form-control" [(ngModel)]="editCourrierMeta.objet" name="metaObjet" />
+      </div>
+      <div class="mb-2">
+        <label class="form-label">Expéditeur</label>
+        <input class="form-control" [(ngModel)]="editCourrierMeta.expediteur" name="metaExp" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-primary" (click)="saveCourrierMeta(modal)">Enregistrer</button>
+      <button type="button" class="btn btn-secondary" (click)="modal.dismiss()">Annuler</button>
+    </div>
+  </ng-template>
+
   <!-- Imputation Modal Window -->
   <ng-template #entiteCibleModal let-modal>
     <div class="modal-header entiteCibleModal">
@@ -350,7 +398,7 @@
     </div>
     <div class="modal-body">
       <p class="small text-muted mb-3">
-        Après validation du directeur ODC, indiquez le service et, si besoin, le collaborateur qui assurera l’envoi ou le suivi auprès du destinataire.
+        Choisissez le service chargé du traitement et, si besoin, un collaborateur.
       </p>
       <div class="row">
         <!-- Choisir le service qui doit traiter -->
@@ -388,7 +436,7 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-warning" [disabled]="!entiteCible" (click)="imputCourrier()">
           <span *ngIf="loadingIndicator" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-          {{ loadingIndicator ? 'Chargement...' : 'Imputer' }}
+          {{ loadingIndicator ? 'Chargement...' : 'Transmettre au service' }}
         </button>
         <button type="button" class="btn btn-dark text-white" (click)="modal.close('Close click')">Fermer</button>
       </div>
@@ -399,8 +447,8 @@
   <ng-template #addRecord let-modal>
     <div class="modal-header editRowModal">
       <div class="modal-title-container">
-        <h5 class="modal-title fw-bold">Nouveau courrier ODC</h5>
-        <small class="modal-subtitle">Brouillon : le directeur ODC sera notifié pour validation ou annulation.</small>
+        <h5 class="modal-title fw-bold">Nouveau courrier</h5>
+        <small class="modal-subtitle">Brouillon soumis pour validation avant envoi.</small>
       </div>
       <button type="button" class="close" aria-label="Close" (click)="modal.dismiss()">
         <span aria-hidden="true"><i class="material-icons">close</i></span>
@@ -437,32 +485,31 @@
           @if (odcDirections.length === 0) {
             <div class="col-12 mb-2">
               <div class="alert alert-warning mb-0">
-                Aucune direction ODC reconnue dans les entités (nom contenant par ex. Kalanso, Multimedia, FabLab, « Orange Digital Center », ODC…).
-                Créez ou renommez une entité de type Direction, ou contactez l’administrateur.
+                Aucune direction d’émission reconnue. Vérifiez la configuration des entités ou contactez l’administrateur.
               </div>
             </div>
           } @else {
             <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
-              <label for="odcDirectionId">Direction ODC d'émission <span class="text-danger">*</span></label>
+              <label for="odcDirectionId">Direction d’émission <span class="text-danger">*</span></label>
               <select id="odcDirectionId" class="form-select" formControlName="odcDirectionId">
                 <option [ngValue]="null" disabled>Choisir une direction</option>
                 <option *ngFor="let d of odcDirections" [ngValue]="d.id">{{ d.nom }}</option>
               </select>
               @if (register.get('odcDirectionId')?.touched && register.get('odcDirectionId')?.invalid) {
-                <small class="form-text text-danger">La direction ODC est obligatoire</small>
+                <small class="form-text text-danger">La direction d’émission est obligatoire</small>
               }
             </div>
           }
 
           <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
-            <label for="destinataireOdc">Destinataire (après validation directeur ODC)</label>
+            <label for="destinataireOdc">Destinataire (après validation)</label>
             <select id="destinataireOdc" class="form-select" formControlName="destinataireOdc">
-              <option value="EXTERNE">Externe / hors division → DCIRE</option>
-              <option value="FONDATION">Fondation (interne)</option>
-              <option value="RSE">RSE (interne)</option>
-              <option value="DCI">DCI (interne)</option>
+              <option value="EXTERNE">Externe</option>
+              <option value="FONDATION">Interne — correspondance A</option>
+              <option value="RSE">Interne — correspondance B</option>
+              <option value="DCI">Interne — correspondance C</option>
             </select>
-            <small class="text-muted">Les cibles internes exigent une entité Direction dont le nom contient le libellé correspondant.</small>
+            <small class="text-muted">Pour les cibles internes, l’entité correspondante doit exister en base.</small>
           </div>
 
           @if ((register.get('destinataireOdc')?.value || 'EXTERNE') === 'EXTERNE') {
@@ -526,12 +573,12 @@
   <!-- Transmettre vers ODC -->
   <ng-template #transmitOdcModal let-modal>
     <div class="modal-header">
-      <h5 class="modal-title">Transmettre à l’ODC</h5>
+      <h5 class="modal-title">Transmettre à une direction</h5>
       <button type="button" class="btn-close" (click)="modal.dismiss()"></button>
     </div>
     <div class="modal-body">
-      <p class="small text-muted">Choisissez la direction ODC qui prendra le relais sur ce courrier.</p>
-      <label class="form-label">Direction ODC</label>
+      <p class="small text-muted">Choisissez la direction qui prendra le relais.</p>
+      <label class="form-label">Direction</label>
       <select class="form-select" [(ngModel)]="transmitOdcDirectionId">
         <option [ngValue]="null" disabled>-- Direction --</option>
         <option *ngFor="let d of odcDirections" [ngValue]="d.id">{{ d.nom }}</option>
@@ -554,7 +601,7 @@
         <div class="mb-2">
           <label>Structure d’origine <span class="text-danger">*</span></label>
           <select class="form-select" formControlName="structureOrigineId">
-            <option [ngValue]="null" disabled>-- Fondation, RSE, DCI, autre --</option>
+            <option [ngValue]="null" disabled>— Choisir une structure —</option>
             <option *ngFor="let d of externalDirections" [ngValue]="d.id">{{ d.nom }}</option>
           </select>
         </div>

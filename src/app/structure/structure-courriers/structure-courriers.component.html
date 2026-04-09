@@ -1,11 +1,9 @@
 <section class="main-content p-4 structure-courriers-dash">
   <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-3">
     <div>
-      <h4 class="mb-1">Tableau de bord courriers — {{ structureLabel }}</h4>
+      <h4 class="mb-1">Tableau de bord courriers</h4>
       <p class="text-muted mb-0 small">
-        Votre structure <strong>reçoit</strong> des courriers (y compris depuis l’ODC ou d’autres directions) et peut
-        <strong>en émettre</strong> vers une autre direction de la division (Fondation, RSE, DCI, piliers ODC), sans passer par la DCIRE.
-        L’onglet <strong>Tout</strong> liste l’historique complet (validés, archivés, en cours, etc.) pour la transparence.
+        Réception, envoi et suivi des courriers. L’onglet <strong>Tout</strong> affiche l’historique complet.
       </p>
     </div>
     <div class="d-flex flex-wrap gap-2">
@@ -121,6 +119,14 @@
                 <button type="button" class="btn btn-sm btn-outline-secondary me-1" (click)="openPiece($any(r)); $event.stopPropagation()">
                   Pièce jointe
                 </button>
+                @if (peutModifierOuSupprimerCourrier($any(r))) {
+                  <button type="button" class="btn btn-sm btn-outline-primary me-1" (click)="openEditCourrierModal(editCourrierTpl, $any(r)); $event.stopPropagation()">
+                    Modifier
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-danger" (click)="supprimerCourrierStructure($any(r)); $event.stopPropagation()">
+                    Supprimer
+                  </button>
+                }
               </td>
             </tr>
           }
@@ -143,9 +149,25 @@
     <div class="card p-3 border-primary mb-3">
       <h6 class="mb-2">Prise en charge — {{ $any(selected).numero }}</h6>
       <p class="small text-muted mb-2">
-        Confirmez la prise en charge : le statut passe en <strong>EN COURS</strong> et reste visible pour l’expéditeur (ex. ODC) dans ses listes.
+        Confirmez la prise en charge : le statut passe en <strong>EN COURS</strong> et reste visible pour l’expéditeur.
       </p>
       <button type="button" class="btn btn-primary" (click)="accuserReceptionOp()">Accuser réception / prise en charge</button>
+    </div>
+  }
+
+  @if (selected && reponsesCourrier.length > 0) {
+    <div class="card p-3 border-info mb-3">
+      <h6 class="mb-2">Réponses enregistrées — {{ $any(selected).numero }}</h6>
+      @for (rep of reponsesCourrier; track $any(rep).id) {
+        <div class="border-bottom pb-2 mb-2">
+          <p class="small mb-1"><strong>Objet :</strong> {{ $any(rep).objet }}</p>
+          <p class="small mb-1 text-muted">De : {{ $any(rep).email }} — {{ $any(rep).dateReponse | date: 'short' }}</p>
+          <p class="small mb-1" style="white-space: pre-wrap">{{ $any(rep).message }}</p>
+          @if ($any(rep).fichierJoint) {
+            <p class="small mb-0"><span class="text-muted">Pièce :</span> {{ $any(rep).fichierJoint }}</p>
+          }
+        </div>
+      }
     </div>
   }
 
@@ -170,14 +192,40 @@
   }
 </section>
 
+<ng-template #editCourrierTpl let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Modifier le courrier</h5>
+    <button type="button" class="btn-close" aria-label="Fermer" (click)="modal.dismiss()"></button>
+  </div>
+  <div class="modal-body">
+    <p class="small text-muted">Seuls le numéro, l’objet et le libellé expéditeur peuvent être modifiés (pas le fichier).</p>
+    <div class="mb-2">
+      <label class="form-label">Numéro</label>
+      <input class="form-control" [(ngModel)]="editCourrier.numero" name="editNumero" />
+    </div>
+    <div class="mb-2">
+      <label class="form-label">Objet</label>
+      <input class="form-control" [(ngModel)]="editCourrier.objet" name="editObjet" />
+    </div>
+    <div class="mb-2">
+      <label class="form-label">Expéditeur</label>
+      <input class="form-control" [(ngModel)]="editCourrier.expediteur" name="editExp" />
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-primary" (click)="saveEditCourrier(modal)">Enregistrer</button>
+    <button type="button" class="btn btn-secondary" (click)="modal.dismiss()">Annuler</button>
+  </div>
+</ng-template>
+
 <ng-template #interneTpl let-modal>
   <div class="modal-header">
-    <h5 class="modal-title">Courrier interne (division)</h5>
+    <h5 class="modal-title">Courrier interne</h5>
     <button type="button" class="btn-close" aria-label="Fermer" (click)="modal.dismiss()"></button>
   </div>
   <div class="modal-body">
     <p class="small text-muted">
-      Envoi direct vers une autre direction de la division (hors DCIRE). Règles métier identiques à l’écran admin « courrier interne division ».
+      Envoi vers une autre direction interne. Mêmes règles que l’écran d’administration courrier interne.
     </p>
     @if (ciblesInternes.length === 0) {
       <div class="alert alert-warning">Aucune direction cible disponible (vérifiez les entités en base).</div>

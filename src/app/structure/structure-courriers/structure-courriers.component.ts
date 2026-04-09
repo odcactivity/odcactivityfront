@@ -54,6 +54,9 @@ export class StructureCourriersComponent implements OnInit, OnDestroy {
   replyMessage = '';
   replyFichier: File | null = null;
 
+  reponsesCourrier: unknown[] = [];
+  editCourrier = { numero: '', objet: '', expediteur: '' };
+
   constructor(
     private readonly route: ActivatedRoute,
     private readonly auth: AuthService,
@@ -145,6 +148,19 @@ export class StructureCourriersComponent implements OnInit, OnDestroy {
     this.replyObjet = '';
     this.replyMessage = '';
     this.replyFichier = null;
+    this.reponsesCourrier = [];
+    const rawId = this.selected?.['id'];
+    const id = typeof rawId === 'number' ? rawId : Number(rawId);
+    if (this.selected && Number.isFinite(id)) {
+      this.global.getCourrierReponses(id).subscribe({
+        next: (r) => {
+          this.reponsesCourrier = Array.isArray(r) ? r : [];
+        },
+        error: () => {
+          this.reponsesCourrier = [];
+        },
+      });
+    }
   }
 
   libelleEtapeCourrier(row: Record<string, unknown>): string {
@@ -155,10 +171,10 @@ export class StructureCourriersComponent implements OnInit, OnDestroy {
       ATTENTE_VALIDATION_ODC: 'En validation ODC',
       EN_REVISION_ADMIN_COURRIER: 'Révision admin',
       ENVOYER: 'Reçu sur votre structure — à traiter',
-      IMPUTER: 'Imputé à un service',
+      IMPUTER: 'Transmis à un service',
       EN_COURS: 'Pris en charge / en traitement',
       REPONDU: 'Répondu',
-      TRANSMIS_DCIRE: 'Transmis à la DCIRE',
+      TRANSMIS_DCIRE: 'Transmis (sortant)',
       ARCHIVER: 'Archivé',
     };
     return map[s] || s || '—';
@@ -292,6 +308,67 @@ export class StructureCourriersComponent implements OnInit, OnDestroy {
         this.load();
       },
       error: () => this.toast.error('Validation impossible.'),
+    });
+  }
+
+  peutModifierOuSupprimerCourrier(row: Record<string, unknown>): boolean {
+    const s = String(row['statut'] || '');
+    return s !== 'ARCHIVER';
+  }
+
+  openEditCourrierModal(tpl: TemplateRef<unknown>, row: Record<string, unknown>): void {
+    this.selected = row;
+    this.editCourrier = {
+      numero: String(row['numero'] ?? ''),
+      objet: String(row['objet'] ?? ''),
+      expediteur: String(row['expediteur'] ?? ''),
+    };
+    this.modalService.open(tpl, { size: 'lg', scrollable: true });
+  }
+
+  saveEditCourrier(modal: { close: () => void }): void {
+    const raw = this.selected?.['id'];
+    const id = typeof raw === 'number' ? raw : Number(raw);
+    if (raw == null || !Number.isFinite(id)) {
+      return;
+    }
+    const { numero, objet, expediteur } = this.editCourrier;
+    if (!numero?.trim() || !objet?.trim() || !expediteur?.trim()) {
+      this.toast.warning('Numéro, objet et expéditeur sont obligatoires.');
+      return;
+    }
+    this.global
+      .patchCourrierMetadonnees(id, {
+        numero: numero.trim(),
+        objet: objet.trim(),
+        expediteur: expediteur.trim(),
+      })
+      .subscribe({
+        next: () => {
+          this.toast.success('Courrier mis à jour.');
+          modal.close();
+          this.load();
+        },
+        error: () => this.toast.error('Modification impossible.'),
+      });
+  }
+
+  supprimerCourrierStructure(row: Record<string, unknown>): void {
+    const raw = row['id'];
+    const id = typeof raw === 'number' ? raw : Number(raw);
+    if (raw == null || !Number.isFinite(id)) {
+      return;
+    }
+    if (!window.confirm('Supprimer définitivement ce courrier et son historique ?')) {
+      return;
+    }
+    this.global.deleteStructureDirecteurCourrier(id).subscribe({
+      next: () => {
+        this.toast.success('Courrier supprimé.');
+        this.selected = null;
+        this.load();
+      },
+      error: () => this.toast.error('Suppression impossible.'),
     });
   }
 

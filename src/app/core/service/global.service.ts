@@ -146,6 +146,57 @@ export class GlobalService {
       .post(`${this.baseUrl}/api/courriers/reponse`, formData)
       .pipe(catchError(this.handleError.bind(this)));
   }
+
+  getCourrierReponses(courrierId: number): Observable<any[]> {
+    return this.http
+      .get<any[]>(`${this.baseUrl}/api/courriers/${courrierId}/reponses`)
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  /** Fichier du courrier en validation ODC (sans effet sur le statut). */
+  getCourrierFichierValidationDirecteurOdc(courrierId: number): Observable<HttpResponse<Blob>> {
+    return this.http
+      .get(`${this.baseUrl}/api/courriers/odc-directeur/${courrierId}/fichier`, {
+        responseType: 'blob',
+        observe: 'response',
+      })
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  patchCourrierMetadonnees(
+    courrierId: number,
+    body: { numero?: string; objet?: string; expediteur?: string }
+  ): Observable<any> {
+    return this.http
+      .patch(`${this.baseUrl}/api/courriers/${courrierId}/metadonnees`, body)
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  deleteStructureDirecteurCourrier(courrierId: number): Observable<void> {
+    return this.http
+      .delete<void>(`${this.baseUrl}/api/courriers/structure-directeur/${courrierId}`)
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  getCourrierDashboardTotaux(structureId?: number | null): Observable<Record<string, number>> {
+    let params = new HttpParams();
+    if (structureId != null && Number.isFinite(Number(structureId))) {
+      params = params.set('structureId', String(structureId));
+    }
+    return this.http
+      .get<Record<string, number>>(`${this.baseUrl}/api/courriers/dashboard/totaux`, { params })
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  getCourrierDashboardSerie(periode: string, structureId?: number | null): Observable<any> {
+    let params = new HttpParams().set('periode', periode);
+    if (structureId != null && Number.isFinite(Number(structureId))) {
+      params = params.set('structureId', String(structureId));
+    }
+    return this.http
+      .get(`${this.baseUrl}/api/courriers/dashboard/serie`, { params })
+      .pipe(catchError(this.handleError.bind(this)));
+  }
   /**
      * Met à jour un objet dans la collection spécifiée.
      *

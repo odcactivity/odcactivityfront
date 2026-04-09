@@ -80,10 +80,13 @@ export class SidebarComponent implements OnInit {
     this.roleLabel = this.useRole
       .map((r) => {
         if (r === 'DIRECTEUR') {
-          return 'DCIRE';
+          return 'Direction';
         }
         if (r === 'DIRECTEUR_ODC') {
-          return 'Directeur ODC';
+          return 'Direction ODC';
+        }
+        if (r === 'DIRECTEUR_FONDATION' || r === 'DIRECTEUR_RSE' || r === 'DIRECTEUR_DCI') {
+          return 'Direction';
         }
         return r;
       })
@@ -102,7 +105,7 @@ export class SidebarComponent implements OnInit {
         .map((item) => ({
           ...item,
           submenu: (item.submenu || []).filter((x) => this.itemVisibleForUser(x)),
-          open: item.title === 'Directeur ODC',
+          open: false,
         }));
     });
   }

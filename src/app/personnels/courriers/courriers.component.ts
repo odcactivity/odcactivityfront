@@ -75,6 +75,11 @@ loading = false;
   listType: string = '1';
   scrollBarHorizontal = window.innerWidth < 1200;
   selectedRowData!: selectActivitySupportInterface;
+  /** Détail des réponses pour la ligne activée (clic sur la ligne). */
+  courrierReponsesDetail: any[] = [];
+  lastDetailCourrierId: number | null = null;
+  @ViewChild('editCourrierMetaTpl') editCourrierMetaTpl!: TemplateRef<unknown>;
+  editCourrierMeta = { numero: '', objet: '', expediteur: '' };
   filteredData: any[] = [];
   editForm: UntypedFormGroup;
   register!: UntypedFormGroup;
@@ -141,6 +146,71 @@ loading = false;
     } else {
       this.isRowSelected = true;
     }
+  }
+
+  onCourrierActivate(ev: { type?: string; row?: { id?: number } }): void {
+    if (ev?.type !== 'click' || ev.row?.id == null) {
+      return;
+    }
+    const id = Number(ev.row.id);
+    if (!Number.isFinite(id)) {
+      return;
+    }
+    this.lastDetailCourrierId = id;
+    this.glogalService.getCourrierReponses(id).subscribe({
+      next: (r) => {
+        this.courrierReponsesDetail = Array.isArray(r) ? r : [];
+      },
+      error: () => {
+        this.courrierReponsesDetail = [];
+      },
+    });
+  }
+
+  peutModifierMetadonneesCourrier(row: { statut?: string }): boolean {
+    if (!row || row.statut === 'ARCHIVER') {
+      return false;
+    }
+    return this.isSuperAdminRole || this.isDcireRole;
+  }
+
+  openEditCourrierMetaModal(row: selectActivitySupportInterface): void {
+    this.selectedRowData = row;
+    this.editCourrierMeta = {
+      numero: String(row.numero ?? ''),
+      objet: String(row.objet ?? ''),
+      expediteur: String(row.expediteur ?? ''),
+    };
+    this.modalService.open(this.editCourrierMetaTpl, { size: 'lg', scrollable: true });
+  }
+
+  saveCourrierMeta(modal: { close: () => void }): void {
+    if (!this.selectedRowData?.id) {
+      return;
+    }
+    const b = this.editCourrierMeta;
+    if (!b.numero?.trim() || !b.objet?.trim() || !b.expediteur?.trim()) {
+      this.toastr.warning('Renseignez numéro, objet et expéditeur.');
+      return;
+    }
+    this.glogalService
+      .patchCourrierMetadonnees(this.selectedRowData.id, {
+        numero: b.numero.trim(),
+        objet: b.objet.trim(),
+        expediteur: b.expediteur.trim(),
+      })
+      .subscribe({
+        next: () => {
+          this.toastr.success('Courrier mis à jour.');
+          modal.close();
+          if (this.isDcireRole) {
+            this.refreshCourriersDcire();
+          } else {
+            this.getCourrierByEntite();
+          }
+        },
+        error: () => this.toastr.error('Modification impossible.'),
+      });
   }
 
   deleteSelected() {

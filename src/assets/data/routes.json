@@ -8,11 +8,11 @@
       "class": "",
       "groupTitle": false,
       "submenu": [],
-      "roles": ["SUPERADMIN", "DIRECTEUR"]
+      "roles": ["SUPERADMIN", "ADMIN", "DIRECTEUR", "DIRECTEUR_ODC"]
     },
     {
       "path": "/entite",
-      "title": "DCIRE",
+      "title": "Entités",
       "iconType": "feather",
       "icon": "layers",
       "class": "",
@@ -23,90 +23,64 @@
       "roles": ["DIRECTEUR"]
     },
     {
-      "path": "",
-      "title": "Directeur ODC",
+      "path": "/directeur-odc/validation-activites",
+      "title": "Validation Activités",
       "iconType": "feather",
-      "icon": "clipboard",
+      "icon": "check-circle",
       "class": "",
       "groupTitle": false,
-      "roles": ["DIRECTEUR_ODC"],
-      "submenu": [
-        {
-          "path": "/dashboard/main",
-          "title": "Dashboard",
-          "submenu": [],
-          "roles": ["DIRECTEUR_ODC"]
-        },
-        {
-          "path": "/directeur-odc/validation-activites",
-          "title": "Validation activités",
-          "submenu": [],
-          "roles": ["DIRECTEUR_ODC"]
-        },
-        {
-          "path": "/directeur-odc/validation-courriers",
-          "title": "Validation courriers",
-          "submenu": [],
-          "roles": ["DIRECTEUR_ODC"]
-        },
-        {
-          "path": "/directeur-odc/rapport-global",
-          "title": "Rapport global",
-          "submenu": [],
-          "roles": ["DIRECTEUR_ODC"]
-        }
-      ]
+      "submenu": [],
+      "roles": ["DIRECTEUR_ODC"]
     },
     {
-      "path": "",
-      "title": "Fondation",
+      "path": "/directeur-odc/validation-courriers",
+      "title": "Validation Courriers",
       "iconType": "feather",
-      "icon": "heart",
+      "icon": "mail",
       "class": "",
       "groupTitle": false,
-      "roles": ["DIRECTEUR_FONDATION"],
-      "submenu": [
-        {
-          "path": "/structure/fondation/courriers",
-          "title": "Tableau de bord courriers",
-          "submenu": [],
-          "roles": ["DIRECTEUR_FONDATION"]
-        }
-      ]
+      "submenu": [],
+      "roles": ["DIRECTEUR_ODC"]
     },
     {
-      "path": "",
-      "title": "RSE",
+      "path": "/directeur-odc/rapport-global",
+      "title": "Rapport global",
       "iconType": "feather",
-      "icon": "users",
+      "icon": "bar-chart-2",
       "class": "",
       "groupTitle": false,
-      "roles": ["DIRECTEUR_RSE"],
-      "submenu": [
-        {
-          "path": "/structure/rse/courriers",
-          "title": "Tableau de bord courriers",
-          "submenu": [],
-          "roles": ["DIRECTEUR_RSE"]
-        }
-      ]
+      "submenu": [],
+      "roles": ["DIRECTEUR_ODC"]
     },
     {
-      "path": "",
-      "title": "DCI",
+      "path": "/structure/fondation/courriers",
+      "title": "Courriers",
       "iconType": "feather",
-      "icon": "briefcase",
+      "icon": "inbox",
       "class": "",
       "groupTitle": false,
-      "roles": ["DIRECTEUR_DCI"],
-      "submenu": [
-        {
-          "path": "/structure/dci/courriers",
-          "title": "Tableau de bord courriers",
-          "submenu": [],
-          "roles": ["DIRECTEUR_DCI"]
-        }
-      ]
+      "submenu": [],
+      "roles": ["DIRECTEUR_FONDATION"]
+    },
+    {
+      "path": "/structure/rse/courriers",
+      "title": "Courriers",
+      "iconType": "feather",
+      "icon": "inbox",
+      "class": "",
+      "groupTitle": false,
+      "submenu": [],
+      "roles": ["DIRECTEUR_RSE"]
+    },
+    {
+      "path": "/structure/dci/courriers",
+      "title": "Courriers",
+      "iconType": "feather",
+      "icon": "inbox",
+      "class": "",
+      "groupTitle": false,
+      "submenu": [],
+      "roles": ["DIRECTEUR_DCI"]
     },
     {
       "path": "/utilisateur",
