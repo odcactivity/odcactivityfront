@@ -7,6 +7,40 @@ import { GlobalService } from '@core/service/global.service';
 import { environment } from 'environments/environment';
 import { ToastrService } from 'ngx-toastr';
 
+function normaliserNomEntite(n: string | undefined): string {
+  return (n || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
+}
+
+/** Structures sœurs hors périmètre activités ODC dans ce filtre. */
+function estEntiteExclueRapportOdc(nom: string | undefined): boolean {
+  const n = normaliserNomEntite(nom);
+  if (!n) {
+    return false;
+  }
+  const exclus = ['orange digital center', 'dci', 'rse', 'fondation'];
+  return exclus.some(
+    (ex) =>
+      n === ex ||
+      n.startsWith(ex + ' ') ||
+      n.endsWith(' ' + ex) ||
+      n.includes(' ' + ex + ' ')
+  );
+}
+
+export interface RapportApercuLigne {
+  id: number;
+  nom: string;
+  titre: string;
+  dateDebut: string;
+  dateFin: string;
+  statut: string;
+  entiteNom: string;
+  lieu: string;
+}
+
 @Component({
   selector: 'app-rapport-global',
   standalone: true,
@@ -25,6 +59,10 @@ export class RapportGlobalComponent implements OnInit {
 
   periodeMode: 'annee' | 'mois' = 'annee';
 
+  apercuLignes: RapportApercuLigne[] = [];
+  apercuLoading = false;
+  apercuCharge = false;
+
   constructor(
     private readonly http: HttpClient,
     private readonly global: GlobalService,
@@ -34,7 +72,8 @@ export class RapportGlobalComponent implements OnInit {
   ngOnInit(): void {
     this.global.get('entite').subscribe({
       next: (list: Entite[]) => {
-        this.entites = Array.isArray(list) ? list : [];
+        const raw = Array.isArray(list) ? list : [];
+        this.entites = raw.filter((e) => !estEntiteExclueRapportOdc(e?.nom));
       },
       error: () => this.toast.error('Impossible de charger les entités.')
     });
@@ -45,6 +84,50 @@ export class RapportGlobalComponent implements OnInit {
           .filter((a) => a.id != null);
       },
       error: () => {}
+    });
+  }
+
+  libelleFiltresResume(): string {
+    const parts: string[] = [];
+    if (this.entiteId != null) {
+      const e = this.entites.find((x) => x.id === this.entiteId);
+      parts.push(`Entité : ${e?.nom ?? '—'}`);
+    } else {
+      parts.push('Entité : toutes (périmètre ODC)');
+    }
+    if (this.activiteId != null) {
+      const a = this.activites.find((x) => x.id === this.activiteId);
+      parts.push(`Activité : ${a?.nom ?? '—'}`);
+    } else {
+      parts.push('Activité : toutes');
+    }
+    parts.push(`Année : ${this.annee}`);
+    if (this.periodeMode === 'mois' && this.mois != null) {
+      const moisNoms = [
+        '', 'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+        'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'
+      ];
+      parts.push(`Mois : ${moisNoms[this.mois] ?? this.mois}`);
+    } else {
+      parts.push('Période : année complète');
+    }
+    return parts.join(' · ');
+  }
+
+  chargerApercu(): void {
+    const url = `${environment.apiUrl}/api/rapport-global/activites-apercu`;
+    this.apercuLoading = true;
+    this.apercuCharge = false;
+    this.http.get<RapportApercuLigne[]>(url, { params: this.buildParams() }).subscribe({
+      next: (rows) => {
+        this.apercuLignes = Array.isArray(rows) ? rows : [];
+        this.apercuLoading = false;
+        this.apercuCharge = true;
+      },
+      error: () => {
+        this.apercuLoading = false;
+        this.toast.error('Impossible de charger l’aperçu.');
+      }
     });
   }
 

@@ -16,6 +16,7 @@ import { ToastrService } from 'ngx-toastr';
 import Swal from 'sweetalert2';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { ValidationCourriersDirecteurComponent } from '../../directeur-odc/validation-courriers-directeur/validation-courriers-directeur.component';
 
 interface selectActivitySupportInterface {
   id: number;
@@ -30,7 +31,7 @@ interface selectActivitySupportInterface {
 
 @Component({
   selector: 'app-courriers',
-  imports: [NgxDatatableModule, CommonModule, ReactiveFormsModule, FormsModule],
+  imports: [NgxDatatableModule, CommonModule, ReactiveFormsModule, FormsModule, ValidationCourriersDirecteurComponent],
   templateUrl: './courriers.component.html',
   styleUrl: './courriers.component.scss'
 })
@@ -97,6 +98,8 @@ loading = false;
   isDcireRole = false;
   /** Direction ODC (validation transmission) */
   isSuperAdminRole = false;
+  /** Directeur produit ODC : bloc validation intégré sur cette page */
+  isDirecteurOdcRole = false;
   odcDirections: Entite[] = [];
   /** Fondation, RSE, DCI, etc. — réception à la DCIRE */
   externalDirections: Entite[] = [];
@@ -276,7 +279,10 @@ loading = false;
     const roles = rawRoles.map((r: string) => String(r).trim().toUpperCase());
     this.isDcireRole = roles.includes('DIRECTEUR') || roles.includes('DCIRE');
     this.isSuperAdminRole =
-      roles.includes('SUPERADMIN') || roles.includes('ADMIN');
+      roles.includes('SUPERADMIN') ||
+      roles.includes('ADMIN') ||
+      roles.includes('DIRECTEUR_ODC');
+    this.isDirecteurOdcRole = roles.includes('DIRECTEUR_ODC');
   }
 
   getAllEntite() {
@@ -506,7 +512,30 @@ loading = false;
   }
 
   isCourrierPhysiquementADcire(row: any): boolean {
-    return this.dcireDirectionId != null && this.rowEntiteId(row) === this.dcireDirectionId;
+    if (this.dcireDirectionId == null) {
+      return false;
+    }
+    if (row?.statut === 'TRANSMIS_DCIRE') {
+      return true;
+    }
+    return this.rowEntiteId(row) === this.dcireDirectionId;
+  }
+
+  /** Externe sortant en attente sur le hub (pas de transmission ODC). */
+  estFluxExterneHubEnAttente(row: any): boolean {
+    if (row?.statut !== 'TRANSMIS_DCIRE') {
+      return false;
+    }
+    const d = row?.destinataireOdc;
+    return d === 'EXTERNE' || d == null;
+  }
+
+  /** Courrier externe explicite au hub : pas de transmission ODC. */
+  estCourrierExterneSortantAuHub(row: any): boolean {
+    if (!this.isCourrierPhysiquementADcire(row)) {
+      return false;
+    }
+    return row?.destinataireOdc === 'EXTERNE';
   }
 
   validerTransmissionVersDcire(row: any): void {
@@ -547,6 +576,21 @@ loading = false;
     this.selectedRowData = row;
     this.transmitOdcDirectionId = this.odcDirections[0]?.id ?? null;
     this.modalService.open(this.transmitOdcModal, { size: 'md' });
+  }
+
+  validerExpeditionExterneDcire(row: any): void {
+    if (!row?.id) {
+      return;
+    }
+    this.glogalService.postCourrierValiderExpeditionExterneDcire(row.id).subscribe({
+      next: () => {
+        this.toastr.success('Accusé de réception hub enregistré.');
+        this.refreshCourriersDcire();
+      },
+      error: (err) => {
+        this.toastr.error(err?.error?.message || 'Action impossible.');
+      },
+    });
   }
 
   confirmTransmitToOdc(modal: any): void {

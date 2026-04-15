@@ -116,6 +116,12 @@ export class GlobalService {
       .pipe(catchError(this.handleError.bind(this)));
   }
 
+  postCourrierValiderExpeditionExterneDcire(courrierId: number): Observable<any> {
+    return this.http
+      .post(`${this.baseUrl}/api/courriers/dcire/${courrierId}/valider-expedition-externe`, {})
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
   getStructureCourriersTableau(): Observable<Record<string, unknown[]>> {
     return this.http
       .get<Record<string, unknown[]>>(`${this.baseUrl}/api/courriers/structure-directeur/tableau`)

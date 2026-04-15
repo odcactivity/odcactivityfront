@@ -56,7 +56,7 @@ export const APP_ROUTE: Route[] = [
       { path: 'reportinghebdo', loadComponent: () => import('./personnels/reportinghebdo/reportinghebdo.component').then(c => c.ReportinghebdoComponent) },
 
       { path: 'directeur-odc/validation-activites', loadComponent: () => import('./directeur-odc/validation-activites/validation-activites.component').then(c => c.ValidationActivitesComponent) },
-      { path: 'directeur-odc/validation-courriers', loadComponent: () => import('./directeur-odc/validation-courriers-directeur/validation-courriers-directeur.component').then(c => c.ValidationCourriersDirecteurComponent) },
+      { path: 'directeur-odc/validation-courriers', redirectTo: 'courrier', pathMatch: 'full' },
       { path: 'directeur-odc/rapport-global', loadComponent: () => import('./directeur-odc/rapport-global/rapport-global.component').then(c => c.RapportGlobalComponent) },
 
       {

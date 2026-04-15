@@ -1,44 +1,189 @@
 <section class="main-content p-4">
   <h4 class="mb-3">Validation des activités</h4>
   <p class="text-muted mb-4">
-    Validez ou refusez les activités soumises. Un e-mail de notification est envoyé aux personnels concernés.
+    Consultez le détail d’une activité avant de valider ou de refuser. L’historique liste les décisions déjà prises
+    (à partir du déploiement de cette fonctionnalité).
   </p>
 
-  @if (loading) {
-    <p>Chargement…</p>
-  } @else if (rows.length === 0) {
-    <p class="text-muted">Aucune activité en attente.</p>
-  } @else {
-    <div class="table-responsive">
-      <table class="table table-striped align-middle">
-        <thead>
-          <tr>
-            <th>Nom</th>
-            <th>Dates</th>
-            <th>Lieu</th>
-            <th>Créateur</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (a of rows; track a.id) {
+  <ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+      <button type="button" class="nav-link" [class.active]="tab === 'attente'" (click)="setTab('attente')">
+        En attente
+        @if (rows.length) {
+          <span class="badge bg-secondary ms-1">{{ rows.length }}</span>
+        }
+      </button>
+    </li>
+    <li class="nav-item">
+      <button type="button" class="nav-link" [class.active]="tab === 'validees'" (click)="setTab('validees')">
+        Validées par vous
+      </button>
+    </li>
+    <li class="nav-item">
+      <button type="button" class="nav-link" [class.active]="tab === 'refusees'" (click)="setTab('refusees')">
+        Refusées
+      </button>
+    </li>
+  </ul>
+
+  @if (tab === 'attente') {
+    @if (loading) {
+      <p>Chargement…</p>
+    } @else if (rows.length === 0) {
+      <p class="text-muted">Aucune activité en attente.</p>
+    } @else {
+      <div class="table-responsive">
+        <table class="table table-striped align-middle">
+          <thead>
             <tr>
-              <td>{{ a.nom }}</td>
-              <td>{{ a.dateDebut | date: 'dd/MM/yyyy' }} – {{ a.dateFin | date: 'dd/MM/yyyy' }}</td>
-              <td>{{ a.lieu }}</td>
-              <td>
-                @if (a.createdBy) {
-                  {{ a.createdBy?.prenom }} {{ a.createdBy?.nom }}
-                }
-              </td>
-              <td class="text-end">
-                <button type="button" class="btn btn-success btn-sm me-1" (click)="valider(a.id)">Valider</button>
-                <button type="button" class="btn btn-outline-danger btn-sm" (click)="rejeter(a.id)">Refuser</button>
-              </td>
+              <th>Nom</th>
+              <th>Dates</th>
+              <th>Lieu</th>
+              <th>Créateur</th>
+              <th class="text-end"></th>
             </tr>
-          }
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            @for (a of rows; track a.id) {
+              <tr>
+                <td>{{ a.nom }}</td>
+                <td>{{ a.dateDebut | date: 'dd/MM/yyyy' }} – {{ a.dateFin | date: 'dd/MM/yyyy' }}</td>
+                <td>{{ a.lieu }}</td>
+                <td>
+                  @if (a.createdBy) {
+                    {{ a.createdBy?.prenom }} {{ a.createdBy?.nom }}
+                  }
+                </td>
+                <td class="text-end text-nowrap">
+                  <button type="button" class="btn btn-outline-primary btn-sm me-1" (click)="openDetail(a)">
+                    Voir le détail
+                  </button>
+                  <button type="button" class="btn btn-success btn-sm me-1" (click)="valider(a.id)">Valider</button>
+                  <button type="button" class="btn btn-outline-danger btn-sm" (click)="rejeter(a.id)">Refuser</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+
+  @if (tab === 'validees') {
+    @if (loadingHistorique && historiqueValidees.length === 0) {
+      <p>Chargement…</p>
+    } @else if (historiqueValidees.length === 0) {
+      <p class="text-muted">Aucune activité validée enregistrée dans l’historique.</p>
+    } @else {
+      <div class="table-responsive">
+        <table class="table table-sm align-middle">
+          <thead>
+            <tr>
+              <th>Nom</th>
+              <th>Dates</th>
+              <th>Décision le</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (a of historiqueValidees; track a.id) {
+              <tr>
+                <td>{{ a.nom }}</td>
+                <td>{{ a.dateDebut | date: 'dd/MM/yyyy' }} – {{ a.dateFin | date: 'dd/MM/yyyy' }}</td>
+                <td>{{ a.directeurOdcTraiteLe | date: 'dd/MM/yyyy HH:mm' }}</td>
+                <td class="text-end">
+                  <button type="button" class="btn btn-link btn-sm p-0" (click)="openDetail(a)">Voir le détail</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+
+  @if (tab === 'refusees') {
+    @if (historiqueRefusees.length === 0) {
+      <p class="text-muted">Aucun refus enregistré dans l’historique.</p>
+    } @else {
+      <div class="table-responsive">
+        <table class="table table-sm align-middle">
+          <thead>
+            <tr>
+              <th>Nom</th>
+              <th>Dates</th>
+              <th>Refus le</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (a of historiqueRefusees; track a.id) {
+              <tr>
+                <td>{{ a.nom }}</td>
+                <td>{{ a.dateDebut | date: 'dd/MM/yyyy' }} – {{ a.dateFin | date: 'dd/MM/yyyy' }}</td>
+                <td>{{ a.directeurOdcTraiteLe | date: 'dd/MM/yyyy HH:mm' }}</td>
+                <td class="text-end">
+                  <button type="button" class="btn btn-link btn-sm p-0" (click)="openDetail(a)">Voir le détail</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
   }
 </section>
+
+<ng-template #detailTpl let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Détail de l’activité</h5>
+    <button type="button" class="btn-close" aria-label="Fermer" (click)="modal.dismiss()"></button>
+  </div>
+  <div class="modal-body">
+    @if (detailLoading) {
+      <p class="text-muted mb-0">Chargement du détail…</p>
+    } @else if (detail) {
+      <dl class="row mb-0">
+        <dt class="col-sm-3">Nom</dt>
+        <dd class="col-sm-9">{{ detail.nom }}</dd>
+        <dt class="col-sm-3">Titre</dt>
+        <dd class="col-sm-9">{{ detail.titre || '—' }}</dd>
+        <dt class="col-sm-3">Période</dt>
+        <dd class="col-sm-9">
+          {{ detail.dateDebut | date: 'dd/MM/yyyy' }} – {{ detail.dateFin | date: 'dd/MM/yyyy' }}
+        </dd>
+        <dt class="col-sm-3">Lieu</dt>
+        <dd class="col-sm-9">{{ detail.lieu || '—' }}</dd>
+        <dt class="col-sm-3">Entité</dt>
+        <dd class="col-sm-9">{{ detail.entite?.nom || '—' }}</dd>
+        <dt class="col-sm-3">Type</dt>
+        <dd class="col-sm-9">{{ detail.typeActivite?.nom || '—' }}</dd>
+        <dt class="col-sm-3">Objectif participation</dt>
+        <dd class="col-sm-9">{{ detail.objectifParticipation ?? '—' }}</dd>
+        <dt class="col-sm-3">Description</dt>
+        <dd class="col-sm-9 text-break">{{ detail.description || '—' }}</dd>
+        @if (detail.etapes?.length) {
+          <dt class="col-sm-3">Étapes</dt>
+          <dd class="col-sm-9">
+            <ul class="mb-0 ps-3">
+              @for (e of detail.etapes; track $index) {
+                <li>{{ e.nom || e.titre || 'Étape' }} @if (e.dateDebut) { ({{ e.dateDebut | date: 'dd/MM/yyyy' }}) }</li>
+              }
+            </ul>
+          </dd>
+        }
+      </dl>
+    } @else {
+      <p class="text-muted mb-0">Aucune donnée.</p>
+    }
+  </div>
+  <div class="modal-footer d-flex flex-wrap gap-2 justify-content-between">
+    <button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss()">Fermer</button>
+    @if (detail?.statut === 'En_Validation_Directeur_ODC' || detailForRow?.statut === 'En_Validation_Directeur_ODC') {
+      <div>
+        <button type="button" class="btn btn-success me-1" (click)="validerFromModal()">Valider</button>
+        <button type="button" class="btn btn-outline-danger" (click)="rejeterFromModal()">Refuser</button>
+      </div>
+    }
+  </div>
+</ng-template>

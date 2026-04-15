@@ -1,17 +1,20 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { GlobalService } from '@core/service/global.service';
 import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-validation-courriers-directeur',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './validation-courriers-directeur.component.html',
   styleUrl: './validation-courriers-directeur.component.scss'
 })
 export class ValidationCourriersDirecteurComponent implements OnInit {
+  @Input() embedded = false;
+
   rows: any[] = [];
   loading = false;
   selected: any | null = null;

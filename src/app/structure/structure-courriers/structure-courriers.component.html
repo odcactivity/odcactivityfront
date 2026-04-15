@@ -10,6 +10,9 @@
       <button type="button" class="btn btn-outline-primary btn-sm" (click)="openInterneModal(interneTpl)">
         Nouveau courrier interne
       </button>
+      <button type="button" class="btn btn-outline-primary btn-sm" (click)="openExterneModal(externeTpl)">
+        Courrier externe (hub)
+      </button>
       <button type="button" class="btn btn-outline-secondary btn-sm" (click)="load()" [disabled]="loading">
         Actualiser
       </button>
@@ -214,6 +217,40 @@
   </div>
   <div class="modal-footer">
     <button type="button" class="btn btn-primary" (click)="saveEditCourrier(modal)">Enregistrer</button>
+    <button type="button" class="btn btn-secondary" (click)="modal.dismiss()">Annuler</button>
+  </div>
+</ng-template>
+
+<ng-template #externeTpl let-modal>
+  <div class="modal-header">
+    <h5 class="modal-title">Courrier externe</h5>
+    <button type="button" class="btn-close" aria-label="Fermer" (click)="modal.dismiss()"></button>
+  </div>
+  <div class="modal-body">
+    <p class="small text-muted">Vers le hub. Envoi physique hors appli. Réponse du tiers : le hub la dépose ici (fichier).</p>
+    <div class="mb-2">
+      <label class="form-label">Numéro <span class="text-danger">*</span></label>
+      <input class="form-control" [(ngModel)]="externe.numero" name="numeroExterne" />
+    </div>
+    <div class="mb-2">
+      <label class="form-label">Objet <span class="text-danger">*</span></label>
+      <input class="form-control" [(ngModel)]="externe.objet" name="objetExterne" />
+    </div>
+    <div class="mb-2">
+      <label class="form-label">Expéditeur <span class="text-danger">*</span></label>
+      <input class="form-control" [(ngModel)]="externe.expediteur" name="expExterne" />
+    </div>
+    <div class="mb-2">
+      <label class="form-label">Précision destinataire (facultatif)</label>
+      <input class="form-control" [(ngModel)]="externe.externePrecision" name="precExterne" />
+    </div>
+    <div class="mb-2">
+      <label class="form-label">Fichier</label>
+      <input type="file" class="form-control" (change)="onExterneFile($event)" />
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-primary" (click)="saveExterne(modal)">Enregistrer</button>
     <button type="button" class="btn btn-secondary" (click)="modal.dismiss()">Annuler</button>
   </div>
 </ng-template>

@@ -50,6 +50,14 @@ export class StructureCourriersComponent implements OnInit, OnDestroy {
     fichier: null as File | null,
   };
 
+  externe = {
+    numero: '',
+    objet: '',
+    expediteur: '',
+    externePrecision: '',
+    fichier: null as File | null,
+  };
+
   replyObjet = '';
   replyMessage = '';
   replyFichier: File | null = null;
@@ -268,6 +276,17 @@ export class StructureCourriersComponent implements OnInit, OnDestroy {
     this.modalService.open(tpl, { size: 'lg', scrollable: true });
   }
 
+  openExterneModal(tpl: TemplateRef<unknown>): void {
+    this.externe = {
+      numero: '',
+      objet: '',
+      expediteur: '',
+      externePrecision: '',
+      fichier: null,
+    };
+    this.modalService.open(tpl, { size: 'lg', scrollable: true });
+  }
+
   saveInterne(modal: { close: () => void }): void {
     if (
       this.interne.cibleDirectionId == null ||
@@ -289,6 +308,37 @@ export class StructureCourriersComponent implements OnInit, OnDestroy {
     this.global.postMultipart('api/courriers/structure-directeur/courrier-interne', fd).subscribe({
       next: () => {
         this.toast.success('Courrier interne enregistré.');
+        modal.close();
+        this.load();
+      },
+      error: () => this.toast.error('Enregistrement impossible.'),
+    });
+  }
+
+  onExterneFile(ev: Event): void {
+    const input = ev.target as HTMLInputElement;
+    this.externe.fichier = input.files?.[0] ?? null;
+  }
+
+  saveExterne(modal: { close: () => void }): void {
+    if (!this.externe.numero?.trim() || !this.externe.objet?.trim() || !this.externe.expediteur?.trim()) {
+      this.toast.warning('Numéro, objet et expéditeur sont obligatoires.');
+      return;
+    }
+    const fd = new FormData();
+    fd.append('numero', this.externe.numero.trim());
+    fd.append('objet', this.externe.objet.trim());
+    fd.append('expediteur', this.externe.expediteur.trim());
+    const prec = (this.externe.externePrecision || '').trim();
+    if (prec) {
+      fd.append('externePrecision', prec);
+    }
+    if (this.externe.fichier) {
+      fd.append('fichier', this.externe.fichier);
+    }
+    this.global.postMultipart('api/courriers/structure-directeur/courrier-externe', fd).subscribe({
+      next: () => {
+        this.toast.success('Courrier externe envoyé au hub.');
         modal.close();
         this.load();
       },

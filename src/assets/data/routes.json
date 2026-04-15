@@ -33,16 +33,6 @@
       "roles": ["DIRECTEUR_ODC"]
     },
     {
-      "path": "/directeur-odc/validation-courriers",
-      "title": "Validation Courriers",
-      "iconType": "feather",
-      "icon": "mail",
-      "class": "",
-      "groupTitle": false,
-      "submenu": [],
-      "roles": ["DIRECTEUR_ODC"]
-    },
-    {
       "path": "/directeur-odc/rapport-global",
       "title": "Rapport global",
       "iconType": "feather",
@@ -51,6 +41,16 @@
       "groupTitle": false,
       "submenu": [],
       "roles": ["DIRECTEUR_ODC"]
+    },
+    {
+      "path": "/courrier",
+      "title": "Gestion des courriers",
+      "iconType": "feather",
+      "icon": "inbox",
+      "class": "",
+      "groupTitle": false,
+      "submenu": [],
+      "roles": ["SUPERADMIN", "ADMIN", "DIRECTEUR", "DIRECTEUR_ODC"]
     },
     {
       "path": "/structure/fondation/courriers",
@@ -110,16 +110,6 @@
           "roles": ["SUPERADMIN"]
         }
       ]
-    },
-    {
-      "path": "/courrier",
-      "title": "Gestion des Courriers",
-      "iconType": "feather",
-      "icon": "mail",
-      "class": "",
-      "groupTitle": false,
-      "submenu": [],
-      "roles": ["SUPERADMIN", "ADMIN", "DIRECTEUR"]
     },
     {
       "path": "",

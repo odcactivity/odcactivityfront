@@ -1,71 +1,132 @@
-<section class="main-content p-4">
-  <h4 class="mb-3">Validation des courriers</h4>
-  <p class="text-muted mb-4">
-    Proposez des corrections ou validez le contenu avant envoi au destinataire.
-  </p>
-
-  @if (loading) {
-    <p>Chargement…</p>
-  } @else if (rows.length === 0) {
-    <p class="text-muted">Aucun courrier à traiter.</p>
-  } @else {
-    <div class="table-responsive mb-4">
-      <table class="table table-hover align-middle">
-        <thead>
-          <tr>
-            <th>N°</th>
-            <th>Objet</th>
-            <th>Statut</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (r of rows; track r.id) {
-            <tr [class.table-active]="selected?.id === r.id">
-              <td>{{ r.numero }}</td>
-              <td>{{ r.objet }}</td>
-              <td><code class="small">{{ r.statut }}</code></td>
-              <td>
-                <button type="button" class="btn btn-sm btn-outline-primary" (click)="selectRow(r)">Sélectionner</button>
-              </td>
+@if (embedded) {
+  <div class="courrier-validation-embed mb-4 pb-4 border-bottom">
+    <h6 class="mb-2 fw-semibold">À valider</h6>
+    <p class="text-muted small mb-3">Décision requise.</p>
+    @if (loading) {
+      <p class="small text-muted">Chargement…</p>
+    } @else if (rows.length === 0) {
+      <p class="text-muted small mb-0">Aucun courrier à traiter.</p>
+    } @else {
+      <div class="table-responsive mb-3">
+        <table class="table table-hover table-sm align-middle">
+          <thead>
+            <tr>
+              <th>N°</th>
+              <th>Objet</th>
+              <th>Statut</th>
+              <th></th>
             </tr>
+          </thead>
+          <tbody>
+            @for (r of rows; track r.id) {
+              <tr [class.table-active]="selected?.id === r.id">
+                <td>{{ r.numero }}</td>
+                <td>{{ r.objet }}</td>
+                <td><code class="small">{{ r.statut }}</code></td>
+                <td>
+                  <button type="button" class="btn btn-sm btn-outline-primary" (click)="selectRow(r)">Sélectionner</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+    @if (selected) {
+      <div class="card p-3">
+        <h6 class="mb-2">Courrier {{ selected.numero }}</h6>
+        <div class="border rounded p-3 mb-3 bg-light">
+          <p class="small mb-1"><strong>Objet :</strong> {{ selected.objet || '—' }}</p>
+          <p class="small mb-1"><strong>Expéditeur (libellé) :</strong> {{ selected.expediteur || '—' }}</p>
+          @if (selected.destinataireOdc) {
+            <p class="small mb-1"><strong>Destinataire prévu :</strong> {{ selected.destinataireOdc }}</p>
           }
-        </tbody>
-      </table>
-    </div>
-  }
-
-  @if (selected) {
-    <div class="card p-3">
-      <h6 class="mb-2">Courrier {{ selected.numero }}</h6>
-      <div class="border rounded p-3 mb-3 bg-light">
-        <p class="small mb-1"><strong>Objet :</strong> {{ selected.objet || '—' }}</p>
-        <p class="small mb-1"><strong>Expéditeur (libellé) :</strong> {{ selected.expediteur || '—' }}</p>
-        @if (selected.destinataireOdc) {
-          <p class="small mb-1"><strong>Destinataire prévu :</strong> {{ selected.destinataireOdc }}</p>
+          @if (selected.externePrecision) {
+            <p class="small mb-0"><strong>Précision :</strong> {{ selected.externePrecision }}</p>
+          }
+          <button type="button" class="btn btn-sm btn-outline-primary mt-2" (click)="telechargerPieceValidation()">
+            Télécharger / consulter la pièce jointe
+          </button>
+        </div>
+        @if (selected.suggestionDirecteur) {
+          <p class="small text-muted mb-2">Dernière suggestion enregistrée : {{ selected.suggestionDirecteur }}</p>
         }
-        @if (selected.externePrecision) {
-          <p class="small mb-0"><strong>Précision :</strong> {{ selected.externePrecision }}</p>
-        }
-        <button type="button" class="btn btn-sm btn-outline-primary mt-2" (click)="telechargerPieceValidation()">
-          Télécharger / consulter la pièce jointe
-        </button>
-        <p class="small text-muted mt-2 mb-0">
-          Consultez le contenu du courrier avant d’envoyer des suggestions ou de valider la transmission.
-        </p>
+        <label class="form-label">Suggestions / remarques pour l’admin</label>
+        <textarea class="form-control mb-3" rows="3" [(ngModel)]="suggestionText" placeholder="Décrivez les changements souhaités…"></textarea>
+        <div class="d-flex flex-wrap gap-2">
+          <button type="button" class="btn btn-warning" (click)="envoyerSuggestion()">Envoyer les suggestions à l’admin</button>
+          @if (peutValiderDcire(selected)) {
+            <button type="button" class="btn btn-success" (click)="validerVersDcire()">Valider le contenu</button>
+          }
+          <button type="button" class="btn btn-outline-secondary" (click)="annuler()">Archiver / annuler</button>
+        </div>
       </div>
-      @if (selected.suggestionDirecteur) {
-        <p class="small text-muted mb-2">Dernière suggestion enregistrée : {{ selected.suggestionDirecteur }}</p>
-      }
-      <label class="form-label">Suggestions / remarques pour l’admin</label>
-      <textarea class="form-control mb-3" rows="4" [(ngModel)]="suggestionText" placeholder="Décrivez les changements souhaités…"></textarea>
-      <div class="d-flex flex-wrap gap-2">
-        <button type="button" class="btn btn-warning" (click)="envoyerSuggestion()">Envoyer les suggestions à l’admin</button>
-        @if (peutValiderDcire(selected)) {
-          <button type="button" class="btn btn-success" (click)="validerVersDcire()">Valider le contenu</button>
-        }
-        <button type="button" class="btn btn-outline-secondary" (click)="annuler()">Archiver / annuler</button>
+    }
+  </div>
+} @else {
+  <section class="main-content p-4">
+    <h4 class="mb-2">Validation des courriers</h4>
+    <p class="text-muted small mb-3">En attente de votre validation.</p>
+    <a routerLink="/courrier" class="btn btn-custom-orange mb-4">Ouvrir la gestion des courriers</a>
+    @if (loading) {
+      <p>Chargement…</p>
+    } @else if (rows.length === 0) {
+      <p class="text-muted">Aucun courrier à traiter.</p>
+    } @else {
+      <div class="table-responsive mb-4">
+        <table class="table table-hover align-middle">
+          <thead>
+            <tr>
+              <th>N°</th>
+              <th>Objet</th>
+              <th>Statut</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of rows; track r.id) {
+              <tr [class.table-active]="selected?.id === r.id">
+                <td>{{ r.numero }}</td>
+                <td>{{ r.objet }}</td>
+                <td><code class="small">{{ r.statut }}</code></td>
+                <td>
+                  <button type="button" class="btn btn-sm btn-outline-primary" (click)="selectRow(r)">Sélectionner</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
       </div>
-    </div>
-  }
-</section>
+    }
+    @if (selected) {
+      <div class="card p-3">
+        <h6 class="mb-2">Courrier {{ selected.numero }}</h6>
+        <div class="border rounded p-3 mb-3 bg-light">
+          <p class="small mb-1"><strong>Objet :</strong> {{ selected.objet || '—' }}</p>
+          <p class="small mb-1"><strong>Expéditeur (libellé) :</strong> {{ selected.expediteur || '—' }}</p>
+          @if (selected.destinataireOdc) {
+            <p class="small mb-1"><strong>Destinataire prévu :</strong> {{ selected.destinataireOdc }}</p>
+          }
+          @if (selected.externePrecision) {
+            <p class="small mb-0"><strong>Précision :</strong> {{ selected.externePrecision }}</p>
+          }
+          <button type="button" class="btn btn-sm btn-outline-primary mt-2" (click)="telechargerPieceValidation()">
+            Télécharger / consulter la pièce jointe
+          </button>
+        </div>
+        @if (selected.suggestionDirecteur) {
+          <p class="small text-muted mb-2">Dernière suggestion enregistrée : {{ selected.suggestionDirecteur }}</p>
+        }
+        <label class="form-label">Suggestions / remarques pour l’admin</label>
+        <textarea class="form-control mb-3" rows="4" [(ngModel)]="suggestionText" placeholder="Décrivez les changements souhaités…"></textarea>
+        <div class="d-flex flex-wrap gap-2">
+          <button type="button" class="btn btn-warning" (click)="envoyerSuggestion()">Envoyer les suggestions à l’admin</button>
+          @if (peutValiderDcire(selected)) {
+            <button type="button" class="btn btn-success" (click)="validerVersDcire()">Valider le contenu</button>
+          }
+          <button type="button" class="btn btn-outline-secondary" (click)="annuler()">Archiver / annuler</button>
+        </div>
+      </div>
+    }
+  </section>
+}
