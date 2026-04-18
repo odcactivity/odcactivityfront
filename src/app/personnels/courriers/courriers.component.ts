@@ -94,7 +94,7 @@ loading = false;
   currenUserData: any;
   taille: any = "";
 
-  /** Rôle DCIRE (JWT = DIRECTEUR) */
+  /** Hub DCIRE : même rôle JWT « DIRECTEUR » que les autres directions ; le périmètre courrier suit la logique DCIRE côté API / entités. */
   isDcireRole = false;
   /** Direction ODC (validation transmission) */
   isSuperAdminRole = false;
@@ -244,6 +244,10 @@ loading = false;
       return;
     }
 
+    if (!this.isDcireRole) {
+      this.typeliste = 'recus';
+    }
+
     this.register = this.fb.group({
       numero: ['', [Validators.required]],
       objet: ['', [Validators.required]],
@@ -277,7 +281,7 @@ loading = false;
 
     const rawRoles = this.authService.getCurrentUserFromStorage()?.roles || [];
     const roles = rawRoles.map((r: string) => String(r).trim().toUpperCase());
-    this.isDcireRole = roles.includes('DIRECTEUR') || roles.includes('DCIRE');
+    this.isDcireRole = roles.includes('DIRECTEUR');
     this.isSuperAdminRole =
       roles.includes('SUPERADMIN') ||
       roles.includes('ADMIN') ||
@@ -354,8 +358,12 @@ loading = false;
             }
           }
         }
-        this.Courriers = [...byId.values()];
-        this.filteredData = [...this.Courriers];
+        let merged = [...byId.values()];
+        if (this.typeliste === 'recus') {
+          merged = merged.filter((c) => this.estCourrierRecuSurPilierOdc(c));
+        }
+        this.Courriers = merged;
+        this.filteredData = [...merged];
         this.loadingIndicator = false;
       },
       error: () => {
@@ -455,6 +463,8 @@ loading = false;
         return 'REPONDUS';
       case 'tous':
         return 'TOUS';
+      case 'recus':
+        return 'OPERATIONNEL';
       case 'actifs':
         return 'OPERATIONNEL';
       default:
@@ -509,6 +519,69 @@ loading = false;
       return e;
     }
     return null;
+  }
+
+  private rowStructureOrigineId(row: any): number | null {
+    const so = row?.structureOrigine;
+    if (so == null) {
+      return null;
+    }
+    if (typeof so === 'object' && so.id != null) {
+      return Number(so.id);
+    }
+    if (typeof so === 'number') {
+      return Number(so);
+    }
+    return null;
+  }
+
+  private rowDirectionInitialId(row: any): number | null {
+    const di = row?.directionInitial;
+    if (di == null) {
+      return null;
+    }
+    if (typeof di === 'object' && di.id != null) {
+      return Number(di.id);
+    }
+    if (typeof di === 'number') {
+      return Number(di);
+    }
+    return null;
+  }
+
+  private rowDetenuSurPilierOdcCharge(row: any): boolean {
+    const e = row?.entite;
+    if (e == null) {
+      return false;
+    }
+    const entId = typeof e === 'object' && e.id != null ? Number(e.id) : Number(e);
+    if (!Number.isFinite(entId)) {
+      return false;
+    }
+    if (this.odcDirections.some((d) => Number(d.id) === entId)) {
+      return true;
+    }
+    const parentId = e?.parent?.id;
+    if (parentId != null && this.odcDirections.some((d) => Number(d.id) === Number(parentId))) {
+      return true;
+    }
+    return false;
+  }
+
+  estCourrierRecuSurPilierOdc(row: any): boolean {
+    if (!row || !this.rowDetenuSurPilierOdcCharge(row)) {
+      return false;
+    }
+    const entId = this.rowEntiteId(row);
+    const origId = this.rowStructureOrigineId(row);
+    if (origId != null && entId != null && origId !== entId) {
+      return true;
+    }
+    const initId = this.rowDirectionInitialId(row);
+    if (origId == null && initId != null && entId != null && initId !== entId) {
+      return true;
+    }
+    return false;
   }
 
   isCourrierPhysiquementADcire(row: any): boolean {

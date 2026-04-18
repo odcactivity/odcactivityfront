@@ -13,7 +13,7 @@ import {NgbModal} from "@ng-bootstrap/ng-bootstrap";
 import {ToastrService} from "ngx-toastr";
 import {GlobalService} from "@core/service/global.service";
 import { Utilisateur } from '@core/models/Utilisateur.model';
-import {NgForOf, NgIf, NgTemplateOutlet} from "@angular/common";
+import {NgClass, NgForOf, NgIf, NgTemplateOutlet} from "@angular/common";
 import Swal from "sweetalert2";
 import {TypeActivite} from "@core/models/TypeActivite";
 import {EncryptionService} from "@core/service/encryption.service";
@@ -27,6 +27,7 @@ import { environment } from 'environments/environment';
     NgxDatatableModule,
     ReactiveFormsModule,
     RouterLink,
+    NgClass,
     NgForOf,
     NgIf
   ],
@@ -38,7 +39,7 @@ export class EntiteComponent {
   entite:  Entite[] = [];
   users:  Utilisateur[] = [];
   directions: Entite[] = []; // Liste des directions uniquement
-  services: Entite[] = []; // Liste des services de la direction sélectionnée
+  services: Array<Entite & { virtual?: boolean }> = []; // Liste des services de la direction sélectionnée
   selectedFile: File | null = null;
   selectedUtilisateur: Utilisateur | null = null; // Déclaration de la variable pour stocker l'utilisateur sélectionné
   logoPreview: string | null = null; // Pour l'aperçu du logo
@@ -57,6 +58,7 @@ export class EntiteComponent {
   isRowSelected = false;
   reorderable = true;
   showParentDirection = false; // Pour afficher/cacher le champ parent
+  showTypeActiviteField = false; // Type activité visible uniquement pour ODC
   public selected: number[] = [];
   columns = [
     { prop: 'nom' }
@@ -65,6 +67,128 @@ export class EntiteComponent {
   // Variables pour la gestion hiérarchique
   viewMode: 'directions' | 'services' = 'directions'; // Mode d'affichage actuel
   selectedDirection: Entite | null = null; // Direction sélectionnée pour voir ses services
+
+  private readonly entiteAccentPalettes: ReadonlyArray<{ tone: string; icon: string }> = [
+    { tone: 'green', icon: 'fa-graduation-cap' },
+    { tone: 'blue', icon: 'fa-layer-group' },
+    { tone: 'purple', icon: 'fa-lightbulb' },
+    { tone: 'amber', icon: 'fa-seedling' },
+  ];
+
+  private readonly odcDirectionKeywords: ReadonlyArray<string> = [
+    'ORANGE DIGITAL KALANSO',
+    'KALANSO',
+    'ORANGE FABLAB',
+    'FABLAB',
+    'ORANGE FAB',
+    'ORANGE DIGITAL MULTIMEDIA',
+    'MULTIMEDIA',
+    'ORANGE DIGITAL CENTER',
+    'DIGITAL CENTER',
+    'ODC',
+  ];
+
+  /**
+   * Règles métier Fondation / DCI / RSE : ordre = du plus spécifique au plus générique.
+   * Clés comparées sur le nom normalisé (sans accent, minuscules).
+   */
+  private readonly entiteServiceVisualRules: ReadonlyArray<{
+    keys: string[];
+    tone: string;
+    icon: string;
+  }> = [
+    { keys: ['m-agri', 'magri', 'm agri'], tone: 'amber', icon: 'fa-seedling' },
+    { keys: ['entrepreunariat', 'entrepreneuriat', 'entrepreneur', 'entrepreneurship'], tone: 'purple', icon: 'fa-rocket' },
+    { keys: ['environnement'], tone: 'teal', icon: 'fa-leaf' },
+    { keys: ['solidarite'], tone: 'indigo', icon: 'fa-hands-helping' },
+    { keys: ['autonomisation', 'autonomie'], tone: 'green', icon: 'fa-hand-holding-heart' },
+    { keys: ['sponsoring', 'sponsor'], tone: 'slate', icon: 'fa-handshake' },
+    { keys: ['presse'], tone: 'blue', icon: 'fa-newspaper' },
+    { keys: ['projet'], tone: 'blue', icon: 'fa-project-diagram' },
+    { keys: ['culture'], tone: 'purple', icon: 'fa-palette' },
+    { keys: ['education'], tone: 'blue', icon: 'fa-graduation-cap' },
+    { keys: ['sante'], tone: 'rose', icon: 'fa-stethoscope' },
+  ];
+
+  private readonly fallbackServicesByDirection: ReadonlyArray<{
+    match: string[];
+    items: Array<Pick<Entite, 'nom' | 'description'>>;
+  }> = [
+    {
+      match: ['fondation'],
+      items: [
+        { nom: 'Sante', description: 'Initiatives et actions de sante portees par la Fondation.' },
+        { nom: 'Education', description: 'Programmes d education, de formation et d accompagnement pedagogique.' },
+        { nom: 'Culture', description: 'Actions culturelles, creatives et de valorisation artistique.' },
+        { nom: 'Solidarite et Autonomisation', description: 'Dispositifs de solidarite, d inclusion et d autonomisation des beneficiaires.' },
+      ],
+    },
+    {
+      match: ['dci'],
+      items: [
+        { nom: 'Sponsoring', description: 'Pilotage des partenariats, appuis et activations de sponsoring.' },
+        { nom: 'Presse', description: 'Relations presse, couverture media et diffusion institutionnelle.' },
+      ],
+    },
+    {
+      match: ['rse'],
+      items: [
+        { nom: 'Projet', description: 'Suivi des projets et actions transverses portes par la RSE.' },
+        { nom: 'Environnement', description: 'Actions environnementales, durables et de sensibilisation ecologique.' },
+        { nom: 'Entrepreunariat', description: 'Programmes d accompagnement entrepreneurial et d innovation.' },
+        { nom: 'M-Agri', description: 'Initiatives agricoles et solutions numeriques au service du secteur agri.' },
+      ],
+    },
+  ];
+
+  private normalizeEntiteLabel(raw: string | undefined | null): string {
+    return String(raw ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  /** Icône / couleur pour une carte service (mots-clés Fondation, DCI, RSE), sinon palette par index. */
+  serviceCardVisual(entite: Entite, index: number): { tone: string; icon: string } {
+    const n = this.normalizeEntiteLabel(entite.nom);
+    for (const r of this.entiteServiceVisualRules) {
+      if (r.keys.some((k) => n.includes(k))) {
+        return { tone: r.tone, icon: r.icon };
+      }
+    }
+    return this.entiteAccent(index);
+  }
+
+  private entiteAccent(index: number): { tone: string; icon: string } {
+    return this.entiteAccentPalettes[index % this.entiteAccentPalettes.length];
+  }
+
+  previewDescription(text: string | undefined | null, max = 220): string {
+    const s = String(text ?? '').trim();
+    if (!s) {
+      return 'Aucune description renseignée pour cette entité.';
+    }
+    if (s.length <= max) {
+      return s;
+    }
+    return `${s.slice(0, max - 1).trimEnd()}…`;
+  }
+
+  private fallbackServicesForDirection(direction: Entite | null): Array<Entite & { virtual?: boolean }> {
+    const n = this.normalizeEntiteLabel(direction?.nom);
+    const rule = this.fallbackServicesByDirection.find((x) => x.match.some((m) => n.includes(m)));
+    if (!rule) {
+      return [];
+    }
+    return rule.items.map((item) => ({
+      nom: item.nom,
+      description: item.description,
+      type: 'SERVICE',
+      virtual: true,
+    }));
+  }
 
   constructor(
     private fb: UntypedFormBuilder,
@@ -147,6 +271,9 @@ export class EntiteComponent {
   }*/
 
   viewEntiteDetails(entite: Entite): void {
+    if (!entite?.id) {
+      return;
+    }
     this.router.navigate(['/entiteDetail'], {
       state: { entiteId: entite.id }
     });
@@ -172,6 +299,7 @@ export class EntiteComponent {
       selectedTypeActivites: [null], // Vous utilisez déjà selectedTypeActivites pour stocker les IDs
 
     });
+    this.setupTypeActiviteVisibilityRules();
   }
 
     // Gestion du changement de type d'entité
@@ -190,6 +318,53 @@ export class EntiteComponent {
     }
 
     parentControl?.updateValueAndValidity();
+    this.refreshTypeActiviteVisibility();
+  }
+
+  private setupTypeActiviteVisibilityRules(): void {
+    this.register.get('type')?.valueChanges.subscribe(() => this.refreshTypeActiviteVisibility());
+    this.register.get('parentId')?.valueChanges.subscribe(() => this.refreshTypeActiviteVisibility());
+    this.register.get('nom')?.valueChanges.subscribe(() => this.refreshTypeActiviteVisibility());
+    this.refreshTypeActiviteVisibility();
+  }
+
+  private normalizeEntiteName(value: unknown): string {
+    return String(value ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toUpperCase()
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  private isOdcDirectionName(name: unknown): boolean {
+    const normalized = this.normalizeEntiteName(name);
+    if (!normalized) {
+      return false;
+    }
+    return this.odcDirectionKeywords.some((k) => normalized.includes(k));
+  }
+
+  private refreshTypeActiviteVisibility(): void {
+    if (!this.register) {
+      this.showTypeActiviteField = false;
+      return;
+    }
+
+    const type = String(this.register.get('type')?.value ?? '').toUpperCase();
+    if (type === 'SERVICE') {
+      const parentId = this.register.get('parentId')?.value;
+      const parent = this.directions.find((d) => d.id === parentId);
+      this.showTypeActiviteField = this.isOdcDirectionName(parent?.nom);
+    } else if (type === 'DIRECTION') {
+      this.showTypeActiviteField = this.isOdcDirectionName(this.register.get('nom')?.value);
+    } else {
+      this.showTypeActiviteField = false;
+    }
+
+    if (!this.showTypeActiviteField) {
+      this.register.get('typeActivite')?.setValue([], { emitEvent: false });
+    }
   }
 
   // Récupérer uniquement les directions
@@ -209,6 +384,7 @@ export class EntiteComponent {
         
         // Charger les activités après l'initialisation
         this.loadActivitiesForEntities(this.directions);
+        this.refreshTypeActiviteVisibility();
       },
       error: (err) => {
         console.error('Erreur lors du chargement des directions', err);
@@ -225,7 +401,7 @@ export class EntiteComponent {
     this.glogalService.get(`entite/parent/${direction.id}`).subscribe({
       next: (data: Entite[]) => {
         console.log('Services reçus:', data);
-        this.services = data;
+        this.services = Array.isArray(data) && data.length > 0 ? data : this.fallbackServicesForDirection(direction);
         
         // Initialiser immédiatement les compteurs d'activités à 0 pour les services
         this.services.forEach(service => {
@@ -469,6 +645,7 @@ export class EntiteComponent {
   resetForm() {
     this.register.reset();
     this.showParentDirection = false;
+    this.showTypeActiviteField = false;
     this.resetLogoPreview(); // Ajout de la réinitialisation de l'aperçu
   }
 
@@ -549,6 +726,7 @@ export class EntiteComponent {
       parentId: row.parentId,
       responsable: row.responsable || null // Ajouter le responsable
     });
+    this.refreshTypeActiviteVisibility();
   }
 
   // update record

@@ -1,3 +1,19 @@
+import { jwtDecode } from 'jwt-decode';
+
+/**
+ * Décode le payload JWT de façon fiable (base64url). `atob` sur le segment milieu échoue souvent → rôles vides → menu latéral vide.
+ */
+export function decodeJwtPayload(token: string | undefined | null): Record<string, unknown> | null {
+  if (!token || typeof token !== 'string') {
+    return null;
+  }
+  try {
+    return jwtDecode<Record<string, unknown>>(token);
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Rôles alignés avec routes.json et @PreAuthorize côté API (sans préfixe Spring ROLE_).
  */

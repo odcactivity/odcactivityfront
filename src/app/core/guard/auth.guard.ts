@@ -34,7 +34,7 @@ import {
   UrlTree
 } from '@angular/router';
 import { AuthService } from '../service/auth.service';
-import { canonicalizeAppRoles, rolesFromJwtPayload } from '../utils/app-roles';
+import { canonicalizeAppRoles, decodeJwtPayload, rolesFromJwtPayload } from '../utils/app-roles';
 
 @Injectable({
   providedIn: 'root',
@@ -44,7 +44,10 @@ export class AuthGuard implements CanActivate {
 
   canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean | UrlTree {
     const currentUser = this.authService.getCurrentUserFromStorage();
-    const roles = canonicalizeAppRoles(currentUser?.roles || []);
+    const fromStorage = canonicalizeAppRoles(currentUser?.roles || []);
+    const payload = decodeJwtPayload(currentUser?.bearer);
+    const fromJwt = payload ? rolesFromJwtPayload(payload) : [];
+    const roles = canonicalizeAppRoles([...fromStorage, ...fromJwt]);
 
     const restrictedRoutes = [
       '/dashboard/main',
@@ -61,15 +64,7 @@ export class AuthGuard implements CanActivate {
       return this.router.parseUrl('/authentication/signin');
     }
 
-    let effectiveRoles = roles;
-    if (effectiveRoles.length === 0) {
-      try {
-        const payload = JSON.parse(atob(currentUser.bearer.split('.')[1])) as Record<string, unknown>;
-        effectiveRoles = rolesFromJwtPayload(payload);
-      } catch {
-        /* ignore */
-      }
-    }
+    const effectiveRoles = roles;
 
     if (effectiveRoles.length === 0) {
       return this.router.parseUrl('/authentication/signin');

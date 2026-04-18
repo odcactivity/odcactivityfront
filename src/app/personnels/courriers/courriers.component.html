@@ -16,7 +16,7 @@
     @if (isDcireRole) {
       Liste des courriers enregistrés sur votre périmètre (réception et transmission).
     } @else {
-      Création, validation et suivi des courriers de votre périmètre.
+      Création, validation et suivi des courriers de votre périmètre. L’onglet <strong>REÇUS</strong> regroupe les courriers arrivés d’une autre structure ou d’un autre pilier ODC.
     }
   </p>
 
@@ -78,6 +78,14 @@
                       <i class="fas fa-list me-1"></i>
                       TOUT
                     </button>
+
+                    @if (!isDcireRole) {
+                      <button [class]="typeliste ==='recus' ? 'btn btn-warning' : 'btn btn shadow-sm btn-dark'"
+                              (click)="handleList('recus')" style="min-width: 100px;">
+                        <i class="fas fa-inbox me-1"></i>
+                        REÇUS
+                      </button>
+                    }
 
                     <button [class]="typeliste ==='actifs' ? 'btn btn-warning' : 'btn btn shadow-sm btn-dark'"
                             (click)="handleList('actifs')" style="min-width: 100px;">

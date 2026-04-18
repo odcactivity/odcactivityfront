@@ -6,7 +6,7 @@ import { Router } from '@angular/router';
 import {jwtDecode} from "jwt-decode";
 import { environment } from 'environments/environment';
 import { Utilisateur} from '@core/models/Utilisateur.model';
-import { canonicalizeAppRoles, rolesFromJwtPayload } from '@core/utils/app-roles';
+import { canonicalizeAppRoles, decodeJwtPayload, rolesFromJwtPayload } from '@core/utils/app-roles';
 
 
 
@@ -57,16 +57,10 @@ export class AuthService {
         if ((!roles || roles.length === 0) && utilisateur?.roles?.length) {
           roles = utilisateur.roles;
         }
-        roles = canonicalizeAppRoles(roles);
         const bearer = utilisateur ? (utilisateur as Utilisateur & { bearer?: string }).bearer : undefined;
-        if (!roles.length && bearer) {
-          try {
-            const payload = JSON.parse(atob(bearer.split('.')[1])) as Record<string, unknown>;
-            roles = rolesFromJwtPayload(payload);
-          } catch {
-            /* ignore */
-          }
-        }
+        const payload = decodeJwtPayload(bearer);
+        const fromJwt = payload ? rolesFromJwtPayload(payload) : [];
+        roles = canonicalizeAppRoles([...roles, ...fromJwt]);
         return utilisateur ? {
           ...utilisateur, roles,
           nom: utilisateur.nom,
@@ -112,14 +106,7 @@ export class AuthService {
   }
 
   private decodeJwt(token: string): any | null {
-    try {
-      const payload = token.split('.')[1];
-      const decodedPayload = atob(payload);
-      return JSON.parse(decodedPayload);
-    } catch (error) {
-      console.error('Erreur lors du décodage du JWT', error);
-      return null;
-    }
+    return decodeJwtPayload(token);
   }
 
   getUserRoles(): string[] {

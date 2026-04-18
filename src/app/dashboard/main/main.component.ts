@@ -139,6 +139,18 @@ export class MainComponent implements OnInit {
     this.loadCourrierSerie();
   }
 
+  /**
+   * Admin / superadmin : filtre « structure » libre.
+   * Directeur (JWT = DIRECTEUR, y compris hub DCIRE) : périmètre imposé côté API.
+   * Directeur ODC : même confort que l’admin ODC, avec choix des structures ODC.
+   */
+  get courrierStructureFilterLocked(): boolean {
+    if (this.currentRoles.includes('SUPERADMIN') || this.currentRoles.includes('ADMIN')) {
+      return false;
+    }
+    return this.currentRoles.includes('DIRECTEUR');
+  }
+
   onCourrierStructureChange(): void {
     this.loadCourrierTotaux();
     this.loadCourrierSerie();
@@ -235,7 +247,7 @@ export class MainComponent implements OnInit {
       this.buildStatusChart();
       this.buildEntityChart();
 
-      this.structureOptionsCourrier = entiteList
+      this.structureOptionsCourrier = this.filterEntitesForCourrierScope(rawEntites)
         .filter((e) => String(e.type || '').toUpperCase() === 'DIRECTION' && e.id != null)
         .map((e) => ({ id: e.id as number, nom: String(e.nom || '—') }))
         .sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
@@ -958,11 +970,10 @@ export class MainComponent implements OnInit {
     return -1;
   }
 
-  /** Vue complète (toutes entités / activités) : admin, DCIRE, directeur ODC produit. */
+  /** Vue complète (toutes entités / activités) : admin, directeur (hub DCIRE = DIRECTEUR), directeur ODC produit. */
   private isDcireScope(): boolean {
     return (
       this.currentRoles.includes('DIRECTEUR') ||
-      this.currentRoles.includes('DCIRE') ||
       this.currentRoles.includes('SUPERADMIN') ||
       this.currentRoles.includes('ADMIN') ||
       this.currentRoles.includes('DIRECTEUR_ODC')
@@ -974,6 +985,13 @@ export class MainComponent implements OnInit {
       return entites;
     }
     return filterEntitesOdcPiliers(entites);
+  }
+
+  private filterEntitesForCourrierScope(entites: Entite[]): Entite[] {
+    if (this.currentRoles.includes('DIRECTEUR_ODC')) {
+      return filterEntitesOdcPiliers(entites);
+    }
+    return this.filterEntitesByScope(entites);
   }
 
   private isActivityAllowedByScope(activity: Activity, allowedEntiteIds: Set<number>): boolean {

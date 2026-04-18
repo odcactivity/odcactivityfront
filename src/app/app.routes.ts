@@ -85,7 +85,7 @@ export const APP_ROUTE: Route[] = [
       },
       { path: 'structure/courriers', loadComponent: () => import('./structure/structure-courriers/structure-courriers.component').then(c => c.StructureCourriersComponent) },
 
-      { path: 'profile', loadComponent: () => import('./profile/profile.component').then(c => c.ProfileComponent) }
+      { path: 'profile', loadComponent: () => import('./profile/profile.component').then(c => c.ProfileComponent) },
     ]
   },
 

@@ -6,7 +6,7 @@ import { NgIf } from '@angular/common';
 import { FeatherModule } from 'angular-feather';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '@core';
-import { canonicalizeAppRoles, rolesFromJwtPayload } from '@core/utils/app-roles';
+import { canonicalizeAppRoles, decodeJwtPayload, rolesFromJwtPayload } from '@core/utils/app-roles';
 import { SidebarService } from './sidebar.service';
 
 @Component({
@@ -48,31 +48,17 @@ export class SidebarComponent implements OnInit {
     this.setMenuHeight();
   }
 
-  /** Rôles effectifs : localStorage + complément JWT si besoin (évite menu vide pour directeur ODC). */
+  /** Rôles effectifs : localStorage + JWT (base64url), toujours fusionnés — évite menu vide si `atob` échoue ou si les rôles stockés sont incomplets. */
   private resolveEffectiveRoles(): string[] {
     const user = this.authService.getCurrentUserFromStorage();
     let raw: unknown = user?.roles ?? [];
     if (!Array.isArray(raw) || raw.length === 0) {
       raw = [];
     }
-    let merged = canonicalizeAppRoles(raw);
-    if (merged.length === 0 && user?.bearer) {
-      try {
-        const p = JSON.parse(atob(user.bearer.split('.')[1])) as Record<string, unknown>;
-        merged = rolesFromJwtPayload(p);
-      } catch {
-        /* ignore */
-      }
-    } else if (user?.bearer) {
-      try {
-        const p = JSON.parse(atob(user.bearer.split('.')[1])) as Record<string, unknown>;
-        const fromJwt = rolesFromJwtPayload(p);
-        merged = canonicalizeAppRoles([...merged, ...fromJwt]);
-      } catch {
-        /* ignore */
-      }
-    }
-    return merged;
+    const fromStorage = canonicalizeAppRoles(raw);
+    const payload = decodeJwtPayload(user?.bearer);
+    const fromJwt = payload ? rolesFromJwtPayload(payload) : [];
+    return canonicalizeAppRoles([...fromStorage, ...fromJwt]);
   }
 
   private refreshSidebarMenu(): void {
