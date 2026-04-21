@@ -23,10 +23,10 @@ export class ErrorInterceptor implements HttpInterceptor {
     return next.handle(request).pipe(
       catchError((err: HttpErrorResponse) => {
 
-        // 401 → logout
-        if (err.status === 401) {
+        // 401 global: on déconnecte l'utilisateur uniquement hors endpoint de login
+        // et on évite tout reload forcé pour laisser le message d'erreur visible.
+        if (err.status === 401 && !request.url.includes('/auth/login')) {
           this.authenticationService.logout();
-          location.reload();
         }
 
         let errorMessage = 'Une erreur est survenue';
