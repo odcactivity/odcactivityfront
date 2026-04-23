@@ -476,6 +476,10 @@ loading = false;
     switch (this.typeliste) {
       case 'tous':
         return [...bruts];
+      case 'recus':
+        return bruts.filter((c) => c.statut === 'TRANSMIS_DCIRE' || c.statut === 'ENVOYER');
+      case 'valides':
+        return bruts.filter((c) => c.statut === 'EN_COURS' || c.statut === 'IMPUTER');
       case 'archives':
         return bruts.filter((c) => c.statut === 'ARCHIVER');
       case 'envoyes':
