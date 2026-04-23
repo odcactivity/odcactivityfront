@@ -79,14 +79,6 @@
                       TOUT
                     </button>
 
-                    @if (isDcireRole) {
-                      <button [class]="typeliste ==='hub' ? 'btn btn-warning' : 'btn btn shadow-sm btn-dark'"
-                              (click)="handleList('hub')" style="min-width: 160px;">
-                        <i class="fas fa-inbox me-1"></i>
-                        À TRAITER HUB
-                      </button>
-                    }
-
                     @if (!isDcireRole) {
                       <button [class]="typeliste ==='recus' ? 'btn btn-warning' : 'btn btn shadow-sm btn-dark'"
                               (click)="handleList('recus')" style="min-width: 100px;">
@@ -216,8 +208,8 @@
                       }
                       @if(isDcireRole && estFluxExterneHubEnAttente(row)) {
                         <button class="btn btn-sm btn-success h-auto me-1" (click)="validerExpeditionExterneDcire(row)"
-                                title="Accuser réception — prise en charge (envoi physique hors application)">
-                          <i class="fas fa-check me-1"></i>Accuser réception
+                                title="Reçu / valider la prise en charge au hub (envoi physique hors application)">
+                          <i class="fas fa-check me-1"></i>Reçu / Valider
                         </button>
                       }
                       @if(isDcireRole && isCourrierPhysiquementADcire(row) && !estCourrierExterneSortantAuHub(row) && !estFluxExterneHubEnAttente(row) && row.statut !== 'ARCHIVER' && row.statut !== 'REPONDU' && row.statut !== 'ATTENTE_VALIDATION_ODC' && row.statut !== 'ATTENTE_VALIDATION_DIRECTEUR_ODC' && row.statut !== 'EN_REVISION_ADMIN_COURRIER') {
