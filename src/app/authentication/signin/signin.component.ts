@@ -80,7 +80,8 @@ export class SigninComponent implements OnInit {
       return;
     }
 
-    this.authService.login(this.f['username'].value, this.f['password'].value).subscribe({
+    const normalizedUsername = String(this.f['username'].value || '').trim().toLowerCase();
+    this.authService.login(normalizedUsername, this.f['password'].value).subscribe({
       next: response => {
         const token = response?.token; // ✅ CORRECTION : response.token au lieu de response.bearer
 

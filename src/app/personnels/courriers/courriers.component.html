@@ -79,6 +79,14 @@
                       TOUT
                     </button>
 
+                    @if (isDcireRole) {
+                      <button [class]="typeliste ==='hub' ? 'btn btn-warning' : 'btn btn shadow-sm btn-dark'"
+                              (click)="handleList('hub')" style="min-width: 160px;">
+                        <i class="fas fa-inbox me-1"></i>
+                        À TRAITER HUB
+                      </button>
+                    }
+
                     @if (!isDcireRole) {
                       <button [class]="typeliste ==='recus' ? 'btn btn-warning' : 'btn btn shadow-sm btn-dark'"
                               (click)="handleList('recus')" style="min-width: 100px;">
