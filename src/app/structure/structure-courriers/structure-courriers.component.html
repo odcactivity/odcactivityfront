@@ -1,24 +1,64 @@
 <section class="main-content p-4 structure-courriers-dash">
   <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-3">
     <div>
-      <h4 class="mb-1">Tableau de bord courriers</h4>
+      <h4 class="mb-1">@if (receiveOnlyMode) { Gestion des courriers } @else { Tableau de bord courriers }</h4>
       <p class="text-muted mb-0 small">
-        Réception, envoi et suivi des courriers. L’onglet <strong>Tout</strong> affiche l’historique complet.
+        @if (receiveOnlyMode) {
+          Réception et réponse uniquement — l’émission est réservée à la DCIRE.
+        } @else {
+          Réception, envoi et suivi des courriers. L’onglet <strong>Tout</strong> affiche l’historique complet.
+        }
       </p>
     </div>
     <div class="d-flex flex-wrap gap-2">
+      @if (!receiveOnlyMode) {
       <button type="button" class="btn btn-outline-primary btn-sm" (click)="openInterneModal(interneTpl)">
         Nouveau courrier interne
       </button>
       <button type="button" class="btn btn-outline-primary btn-sm" (click)="openExterneModal(externeTpl)">
         Courrier externe (hub)
       </button>
+      }
       <button type="button" class="btn btn-outline-secondary btn-sm" (click)="load()" [disabled]="loading">
         Actualiser
       </button>
     </div>
   </div>
 
+  @if (receiveOnlyMode) {
+  <div class="row g-3 mb-4">
+    <div class="col-md-6">
+      <button type="button" class="structure-dash-card w-100 text-start border-0"
+        [class.structure-dash-card--active]="onglet === 'recus'" (click)="setOnglet('recus')">
+        <div class="structure-dash-card__kpi text-primary">{{ recus.length }}</div>
+        <div class="structure-dash-card__title">Reçus</div>
+        <div class="structure-dash-card__hint">Courriers à traiter</div>
+      </button>
+    </div>
+    <div class="col-md-6">
+      <button type="button" class="structure-dash-card w-100 text-start border-0"
+        [class.structure-dash-card--active]="onglet === 'repondus'" (click)="setOnglet('repondus')">
+        <div class="structure-dash-card__kpi text-success">{{ repondus().length }}</div>
+        <div class="structure-dash-card__title">Répondus</div>
+        <div class="structure-dash-card__hint">Réponses enregistrées</div>
+      </button>
+    </div>
+  </div>
+  <ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+      <button type="button" class="nav-link" [class.active]="onglet === 'recus'" (click)="setOnglet('recus')">
+        Reçus <span class="badge bg-secondary ms-1">{{ recus.length }}</span>
+      </button>
+    </li>
+    <li class="nav-item">
+      <button type="button" class="nav-link" [class.active]="onglet === 'repondus'" (click)="setOnglet('repondus')">
+        Répondus <span class="badge bg-secondary ms-1">{{ repondus().length }}</span>
+      </button>
+    </li>
+  </ul>
+  }
+
+  @if (!receiveOnlyMode) {
   <div class="row g-3 mb-4">
     <div class="col-md-3">
       <button
@@ -88,6 +128,7 @@
       </button>
     </li>
   </ul>
+  }
 
   @if (loading) {
     <p>Chargement…</p>
@@ -148,13 +189,43 @@
     </div>
   }
 
-  @if (selected && (onglet === 'recus' || onglet === 'tout') && peutAccuserReception(selected)) {
+  @if (selected && (onglet === 'recus' || onglet === 'tout' || onglet === 'repondus') && peutAccuserReception(selected)) {
     <div class="card p-3 border-primary mb-3">
       <h6 class="mb-2">Prise en charge — {{ $any(selected).numero }}</h6>
       <p class="small text-muted mb-2">
         Confirmez la prise en charge : le statut passe en <strong>EN COURS</strong> et reste visible pour l’expéditeur.
       </p>
       <button type="button" class="btn btn-primary" (click)="accuserReceptionOp()">Accuser réception / prise en charge</button>
+    </div>
+  }
+
+  @if (selected && historiquesCourrier.length > 0) {
+    <div class="card p-3 border-secondary mb-3">
+      <h6 class="mb-2">Historique — {{ $any(selected).numero }}</h6>
+      @if (historiquesCourrier[0]) {
+        <div class="small text-muted border-bottom pb-2 mb-2">
+          <div><strong>De :</strong> {{ $any(historiquesCourrier[0]).expediteurCourrier || $any(selected).expediteur || '—' }}</div>
+          <div><strong>À :</strong> {{ $any(historiquesCourrier[0]).entiteDetentionNom || $any(historiquesCourrier[0]).structureOrigineNom || '—' }}</div>
+        </div>
+      }
+      @for (h of historiquesCourrier; track $index) {
+        <div class="border-bottom pb-2 mb-2 small">
+          <div class="text-muted">{{ $any(h).dateAction | date: 'short' }}</div>
+          <div><code class="small">{{ $any(h).statut }}</code></div>
+          @if ($any(h).ancienneEntiteNom || $any(h).nouvelleEntiteNom) {
+            <div class="mt-1">
+              <strong>De :</strong> {{ $any(h).ancienneEntiteNom || '—' }}
+              <span class="text-muted"> → </span>
+              <strong>À :</strong> {{ $any(h).nouvelleEntiteNom || $any(h).entiteActionNom || '—' }}
+            </div>
+          }
+          <div class="text-muted">Étape (entité) : {{ $any(h).entite }}</div>
+          <div class="text-muted"><i class="fas fa-user me-1"></i>{{ $any(h).utilisateur }}</div>
+          @if ($any(h).commentaire) {
+            <p class="mb-0 mt-1" style="white-space: pre-wrap">{{ $any(h).commentaire }}</p>
+          }
+        </div>
+      }
     </div>
   }
 
@@ -174,7 +245,7 @@
     </div>
   }
 
-  @if (selected && (onglet === 'recus' || onglet === 'tout') && peutRepondre(selected)) {
+  @if (selected && (onglet === 'recus' || onglet === 'tout' || onglet === 'repondus') && peutRepondre(selected)) {
     <div class="card p-3 border-success mb-3">
       <h6 class="mb-2">Répondre au courrier {{ $any(selected).numero }}</h6>
       <p class="small text-muted mb-3">Votre e-mail de compte est utilisé comme expéditeur de la réponse.</p>

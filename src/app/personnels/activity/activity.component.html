@@ -112,8 +112,11 @@
                       <div class="badge-outline col-indigo">{{row.statut}}
                       </div>
                     }
+                    @if (row.statut === 'En_Validation_Responsable_ODK') {
+                      <div class="badge-outline col-blue">En validation responsable ODK</div>
+                    }
                     @if (row.statut === 'En_Validation_Directeur_ODC') {
-                      <div class="badge-outline col-orange">{{row.statut}}</div>
+                      <div class="badge-outline col-orange">En validation directeur ODC</div>
                     }
                     @if (row.statut === 'Rejetee') {
                       <div class="badge-outline col-red">{{row.statut}}</div>

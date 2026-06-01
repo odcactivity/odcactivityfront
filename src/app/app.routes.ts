@@ -55,6 +55,27 @@ export const APP_ROUTE: Route[] = [
       { path: 'reporting', loadComponent: () => import('./personnels/reporting/reporting.component').then(c => c.ReportingComponent) },
       { path: 'reportinghebdo', loadComponent: () => import('./personnels/reportinghebdo/reportinghebdo.component').then(c => c.ReportinghebdoComponent) },
 
+      {
+        path: 'responsable-odk/dashboard',
+        redirectTo: 'responsable-odk/activites',
+        pathMatch: 'full',
+      },
+      {
+        path: 'responsable-odk/activites',
+        loadComponent: () =>
+          import('./responsable-odk/responsable-odk-dashboard/responsable-odk-dashboard.component').then(
+            (c) => c.ResponsableOdkDashboardComponent
+          ),
+        data: { responsableTab: 'activites' },
+      },
+      {
+        path: 'responsable-odk/courriers',
+        loadComponent: () =>
+          import('./responsable-odk/responsable-odk-dashboard/responsable-odk-dashboard.component').then(
+            (c) => c.ResponsableOdkDashboardComponent
+          ),
+        data: { responsableTab: 'courriers' },
+      },
       { path: 'directeur-odc/validation-activites', loadComponent: () => import('./directeur-odc/validation-activites/validation-activites.component').then(c => c.ValidationActivitesComponent) },
       { path: 'directeur-odc/validation-courriers', redirectTo: 'courrier', pathMatch: 'full' },
       { path: 'directeur-odc/rapport-global', loadComponent: () => import('./directeur-odc/rapport-global/rapport-global.component').then(c => c.RapportGlobalComponent) },

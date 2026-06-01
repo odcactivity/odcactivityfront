@@ -1,7 +1,7 @@
 <section class="main-content">
   <ul class="breadcrumb breadcrumb-style ">
     <li class="breadcrumb-item">
-      <h5 class="page-title m-b-0">Dashboard</h5>
+      <h5 class="page-title m-b-0">@if (isStructureDivisionDashboard) { Courriers } @else { Dashboard }</h5>
     </li>
     <li class="breadcrumb-item bcrumb-1">
       <a routerLink="/dashboard/main">
@@ -12,7 +12,7 @@
   <div class="section-body">
 
     <!-- Carte récap des activités (style ODL, regroupée) -->
-    <div class="card mb-4 odl-dashboard-card">
+    <div class="card mb-4 odl-dashboard-card" *ngIf="showActivityDashboard">
       <div class="card-header">
         <h4 class="mb-1">Vue d’ensemble des activités</h4>
         <p class="odl-dashboard-subtitle mb-0">
@@ -77,7 +77,7 @@
     </div>
 
     <!-- Statistique globale + répartition activités (côte à côte sur grand écran) -->
-    <div class="card mb-4 odl-dashboard-card">
+    <div class="card mb-4 odl-dashboard-card" *ngIf="showActivityDashboard">
       <div class="card-header">
         <div class="odl-graph-header flex-wrap gap-2">
           <div class="flex-grow-1">
@@ -137,11 +137,16 @@
       <div class="card mb-4 odl-dashboard-card">
         <div class="card-header">
           <h4 class="mb-1">Vue d’ensemble des courriers</h4>
-          <p class="odl-dashboard-subtitle mb-0">Volumes par étape du circuit.</p>
+          <p class="odl-dashboard-subtitle mb-0">
+            <ng-container *ngIf="courrierStatsRecuReponduOnly; else courrierStatsComplet">
+              Courriers reçus et réponses enregistrées.
+            </ng-container>
+            <ng-template #courrierStatsComplet>Volumes par étape du circuit.</ng-template>
+          </p>
         </div>
         <div class="card-body">
           <div class="row g-3">
-            <div class="col-xl col-lg-4 col-md-6 col-sm-6">
+            <div class="col-xl col-lg-4 col-md-6 col-sm-6" *ngIf="!courrierStatsRecuReponduOnly">
               <div class="odl-stat-card">
                 <div class="odl-stat-icon odl-stat-icon-courrier-emis">
                   <i class="fas fa-paper-plane"></i>
@@ -152,7 +157,7 @@
                 </div>
               </div>
             </div>
-            <div class="col-xl col-lg-4 col-md-6 col-sm-6">
+            <div class="col-xl col-lg-4 col-md-6 col-sm-6" [class.col-md-6]="courrierStatsRecuReponduOnly">
               <div class="odl-stat-card">
                 <div class="odl-stat-icon odl-stat-icon-courrier-repondu">
                   <i class="fas fa-reply"></i>
@@ -163,7 +168,7 @@
                 </div>
               </div>
             </div>
-            <div class="col-xl col-lg-4 col-md-6 col-sm-6">
+            <div class="col-xl col-lg-4 col-md-6 col-sm-6" *ngIf="!courrierStatsRecuReponduOnly">
               <div class="odl-stat-card">
                 <div class="odl-stat-icon odl-stat-icon-courrier-attente">
                   <i class="fas fa-hourglass-half"></i>
@@ -174,7 +179,7 @@
                 </div>
               </div>
             </div>
-            <div class="col-xl col-lg-4 col-md-6 col-sm-6">
+            <div class="col-xl col-lg-4 col-md-6 col-sm-6" [class.col-md-6]="courrierStatsRecuReponduOnly">
               <div class="odl-stat-card">
                 <div class="odl-stat-icon odl-stat-icon-courrier-recu">
                   <i class="fas fa-inbox"></i>
@@ -185,7 +190,7 @@
                 </div>
               </div>
             </div>
-            <div class="col-xl col-lg-4 col-md-6 col-sm-6">
+            <div class="col-xl col-lg-4 col-md-6 col-sm-6" *ngIf="!courrierStatsRecuReponduOnly">
               <div class="odl-stat-card">
                 <div class="odl-stat-icon odl-stat-icon-courrier-valide">
                   <i class="fas fa-clipboard-check"></i>
@@ -200,7 +205,7 @@
         </div>
       </div>
 
-      <div class="card mb-4 odl-dashboard-card">
+      <div class="card mb-4 odl-dashboard-card" *ngIf="!isStructureDivisionDashboard">
         <div class="card-header">
           <div class="odl-graph-header flex-wrap gap-2">
             <div class="flex-grow-1">
@@ -209,9 +214,11 @@
             </div>
             <div class="d-flex flex-wrap align-items-center gap-2">
               <select
+                *ngIf="!courrierStatsRecuReponduOnly || !courrierStructureFilterLocked"
                 class="form-select form-select-sm odl-courrier-structure-select"
                 [(ngModel)]="selectedCourrierStructureId"
                 (ngModelChange)="onCourrierStructureChange()"
+                [disabled]="courrierStructureFilterLocked"
                 aria-label="Filtrer par structure">
                 <option [ngValue]="null">Toutes</option>
                 <option *ngFor="let s of structureOptionsCourrier" [ngValue]="s.id">{{ s.nom }}</option>

@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, TemplateRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '@core/service/auth.service';
 import { canonicalizeAppRoles } from '@core/utils/app-roles';
 import { GlobalService } from '@core/service/global.service';
@@ -31,7 +31,7 @@ interface CibleInterne {
   styleUrl: './structure-courriers.component.scss',
 })
 export class StructureCourriersComponent implements OnInit, OnDestroy {
-  onglet: 'tout' | 'attente' | 'recus' | 'emis' = 'tout';
+  onglet: 'tout' | 'attente' | 'recus' | 'emis' | 'repondus' = 'tout';
   loading = false;
   tout: unknown[] = [];
   enAttente: unknown[] = [];
@@ -63,10 +63,14 @@ export class StructureCourriersComponent implements OnInit, OnDestroy {
   replyFichier: File | null = null;
 
   reponsesCourrier: unknown[] = [];
+  historiquesCourrier: Record<string, unknown>[] = [];
   editCourrier = { numero: '', objet: '', expediteur: '' };
+  /** Direction de l’utilisateur connecté (pour distinguer détention réelle vs simple visibilité « émis »). */
+  private maDirectionId: number | null = null;
 
   constructor(
     private readonly route: ActivatedRoute,
+    private readonly router: Router,
     private readonly auth: AuthService,
     private readonly global: GlobalService,
     private readonly supportactivityService: SupportactivityService,
@@ -74,7 +78,21 @@ export class StructureCourriersComponent implements OnInit, OnDestroy {
     private readonly modalService: NgbModal
   ) {}
 
+  /** Fondation / RSE / DCI : réception et réponse uniquement (émission réservée à la DCIRE). */
+  receiveOnlyMode = false;
+
   ngOnInit(): void {
+    const roles = canonicalizeAppRoles(this.auth.getCurrentUserFromStorage()?.roles || []);
+    this.receiveOnlyMode =
+      roles.includes('DIRECTEUR_FONDATION') ||
+      roles.includes('DIRECTEUR_RSE') ||
+      roles.includes('DIRECTEUR_DCI');
+    if (this.receiveOnlyMode) {
+      this.onglet = 'recus';
+    }
+    const u = this.auth.getCurrentUserFromStorage() as { entite?: { id?: number } } | null;
+    const raw = u?.entite?.id;
+    this.maDirectionId = raw != null && Number.isFinite(Number(raw)) ? Number(raw) : null;
     this.dataSub = this.route.data.subscribe((d) => {
       this.structureLabel =
         d['structureLabel'] != null && String(d['structureLabel']).trim() !== ''
@@ -110,6 +128,7 @@ export class StructureCourriersComponent implements OnInit, OnDestroy {
   load(): void {
     this.loading = true;
     this.selected = null;
+    this.historiquesCourrier = [];
     forkJoin({
       tab: this.global.getStructureCourriersTableau(),
       cibles: this.global.getStructureCiblesInternes().pipe(catchError(() => of([]))),
@@ -130,15 +149,26 @@ export class StructureCourriersComponent implements OnInit, OnDestroy {
     });
   }
 
-  setOnglet(t: 'tout' | 'attente' | 'recus' | 'emis'): void {
+  setOnglet(t: 'tout' | 'attente' | 'recus' | 'emis' | 'repondus'): void {
     this.onglet = t;
     this.selected = null;
+    this.historiquesCourrier = [];
     this.replyObjet = '';
     this.replyMessage = '';
     this.replyFichier = null;
   }
 
+  repondus(): unknown[] {
+    return this.tout.filter((row) => {
+      const r = row as Record<string, unknown>;
+      return String(r['statut'] || '') === 'REPONDU';
+    });
+  }
+
   rowsCourants(): unknown[] {
+    if (this.receiveOnlyMode) {
+      return this.onglet === 'repondus' ? this.repondus() : this.recus;
+    }
     switch (this.onglet) {
       case 'tout':
         return this.tout;
@@ -157,6 +187,7 @@ export class StructureCourriersComponent implements OnInit, OnDestroy {
     this.replyMessage = '';
     this.replyFichier = null;
     this.reponsesCourrier = [];
+    this.historiquesCourrier = [];
     const rawId = this.selected?.['id'];
     const id = typeof rawId === 'number' ? rawId : Number(rawId);
     if (this.selected && Number.isFinite(id)) {
@@ -166,6 +197,14 @@ export class StructureCourriersComponent implements OnInit, OnDestroy {
         },
         error: () => {
           this.reponsesCourrier = [];
+        },
+      });
+      this.global.get(`api/historique/courrier/${id}`).subscribe({
+        next: (h) => {
+          this.historiquesCourrier = Array.isArray(h) ? (h as Record<string, unknown>[]) : [];
+        },
+        error: () => {
+          this.historiquesCourrier = [];
         },
       });
     }
@@ -188,11 +227,30 @@ export class StructureCourriersComponent implements OnInit, OnDestroy {
     return map[s] || s || '—';
   }
 
+  /** Courrier réellement en possession de ma direction (ou d’un service rattaché). */
+  private estDetenuParMaStructure(row: Record<string, unknown> | null): boolean {
+    if (!row || this.maDirectionId == null) {
+      return false;
+    }
+    const ent = row['entite'] as Record<string, unknown> | undefined;
+    const id = typeof ent?.['id'] === 'number' ? ent['id'] : Number(ent?.['id']);
+    if (Number.isFinite(id) && id === this.maDirectionId) {
+      return true;
+    }
+    const parent = ent?.['parent'] as Record<string, unknown> | undefined;
+    const pid = typeof parent?.['id'] === 'number' ? parent['id'] : Number(parent?.['id']);
+    if (Number.isFinite(pid) && pid === this.maDirectionId) {
+      return true;
+    }
+    const parentIdFlat = typeof ent?.['parentId'] === 'number' ? ent['parentId'] : Number(ent?.['parentId']);
+    return Number.isFinite(parentIdFlat) && parentIdFlat === this.maDirectionId;
+  }
+
   peutAccuserReception(row: Record<string, unknown> | null): boolean {
     if (!row) {
       return false;
     }
-    return String(row['statut'] || '') === 'ENVOYER';
+    return String(row['statut'] || '') === 'ENVOYER' && this.estDetenuParMaStructure(row);
   }
 
   peutRepondre(row: Record<string, unknown> | null): boolean {
@@ -201,6 +259,9 @@ export class StructureCourriersComponent implements OnInit, OnDestroy {
     }
     const s = String(row['statut'] || '');
     if (s === 'REPONDU' || s === 'ARCHIVER' || s === 'ATTENTE_VALIDATION_DIRECTEUR_STRUCTURE') {
+      return false;
+    }
+    if (!this.estDetenuParMaStructure(row)) {
       return false;
     }
     return s === 'ENVOYER' || s === 'EN_COURS' || s === 'IMPUTER';

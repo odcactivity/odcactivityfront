@@ -74,3 +74,13 @@ export function rolesFromJwtPayload(payload: Record<string, unknown> | null | un
   }
   return [];
 }
+
+/** Rôles effectifs : stockage local + JWT (comme le menu latéral). */
+export function resolveEffectiveRolesFromUser(
+  user: { roles?: unknown; bearer?: string } | null | undefined
+): string[] {
+  const fromStorage = canonicalizeAppRoles(user?.roles ?? []);
+  const payload = decodeJwtPayload(user?.bearer);
+  const fromJwt = payload ? rolesFromJwtPayload(payload) : [];
+  return canonicalizeAppRoles([...fromStorage, ...fromJwt]);
+}

@@ -1,0 +1,74 @@
+<div class="container-fluid py-3">
+  <h4 class="mb-3">Espace responsable ODK</h4>
+  <p class="text-muted small mb-0">
+  Gestion opérationnelle des activités et des courriers DCIRE avant validation par le directeur ODC.
+  </p>
+  <p class="text-muted small">Aucune statistique globale ici — réservée à l’administration et au directeur ODC.</p>
+
+  <ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+      <button type="button" class="nav-link" [class.active]="tab === 'activites'" (click)="setTab('activites')">
+        Gestion activités ({{ activites.length }})
+      </button>
+    </li>
+    <li class="nav-item">
+      <button type="button" class="nav-link" [class.active]="tab === 'courriers'" (click)="setTab('courriers')">
+        Gestion courriers ({{ courriers.length }})
+      </button>
+    </li>
+  </ul>
+
+  @if (loading) {
+    <div class="text-center py-4"><span class="spinner-border"></span></div>
+  }
+
+  @if (!loading && tab === 'activites') {
+    @if (activites.length === 0) {
+      <div class="alert alert-info">Aucune activité en attente.</div>
+    }
+    @for (a of activites; track a.id) {
+      <div class="card mb-3 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">{{ a.nom }}</h5>
+          <p class="mb-1"><strong>Salle :</strong> {{ a.salleId?.nom || '—' }}</p>
+          <p class="mb-1"><strong>Dates :</strong> {{ a.dateDebut | date:'dd/MM/yyyy' }} — {{ a.dateFin | date:'dd/MM/yyyy' }}</p>
+          <p class="mb-2 text-muted">{{ a.description }}</p>
+          @if (a.suggestionDirecteurOdc) {
+            <div class="alert alert-warning py-2 small">Suggestion directeur ODC : {{ a.suggestionDirecteurOdc }}</div>
+          }
+          <label class="form-label small">Note / commentaire</label>
+          <textarea class="form-control mb-2" rows="2" [(ngModel)]="noteActivite"></textarea>
+          <button type="button" class="btn btn-success btn-sm me-2" (click)="transmettreActivite(a)">
+            Transmettre au directeur ODC
+          </button>
+          <button type="button" class="btn btn-outline-danger btn-sm" (click)="retourActivite(a)">
+            Retour au personnel
+          </button>
+        </div>
+      </div>
+    }
+  }
+
+  @if (!loading && tab === 'courriers') {
+    @if (courriers.length === 0) {
+      <div class="alert alert-info">Aucun courrier DCIRE en attente.</div>
+    }
+    @for (c of courriers; track c.id) {
+      <div class="card mb-3 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">{{ c.objet }}</h5>
+          <p class="mb-1"><strong>N°</strong> {{ c.numero }}</p>
+          <label class="form-label small">Service destinataire</label>
+          <select class="form-select mb-2" [(ngModel)]="serviceId">
+            <option [ngValue]="null">Choisir un service</option>
+            @for (s of services; track s.id) {
+              <option [ngValue]="s.id">{{ s.nom }}</option>
+            }
+          </select>
+          <textarea class="form-control mb-2" rows="2" [(ngModel)]="noteCourrier"></textarea>
+          <button type="button" class="btn btn-primary btn-sm" (click)="affecterCourrier(c)">Affecter au service</button>
+        </div>
+      </div>
+    }
+  }
+</div>

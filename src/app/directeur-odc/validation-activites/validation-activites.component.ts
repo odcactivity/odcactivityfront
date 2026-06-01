@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { GlobalService } from '@core/service/global.service';
 import { NgbModal, NgbModalModule } from '@ng-bootstrap/ng-bootstrap';
@@ -9,7 +10,7 @@ type TabKey = 'attente' | 'validees' | 'refusees';
 @Component({
   selector: 'app-validation-activites',
   standalone: true,
-  imports: [CommonModule, NgbModalModule],
+  imports: [CommonModule, FormsModule, NgbModalModule],
   templateUrl: './validation-activites.component.html',
   styleUrl: './validation-activites.component.scss'
 })
@@ -26,6 +27,7 @@ export class ValidationActivitesComponent implements OnInit {
   detail: any | null = null;
   detailLoading = false;
   detailForRow: any | null = null;
+  suggestionTexte = '';
 
   constructor(
     private readonly global: GlobalService,
@@ -132,6 +134,22 @@ export class ValidationActivitesComponent implements OnInit {
       },
       error: () => this.toast.error('Validation impossible.')
     });
+  }
+
+  suggerer(id: number | undefined, texte: string): void {
+    if (id == null || !texte?.trim()) {
+      this.toast.warning('Saisissez une suggestion.');
+      return;
+    }
+    this.global
+      .post(`activite/${id}/suggestion-directeur-odc?suggestion=${encodeURIComponent(texte.trim())}`, {})
+      .subscribe({
+        next: () => {
+          this.toast.success('Suggestion envoyée au responsable ODK.');
+          this.load();
+        },
+        error: () => this.toast.error('Envoi impossible.'),
+      });
   }
 
   rejeter(id: number | undefined, fromModal = false): void {

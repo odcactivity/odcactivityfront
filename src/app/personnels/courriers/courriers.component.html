@@ -47,12 +47,7 @@
                     <div class="d-flex gap-2">
                       @if (isDcireRole) {
                         <button class="btn btn-icon icon-left bg-warning text-white rounded-button"
-                                (click)="openDcireExterneModal()" title="Réception courrier externe">
-                          <i class="material-icons">add</i>
-                        </button>
-                      } @else {
-                        <button class="btn btn-icon icon-left bg-warning text-white rounded-button"
-                                (click)='addRow(addRecord)' title="Nouveau courrier (brouillon)">
+                                (click)="openDcireExterneModal()" title="Émettre un courrier (DCIRE)">
                           <i class="material-icons">add</i>
                         </button>
                       }
@@ -532,17 +527,31 @@
           }
 
           <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
-            <label for="destinataireOdc">Type de destinataire</label>
-            <select id="destinataireOdc" class="form-select" formControlName="destinataireOdc">
-              <option value="EXTERNE">Externe (hub DCIRE)</option>
-              <option value="FONDATION">Fondation</option>
-              <option value="RSE">RSE</option>
-              <option value="DCI">DCI</option>
+            <label for="fluxVers">Flux du courrier <span class="text-danger">*</span></label>
+            <select id="fluxVers" class="form-select" formControlName="fluxVers">
+              <option value="interne">Interne (autre direction de la même division)</option>
+              <option value="externe">Externe (passage par la DCIRE après validation du Directeur ODC)</option>
             </select>
-            <p class="small text-muted mb-0 mt-2">Externe : passage par le hub puis envoi final. Interne : autre direction de la division.</p>
+            <p class="small text-muted mb-0 mt-2">
+              Interne : échange entre directions de la même division, sans validation hub DCIRE.
+              Externe : le courrier transite par la DCIRE pour validation avant envoi au destinataire final.
+            </p>
           </div>
 
-          @if ((register.get('destinataireOdc')?.value || 'EXTERNE') === 'EXTERNE') {
+          @if (register.get('fluxVers')?.value === 'interne') {
+            <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
+              <label for="cibleInterneDirectionId">Direction destinataire (interne) <span class="text-danger">*</span></label>
+              <select id="cibleInterneDirectionId" class="form-select" formControlName="cibleInterneDirectionId">
+                <option [ngValue]="null" disabled>Choisir une direction</option>
+                <option *ngFor="let d of ciblesInternesBrouillon" [ngValue]="d.id">{{ d.nom }}</option>
+              </select>
+              @if (ciblesInternesBrouillon.length === 0 && register.get('odcDirectionId')?.value != null) {
+                <small class="form-text text-muted">
+                  Aucune autre direction interne disponible pour cette direction d’émission.
+                </small>
+              }
+            </div>
+          } @else {
             <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-2">
               <label for="externePrecision">Précision destinataire externe (facultatif)</label>
               <input type="text" id="externePrecision" class="form-control" formControlName="externePrecision"
@@ -583,14 +592,27 @@
       </button>
     </div>
     <div class="modal-body">
-      <h6>historique du courrier {{selectedRowData ? selectedRowData.numero : '-'}}</h6>
+      <h6>Historique du courrier {{ selectedRowData ? selectedRowData.numero : '-' }}</h6>
+      @if (Historiques.length > 0) {
+        <div class="border rounded p-2 mb-3 small bg-light">
+          <div><strong>De :</strong> {{ Historiques[0].expediteurCourrier || selectedRowData?.expediteur || '—' }}</div>
+          <div><strong>À :</strong> {{ Historiques[0].entiteDetentionNom || Historiques[0].structureOrigineNom || '—' }}</div>
+        </div>
+      }
       <div>
         @if(Historiques.length > 0) {
           @for (item of Historiques; track item) {
             <div class="shadow-sm mb-3" style="border-left: 1.5px solid orange; border-radius: 5px; padding-left: 5px;">
               <div style="font-size: 12px;">{{item.dateAction | date: 'dd/MM/yyyy'}}</div>
               <span style="font-size: 12px;"><i class="text-warning fa fa-square"></i> {{item.statut}}</span>
-              <div class="text-warning" style="font-size: 12px;">Entité: {{item.entite}}</div>
+              @if (item.ancienneEntiteNom || item.nouvelleEntiteNom) {
+                <div class="text-muted" style="font-size: 12px;">
+                  <strong>De :</strong> {{ item.ancienneEntiteNom || '—' }}
+                  &nbsp;→&nbsp;
+                  <strong>À :</strong> {{ item.nouvelleEntiteNom || item.entiteActionNom || '—' }}
+                </div>
+              }
+              <div class="text-warning" style="font-size: 12px;">Entité (étape) : {{item.entite}}</div>
               <div class="text-warning" style="font-size: 12px;"><i class="fa fa-user"></i> {{item.utilisateur}}</div>
               <p>{{item.commentaire}}</p>
             </div>
@@ -623,17 +645,18 @@
   <!-- Réception courrier hors périmètre ODC -->
   <ng-template #addDcireExterne let-modal>
     <div class="modal-header">
-      <h5 class="modal-title">Réception d’un courrier externe</h5>
+      <h5 class="modal-title">Émettre un courrier (DCIRE)</h5>
       <button type="button" class="btn-close" (click)="modal.dismiss()"></button>
     </div>
     <div class="modal-body">
       <form [formGroup]="registerExterne" (ngSubmit)="saveDcireExterne(registerExterne, modal)">
         <div class="mb-2">
-          <label>Structure d’origine <span class="text-danger">*</span></label>
-          <select class="form-select" formControlName="structureOrigineId">
-            <option [ngValue]="null" disabled>— Choisir une structure —</option>
-            <option *ngFor="let d of externalDirections" [ngValue]="d.id">{{ d.nom }}</option>
+          <label>Structure destinataire <span class="text-danger">*</span></label>
+          <select class="form-select" formControlName="cibleDirectionId">
+            <option [ngValue]="null" disabled>— Choisir —</option>
+            <option *ngFor="let d of ciblesEmissionDcire" [ngValue]="d.id">{{ d.nom }}</option>
           </select>
+          <p class="small text-muted mb-0 mt-1">Périmètre Orange Digital Center : passage par le responsable ODK.</p>
         </div>
         <div class="mb-2">
           <label>Numéro <span class="text-danger">*</span></label>
@@ -644,8 +667,9 @@
           <input class="form-control" formControlName="objet" />
         </div>
         <div class="mb-2">
-          <label>Expéditeur (contact) <span class="text-danger">*</span></label>
-          <input class="form-control" formControlName="expediteur" />
+          <label>Expéditeur</label>
+          <input class="form-control bg-light" formControlName="expediteur" readonly />
+          <p class="small text-muted mb-0 mt-1">Courriers sortants DCIRE : expéditeur officiel KEÏTA DCIRE.</p>
         </div>
         <div class="mb-2">
           <label>Fichier</label>

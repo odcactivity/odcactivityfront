@@ -71,6 +71,9 @@ export class SidebarComponent implements OnInit {
         if (r === 'DIRECTEUR_ODC') {
           return 'Direction ODC';
         }
+        if (r === 'RESPONSABLE_ODK') {
+          return 'Responsable ODK';
+        }
         if (r === 'DIRECTEUR_FONDATION' || r === 'DIRECTEUR_RSE' || r === 'DIRECTEUR_DCI') {
           return 'Direction';
         }

@@ -8,7 +8,7 @@
       "class": "",
       "groupTitle": false,
       "submenu": [],
-      "roles": ["SUPERADMIN", "ADMIN", "DIRECTEUR", "DIRECTEUR_ODC"]
+      "roles": ["SUPERADMIN", "ADMIN", "DIRECTEUR", "DIRECTEUR_ODC", "DIRECTEUR_FONDATION", "DIRECTEUR_RSE", "DIRECTEUR_DCI"]
     },
     {
       "path": "/entite",
@@ -21,6 +21,56 @@
       "badgeClass": "",
       "submenu": [],
       "roles": ["DIRECTEUR"]
+    },
+    {
+      "path": "/responsable-odk/activites",
+      "title": "Gestion activités",
+      "iconType": "feather",
+      "icon": "check-square",
+      "class": "",
+      "groupTitle": false,
+      "submenu": [],
+      "roles": ["RESPONSABLE_ODK"]
+    },
+    {
+      "path": "/responsable-odk/courriers",
+      "title": "Gestion courriers",
+      "iconType": "feather",
+      "icon": "inbox",
+      "class": "",
+      "groupTitle": false,
+      "submenu": [],
+      "roles": ["RESPONSABLE_ODK"]
+    },
+    {
+      "path": "/structure/fondation/courriers",
+      "title": "Courriers reçus",
+      "iconType": "feather",
+      "icon": "inbox",
+      "class": "",
+      "groupTitle": false,
+      "submenu": [],
+      "roles": ["DIRECTEUR_FONDATION"]
+    },
+    {
+      "path": "/structure/rse/courriers",
+      "title": "Courriers reçus",
+      "iconType": "feather",
+      "icon": "inbox",
+      "class": "",
+      "groupTitle": false,
+      "submenu": [],
+      "roles": ["DIRECTEUR_RSE"]
+    },
+    {
+      "path": "/structure/dci/courriers",
+      "title": "Courriers reçus",
+      "iconType": "feather",
+      "icon": "inbox",
+      "class": "",
+      "groupTitle": false,
+      "submenu": [],
+      "roles": ["DIRECTEUR_DCI"]
     },
     {
       "path": "/directeur-odc/validation-activites",
@@ -50,37 +100,7 @@
       "class": "",
       "groupTitle": false,
       "submenu": [],
-      "roles": ["SUPERADMIN", "ADMIN", "DIRECTEUR", "DIRECTEUR_ODC"]
-    },
-    {
-      "path": "/structure/fondation/courriers",
-      "title": "Courriers",
-      "iconType": "feather",
-      "icon": "inbox",
-      "class": "",
-      "groupTitle": false,
-      "submenu": [],
-      "roles": ["DIRECTEUR_FONDATION"]
-    },
-    {
-      "path": "/structure/rse/courriers",
-      "title": "Courriers",
-      "iconType": "feather",
-      "icon": "inbox",
-      "class": "",
-      "groupTitle": false,
-      "submenu": [],
-      "roles": ["DIRECTEUR_RSE"]
-    },
-    {
-      "path": "/structure/dci/courriers",
-      "title": "Courriers",
-      "iconType": "feather",
-      "icon": "inbox",
-      "class": "",
-      "groupTitle": false,
-      "submenu": [],
-      "roles": ["DIRECTEUR_DCI"]
+      "roles": ["DIRECTEUR", "DIRECTEUR_ODC"]
     },
     {
       "path": "/utilisateur",

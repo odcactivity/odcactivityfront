@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { NgApexchartsModule } from 'ng-apexcharts';
 import { RouterLink } from '@angular/router';
@@ -10,7 +11,7 @@ import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Activity } from '@core/models/Activity';
 import { Entite } from '@core/models/Entite';
-import { canonicalizeAppRoles } from '@core/utils/app-roles';
+import { canonicalizeAppRoles, resolveEffectiveRolesFromUser } from '@core/utils/app-roles';
 import { filterEntitesOdcPiliers, isOdcPillarEntiteName } from '@core/utils/odc-entite';
 
 type PeriodKey = 'semaine' | 'mois' | 'annee';
@@ -119,11 +120,34 @@ export class MainComponent implements OnInit {
   /** id entité API → index 0..3 (prioritaire sur le matching par nom) */
   private entiteIdToSlot = new Map<number, number>();
   private currentRoles: string[] = [];
+  private readonly router = inject(Router);
 
   constructor(private globalService: GlobalService, private authService: AuthService) {}
 
+  /** Fondation / RSE / DCI : pas de stats activités, uniquement courriers reçus / répondus. */
+  get isStructureDivisionDashboard(): boolean {
+    const division =
+      this.currentRoles.includes('DIRECTEUR_FONDATION') ||
+      this.currentRoles.includes('DIRECTEUR_RSE') ||
+      this.currentRoles.includes('DIRECTEUR_DCI');
+    if (!division) {
+      return false;
+    }
+    return !this.currentRoles.some((r) =>
+      ['SUPERADMIN', 'ADMIN', 'DIRECTEUR', 'DIRECTEUR_ODC'].includes(r)
+    );
+  }
+
+  get showActivityDashboard(): boolean {
+    return !this.isStructureDivisionDashboard;
+  }
+
   ngOnInit() {
-    this.currentRoles = canonicalizeAppRoles(this.authService.getCurrentUserFromStorage()?.roles || []);
+    this.currentRoles = resolveEffectiveRolesFromUser(this.authService.getCurrentUserFromStorage());
+    if (this.currentRoles.includes('RESPONSABLE_ODK')) {
+      void this.router.navigate(['/responsable-odk/activites'], { replaceUrl: true });
+      return;
+    }
     this.getNombreUitlisateur();
     this.getNombreActivite();
     this.getNombreActiviteEncours();
@@ -144,11 +168,50 @@ export class MainComponent implements OnInit {
    * Directeur (JWT = DIRECTEUR, y compris hub DCIRE) : périmètre imposé côté API.
    * Directeur ODC : même confort que l’admin ODC, avec choix des structures ODC.
    */
+  /** Admin et divisions Fondation / RSE / DCI : stats courrier limitées à Reçu + Répondu. */
+  get courrierStatsRecuReponduOnly(): boolean {
+    return (
+      this.currentRoles.includes('SUPERADMIN') ||
+      this.currentRoles.includes('ADMIN') ||
+      this.currentRoles.includes('DIRECTEUR_FONDATION') ||
+      this.currentRoles.includes('DIRECTEUR_RSE') ||
+      this.currentRoles.includes('DIRECTEUR_DCI')
+    );
+  }
+
   get courrierStructureFilterLocked(): boolean {
     if (this.currentRoles.includes('SUPERADMIN') || this.currentRoles.includes('ADMIN')) {
       return false;
     }
+    if (
+      this.currentRoles.includes('DIRECTEUR_FONDATION') ||
+      this.currentRoles.includes('DIRECTEUR_RSE') ||
+      this.currentRoles.includes('DIRECTEUR_DCI')
+    ) {
+      return true;
+    }
     return this.currentRoles.includes('DIRECTEUR');
+  }
+
+  private activeCourrierCatKeys(): (typeof MainComponent.COURRIER_CAT_KEYS)[number][] {
+    if (this.courrierStatsRecuReponduOnly) {
+      return ['recu', 'repondu'];
+    }
+    return [...MainComponent.COURRIER_CAT_KEYS];
+  }
+
+  private activeCourrierChartLabels(): string[] {
+    if (this.courrierStatsRecuReponduOnly) {
+      return ['Reçu', 'Répondu'];
+    }
+    return [...MainComponent.COURRIER_CHART_LABELS];
+  }
+
+  private activeCourrierColors(): string[] {
+    if (this.courrierStatsRecuReponduOnly) {
+      return ['#2563eb', '#16a34a'];
+    }
+    return [...MainComponent.COURRIER_COLORS];
   }
 
   onCourrierStructureChange(): void {
@@ -256,9 +319,25 @@ export class MainComponent implements OnInit {
   }
 
   private loadCourrierDashboardBlock(): void {
-    if (!this.isDcireScope()) {
+    const showCourriers =
+      this.isDcireScope() ||
+      this.currentRoles.includes('DIRECTEUR_FONDATION') ||
+      this.currentRoles.includes('DIRECTEUR_RSE') ||
+      this.currentRoles.includes('DIRECTEUR_DCI');
+    if (!showCourriers) {
       this.showCourrierDashboard = false;
       return;
+    }
+    if (
+      this.currentRoles.includes('DIRECTEUR_FONDATION') ||
+      this.currentRoles.includes('DIRECTEUR_RSE') ||
+      this.currentRoles.includes('DIRECTEUR_DCI')
+    ) {
+      const u = this.authService.getCurrentUserFromStorage() as { entite?: { id?: number } } | null;
+      const eid = u?.entite?.id;
+      if (eid != null && Number.isFinite(Number(eid))) {
+        this.selectedCourrierStructureId = Number(eid);
+      }
     }
     this.showCourrierDashboard = true;
     this.loadCourrierTotaux();
@@ -310,23 +389,25 @@ export class MainComponent implements OnInit {
   }
 
   private initCourrierCharts(): void {
+    const labels = this.activeCourrierChartLabels();
+    const colors = this.activeCourrierColors();
     this.courrierPieOptions = {
-      series: [0, 0, 0, 0, 0],
+      series: labels.map(() => 0),
       chart: { type: 'donut', height: 320, toolbar: { show: false } },
-      labels: [...MainComponent.COURRIER_CHART_LABELS],
-      colors: [...MainComponent.COURRIER_COLORS],
+      labels: [...labels],
+      colors: [...colors],
       legend: { position: 'bottom', fontSize: '13px' },
       plotOptions: { pie: { donut: { size: '58%' } } },
       dataLabels: { enabled: true },
       stroke: { width: 1, colors: ['#fff'] }
     };
     this.courrierLineOptions = {
-      series: MainComponent.COURRIER_CHART_LABELS.map((name) => ({ name, data: [] })),
+      series: labels.map((name) => ({ name, data: [] })),
       chart: { type: 'area', height: 340, toolbar: { show: false }, zoom: { enabled: false } },
       xaxis: { categories: [] },
       stroke: { curve: 'smooth', width: 2 },
       fill: { type: 'gradient', gradient: { opacityFrom: 0.35, opacityTo: 0.05 } },
-      colors: [...MainComponent.COURRIER_COLORS],
+      colors: [...colors],
       dataLabels: { enabled: false },
       legend: { position: 'top', horizontalAlign: 'right', fontSize: '13px' },
       grid: { borderColor: '#e5e7eb', strokeDashArray: 3 },
@@ -336,16 +417,19 @@ export class MainComponent implements OnInit {
   }
 
   private buildCourrierPieChart(): void {
-    const s = [
-      this.courrierEmis,
-      this.courrierRepondu,
-      this.courrierEnAttente,
-      this.courrierRecu,
-      this.courrierValide
-    ];
+    const all = {
+      emis: this.courrierEmis,
+      repondu: this.courrierRepondu,
+      enAttente: this.courrierEnAttente,
+      recu: this.courrierRecu,
+      valide: this.courrierValide
+    };
+    const s = this.activeCourrierCatKeys().map((k) => all[k]);
     this.courrierPieOptions = {
       ...this.courrierPieOptions,
       series: s,
+      labels: this.activeCourrierChartLabels(),
+      colors: this.activeCourrierColors(),
       tooltip: {
         y: {
           formatter: (val: number) => `${val} courrier(s)`
@@ -451,8 +535,8 @@ export class MainComponent implements OnInit {
     const fallbackCats = this.defaultCourrierCategories();
     const hasBuckets = rawBuckets.length > 0;
     const categories = hasBuckets ? rawBuckets.map((b) => String(b.label ?? '')) : fallbackCats;
-    const keys = MainComponent.COURRIER_CAT_KEYS;
-    const labels = MainComponent.COURRIER_CHART_LABELS;
+    const keys = this.activeCourrierCatKeys();
+    const labels = this.activeCourrierChartLabels();
 
     this.courrierLineBuckets = hasBuckets
       ? rawBuckets.map((b) => ({
@@ -472,6 +556,7 @@ export class MainComponent implements OnInit {
     this.courrierLineOptions = {
       ...this.courrierLineOptions,
       series,
+      colors: [...this.activeCourrierColors()],
       xaxis: {
         categories,
         labels: {

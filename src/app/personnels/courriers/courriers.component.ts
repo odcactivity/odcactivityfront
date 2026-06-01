@@ -103,6 +103,9 @@ loading = false;
   odcDirections: Entite[] = [];
   /** Fondation, RSE, DCI, etc. — réception à la DCIRE */
   externalDirections: Entite[] = [];
+  /** Cibles internes division pour brouillon ODC (sans hub DCIRE). */
+  ciblesInternesBrouillon: Entite[] = [];
+  ciblesEmissionDcire: Entite[] = [];
   dcireDirectionId: number | null = null;
   /** Liste brute côté DCIRE (filtrée par onglet) */
   private courriersDcireBruts: any[] = [];
@@ -243,6 +246,22 @@ loading = false;
       this.router.navigate(['/dashboardActivite'], { replaceUrl: true });
       return;
     }
+    if (r.includes('RESPONSABLE_ODK')) {
+      this.router.navigate(['/responsable-odk/activites'], { replaceUrl: true });
+      return;
+    }
+    if (r.includes('SUPERADMIN') || r.includes('ADMIN')) {
+      this.router.navigate(['/dashboard/main'], { replaceUrl: true });
+      return;
+    }
+    if (
+      r.includes('DIRECTEUR_FONDATION') ||
+      r.includes('DIRECTEUR_RSE') ||
+      r.includes('DIRECTEUR_DCI')
+    ) {
+      this.router.navigate(['/dashboard/main'], { replaceUrl: true });
+      return;
+    }
 
     if (!this.isDcireRole) {
       this.typeliste = 'recus';
@@ -254,17 +273,37 @@ loading = false;
       expediteur: ['', [Validators.required]],
       fichier: [''],
       odcDirectionId: [null as number | null],
-      destinataireOdc: ['EXTERNE'],
+      fluxVers: ['interne', [Validators.required]],
+      cibleInterneDirectionId: [null as number | null, [Validators.required]],
       externePrecision: [''],
     });
 
+    /** Expéditeur officiel des courriers sortants DCIRE (figé). */
     this.registerExterne = this.fb.group({
-      structureOrigineId: [null, [Validators.required]],
+      cibleDirectionId: [null, [Validators.required]],
       numero: ['', [Validators.required]],
       objet: ['', [Validators.required]],
-      expediteur: ['', [Validators.required]],
+      expediteur: [{ value: 'KEÏTA DCIRE', disabled: false }],
       fichier: [''],
     });
+
+    this.register.get('odcDirectionId')?.valueChanges.subscribe((v) => {
+      this.refreshCiblesInternesBrouillon(v);
+      this.register.patchValue({ cibleInterneDirectionId: null }, { emitEvent: false });
+    });
+    this.register.get('fluxVers')?.valueChanges.subscribe((v) => {
+      const c = this.register.get('cibleInterneDirectionId');
+      if (c) {
+        if (v === 'externe') {
+          c.clearValidators();
+          this.register.patchValue({ cibleInterneDirectionId: null }, { emitEvent: false });
+        } else {
+          c.setValidators([Validators.required]);
+        }
+        c.updateValueAndValidity({ emitEvent: false });
+      }
+    });
+    this.applyFluxValidatorsForRegister();
 
     this.getAllEntite();
     this.getUtilisateur();
@@ -300,8 +339,9 @@ loading = false;
         this.odcDirections = this.directions.filter(
           (e) => this.isOdcDirectionName(e.nom) && !this.isDcireDirectionName(e.nom)
         );
+        /** Hub DCIRE : seules les divisions DCIRE (Fondation, RSE, DCI, Orange Digital Center), pas les autres piliers ODC. */
         this.externalDirections = this.directions.filter(
-          (e) => !this.isOdcDirectionName(e.nom) && !this.isDcireDirectionName(e.nom)
+          (e) => this.isStructureOrigineHubDcireDivision(e.nom) && !this.isDcireDirectionName(e.nom)
         );
         const dc = this.directions.find((e) => this.isDcireDirectionName(e.nom));
         this.dcireDirectionId = dc?.id ?? null;
@@ -414,6 +454,37 @@ loading = false;
       }
     }
     ctrl.updateValueAndValidity({ emitEvent: false });
+    this.refreshCiblesInternesBrouillon(ctrl.value);
+  }
+
+  private refreshCiblesInternesBrouillon(origineDirectionId: number | null | undefined): void {
+    const id = origineDirectionId != null ? Number(origineDirectionId) : NaN;
+    if (Number.isNaN(id)) {
+      this.ciblesInternesBrouillon = [];
+      return;
+    }
+    this.glogalService.get(`api/courriers/odc/cibles-internes?origineDirectionId=${id}`).subscribe({
+      next: (rows: Entite[]) => {
+        this.ciblesInternesBrouillon = Array.isArray(rows) ? rows : [];
+      },
+      error: () => {
+        this.ciblesInternesBrouillon = [];
+      },
+    });
+  }
+
+  private applyFluxValidatorsForRegister(): void {
+    const flux = this.register.get('fluxVers')?.value;
+    const c = this.register.get('cibleInterneDirectionId');
+    if (!c) {
+      return;
+    }
+    if (flux === 'externe') {
+      c.clearValidators();
+    } else {
+      c.setValidators([Validators.required]);
+    }
+    c.updateValueAndValidity({ emitEvent: false });
   }
 
   private normalizeNomCourrier(nom: string | undefined): string {
@@ -451,6 +522,27 @@ loading = false;
       n.includes('DIGITAL CENTER') ||
       n.includes('ODC')
     );
+  }
+
+  /**
+   * Structures autorisées comme « structure d'origine » sur le formulaire hub DCIRE :
+   * Fondation, RSE, DCI (hors DCIRE), Orange Digital Center — pas Kalanso, Multimedia, FabLab, etc.
+   */
+  private isStructureOrigineHubDcireDivision(nom: string | undefined): boolean {
+    const n = this.normalizeNomCourrier(nom);
+    if (!n) {
+      return false;
+    }
+    if (n.includes('FONDATION')) {
+      return true;
+    }
+    if (n.includes('RSE')) {
+      return true;
+    }
+    if (n.includes('DCI') && !n.includes('DCIRE')) {
+      return true;
+    }
+    return n.includes('ORANGE DIGITAL CENTER') || n.includes('DIGITAL CENTER');
   }
 
   private mapTypelisteToVueParam(): string {
@@ -603,6 +695,9 @@ loading = false;
     if (row?.statut !== 'TRANSMIS_DCIRE') {
       return false;
     }
+    if (row?.cibleInterneDirection != null || row?.cibleInterneDirectionId != null) {
+      return false;
+    }
     const d = row?.destinataireOdc;
     return d === 'EXTERNE' || d == null;
   }
@@ -610,6 +705,9 @@ loading = false;
   /** Courrier externe explicite au hub : pas de transmission ODC. */
   estCourrierExterneSortantAuHub(row: any): boolean {
     if (!this.isCourrierPhysiquementADcire(row)) {
+      return false;
+    }
+    if (row?.cibleInterneDirection != null || row?.cibleInterneDirectionId != null) {
       return false;
     }
     return row?.destinataireOdc === 'EXTERNE';
@@ -690,7 +788,12 @@ loading = false;
   }
 
   openDcireExterneModal(): void {
-    this.registerExterne.reset({ fichier: '' });
+    this.registerExterne.reset({ expediteur: 'KEÏTA DCIRE', fichier: '' });
+    this.glogalService.get('api/courriers/dcire/cibles-division').subscribe({
+      next: (rows: Entite[]) => {
+        this.ciblesEmissionDcire = Array.isArray(rows) ? rows : [];
+      },
+    });
     this.modalService.open(this.addDcireExterne, { size: 'lg' });
   }
 
@@ -706,15 +809,15 @@ loading = false;
       return;
     }
     const fd = new FormData();
-    fd.append('structureOrigineId', String(form.value.structureOrigineId));
+    fd.append('cibleDirectionId', String(form.value.cibleDirectionId));
     fd.append('numero', form.value.numero);
     fd.append('objet', form.value.objet);
-    fd.append('expediteur', form.value.expediteur);
+    fd.append('expediteur', (form.getRawValue().expediteur || 'KEÏTA DCIRE').toString().trim());
     if (form.value.fichier) {
       fd.append('fichier', form.value.fichier);
     }
     this.loadingIndicator = true;
-    this.glogalService.postMultipart('api/courriers/dcire/reception-externe', fd).subscribe({
+    this.glogalService.postMultipart('api/courriers/dcire/emission', fd).subscribe({
       next: () => {
         this.toastr.success('Courrier enregistré.');
         modal.close();
@@ -992,17 +1095,35 @@ loading = false;
       );
       return;
     }
+    const flux = (form.value.fluxVers || 'externe').toString().toLowerCase();
+    if (flux === 'interne') {
+      const cible =
+        form.value.cibleInterneDirectionId != null ? Number(form.value.cibleInterneDirectionId) : null;
+      if (cible == null || Number.isNaN(cible)) {
+        this.toastr.error(
+          'Sélectionnez une direction de destination pour un courrier interne (échange au sein de la division).'
+        );
+        return;
+      }
+      if (cible === dirId) {
+        this.toastr.error('La destination interne doit être différente de la direction d’émission.');
+        return;
+      }
+    }
     this.loadingIndicator = true;
     const fd = new FormData();
     fd.append("numero", form.value.numero);
     fd.append("objet", form.value.objet);
     fd.append("expediteur", form.value.expediteur);
     fd.append("odcDirectionId", String(dirId));
-    const dest = (form.value.destinataireOdc || 'EXTERNE').toString().trim().toUpperCase();
-    fd.append('destinataireOdc', dest || 'EXTERNE');
-    const prec = (form.value.externePrecision || '').toString().trim();
-    if (prec) {
-      fd.append('externePrecision', prec);
+    if (flux === 'interne') {
+      fd.append('cibleInterneDirectionId', String(Number(form.value.cibleInterneDirectionId)));
+    } else {
+      fd.append('destinataireOdc', 'EXTERNE');
+      const prec = (form.value.externePrecision || '').toString().trim();
+      if (prec) {
+        fd.append('externePrecision', prec);
+      }
     }
     if (form.value.fichier) {
       fd.append("fichier", form.value.fichier);
@@ -1013,8 +1134,17 @@ loading = false;
         console.log('✅ Courrier créé avec succès:', response);
         
         // Réinitialiser le formulaire complètement
-        form.reset();
-        form.patchValue({ destinataireOdc: 'EXTERNE', externePrecision: '' });
+        form.reset({
+          numero: '',
+          objet: '',
+          expediteur: '',
+          fichier: '',
+          fluxVers: 'interne',
+          cibleInterneDirectionId: null,
+          externePrecision: '',
+          odcDirectionId: null,
+        });
+        this.applyFluxValidatorsForRegister();
         this.patchRegisterOdcDirectionDefaults();
         this.selectedFile = null;
         

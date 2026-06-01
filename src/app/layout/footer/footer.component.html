@@ -3,6 +3,9 @@
     Copyright &copy; 2022 <div class="bullet"></div> Design By <a href="#" onClick="return false;">Redstar</a>
   </div>
   <div class="footer-right">
+    @if (buildTag) {
+      <span class="text-muted small me-3">Build {{ buildTag }}</span>
+    }
     Coded with <i-feather name="heart" class="footer-icon"></i-feather>
   </div>
 </footer>

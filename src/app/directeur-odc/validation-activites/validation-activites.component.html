@@ -180,7 +180,13 @@
   <div class="modal-footer d-flex flex-wrap gap-2 justify-content-between">
     <button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss()">Fermer</button>
     @if (detail?.statut === 'En_Validation_Directeur_ODC' || detailForRow?.statut === 'En_Validation_Directeur_ODC') {
-      <div>
+      <div class="w-100">
+        <textarea class="form-control form-control-sm mb-2" rows="2" [(ngModel)]="suggestionTexte"
+                  placeholder="Suggestion pour le responsable ODK"></textarea>
+        <button type="button" class="btn btn-warning btn-sm me-1"
+                (click)="suggerer(detail?.id ?? detailForRow?.id, suggestionTexte); modal.dismiss()">
+          Suggestion
+        </button>
         <button type="button" class="btn btn-success me-1" (click)="validerFromModal()">Valider</button>
         <button type="button" class="btn btn-outline-danger" (click)="rejeterFromModal()">Refuser</button>
       </div>

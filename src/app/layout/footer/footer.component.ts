@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { FeatherModule } from 'angular-feather';
+import { environment } from '../../../environments/environment';
 
 @Component({
     selector: 'app-footer',
@@ -7,11 +8,6 @@ import { FeatherModule } from 'angular-feather';
     styleUrls: ['./footer.component.sass'],
     imports: [FeatherModule]
 })
-export class FooterComponent implements OnInit {
-
-  constructor() { }
-
-  ngOnInit(): void {
-  }
-
+export class FooterComponent {
+  readonly buildTag = environment.appBuildTag || '';
 }

@@ -3,6 +3,7 @@
 // The list of file replacements can be found in `angular.json`.
 
 export const environment = {
+  appBuildTag: '2026-05-17-roles-dash-v3',
   production: false,
   //uploadUrl: 'http://localhost:8089',
   //apiUrl: 'http://localhost:8089',
