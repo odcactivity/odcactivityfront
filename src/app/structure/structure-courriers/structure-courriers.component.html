@@ -30,9 +30,9 @@
     <div class="col-md-6">
       <button type="button" class="structure-dash-card w-100 text-start border-0"
         [class.structure-dash-card--active]="onglet === 'recus'" (click)="setOnglet('recus')">
-        <div class="structure-dash-card__kpi text-primary">{{ recus.length }}</div>
+        <div class="structure-dash-card__kpi text-primary">{{ recusEtLegacyAttente().length }}</div>
         <div class="structure-dash-card__title">Reçus</div>
-        <div class="structure-dash-card__hint">Courriers à traiter</div>
+        <div class="structure-dash-card__hint">Courriers adressés par la DCIRE — à traiter ou répondre</div>
       </button>
     </div>
     <div class="col-md-6">
@@ -47,7 +47,7 @@
   <ul class="nav nav-tabs mb-3">
     <li class="nav-item">
       <button type="button" class="nav-link" [class.active]="onglet === 'recus'" (click)="setOnglet('recus')">
-        Reçus <span class="badge bg-secondary ms-1">{{ recus.length }}</span>
+        Reçus <span class="badge bg-secondary ms-1">{{ recusEtLegacyAttente().length }}</span>
       </button>
     </li>
     <li class="nav-item">
@@ -179,7 +179,7 @@
     </div>
   }
 
-  @if (selected && onglet === 'attente' && $any(selected).statut === 'ATTENTE_VALIDATION_DIRECTEUR_STRUCTURE') {
+  @if (selected && $any(selected).statut === 'ATTENTE_VALIDATION_DIRECTEUR_STRUCTURE') {
     <div class="card p-3 border-warning mb-3">
       <h6 class="mb-2">Courrier {{ $any(selected).numero }}</h6>
       <p class="small text-muted mb-3">

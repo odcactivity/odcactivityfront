@@ -109,6 +109,54 @@ export class GlobalService {
       .pipe(catchError(this.handleError.bind(this)));
   }
 
+  getCourrierReponsesEnAttenteDirecteurOdc(): Observable<any[]> {
+    return this.http
+      .get<any[]>(`${this.baseUrl}/api/courriers/odc-directeur/reponses-en-attente`)
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  getServicesOdcPourDirecteur(): Observable<{ id: number; nom: string }[]> {
+    return this.http
+      .get<{ id: number; nom: string }[]>(`${this.baseUrl}/api/courriers/odc-directeur/services-odc`)
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  postCourrierValiderReponseDirecteurOdc(courrierId: number, suggestion?: string): Observable<any> {
+    let params = new HttpParams();
+    if (suggestion != null && suggestion.trim() !== '') {
+      params = params.set('suggestion', suggestion.trim());
+    }
+    return this.http
+      .post(`${this.baseUrl}/api/courriers/odc-directeur/${courrierId}/valider-reponse`, {}, { params })
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  postCourrierDeleguerServiceDirecteurOdc(
+    courrierId: number,
+    serviceEntiteId: number,
+    note?: string
+  ): Observable<any> {
+    let params = new HttpParams().set('serviceEntiteId', String(serviceEntiteId));
+    if (note != null && note.trim() !== '') {
+      params = params.set('note', note.trim());
+    }
+    return this.http
+      .post(`${this.baseUrl}/api/courriers/odc-directeur/${courrierId}/deleguer-service`, {}, { params })
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  postCourrierConfirmerEnvoiPhysiqueOdc(courrierId: number): Observable<any> {
+    return this.http
+      .post(`${this.baseUrl}/api/courriers/odc-directeur/${courrierId}/confirmer-envoi-physique`, {})
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  postCourrierValiderDechargeReponseDcire(courrierId: number): Observable<any> {
+    return this.http
+      .post(`${this.baseUrl}/api/courriers/dcire/${courrierId}/valider-decharge-reponse`, {})
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
   postCourrierTransmettreVersOdc(courrierId: number, odcDirectionId: number): Observable<any> {
     const params = new HttpParams().set('odcDirectionId', String(odcDirectionId));
     return this.http

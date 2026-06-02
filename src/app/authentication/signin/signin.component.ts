@@ -3,6 +3,7 @@ import { Router, RouterLink } from '@angular/router';
 import { UntypedFormBuilder, UntypedFormGroup, Validators, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FeatherModule } from 'angular-feather';
 import { AuthService } from '@core';
+import { structureCourriersPathForRoles } from '@core/utils/app-roles';
 import { GlobalService } from "@core/service/global.service";
 import {isPlatformBrowser, NgIf} from '@angular/common';
 import Swal from 'sweetalert2';
@@ -99,26 +100,30 @@ export class SigninComponent implements OnInit {
             this.router.navigateByUrl('/responsable-odk/activites').then(() => {
               this.cdRef.detectChanges();
             });
-          } else if (
-            roles?.includes('DIRECTEUR_FONDATION') ||
-            roles?.includes('DIRECTEUR_RSE') ||
-            roles?.includes('DIRECTEUR_DCI')
-          ) {
-            this.router.navigateByUrl('/dashboard/main').then(() => {
-              this.cdRef.detectChanges();
-            });
-          } else if (roles?.includes('SUPERADMIN') || roles?.includes('ADMIN') || roles?.includes('DIRECTEUR') || roles?.includes('DIRECTEUR_ODC')) {
-            this.router.navigateByUrl('/dashboard/main').then(() => {
-              this.cdRef.detectChanges();
-            });
-          } else if (roles?.includes('PERSONNEL')) {
-            this.router.navigateByUrl('/dashboardActivite').then(() => {
-              this.cdRef.detectChanges();
-            });
           } else {
-            this.router.navigateByUrl('/dashboard/main').then(() => {
-              this.cdRef.detectChanges();
-            });
+            const structurePath = structureCourriersPathForRoles(roles || []);
+            if (structurePath) {
+              this.router.navigateByUrl(structurePath).then(() => {
+                this.cdRef.detectChanges();
+              });
+            } else if (
+              roles?.includes('SUPERADMIN') ||
+              roles?.includes('ADMIN') ||
+              roles?.includes('DIRECTEUR') ||
+              roles?.includes('DIRECTEUR_ODC')
+            ) {
+              this.router.navigateByUrl('/dashboard/main').then(() => {
+                this.cdRef.detectChanges();
+              });
+            } else if (roles?.includes('PERSONNEL')) {
+              this.router.navigateByUrl('/dashboardActivite').then(() => {
+                this.cdRef.detectChanges();
+              });
+            } else {
+              this.router.navigateByUrl('/dashboard/main').then(() => {
+                this.cdRef.detectChanges();
+              });
+            }
           }
 
           // Toast de succès...

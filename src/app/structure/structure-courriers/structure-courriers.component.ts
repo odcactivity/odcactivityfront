@@ -165,9 +165,25 @@ export class StructureCourriersComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Reçus + anciens en attente validation (rétrocompatibilité) — Fondation / RSE / DCI. */
+  recusEtLegacyAttente(): unknown[] {
+    const byId = new Map<number, unknown>();
+    for (const row of [...this.enAttente, ...this.recus]) {
+      const r = row as Record<string, unknown>;
+      const id = typeof r['id'] === 'number' ? r['id'] : Number(r['id']);
+      if (Number.isFinite(id) && !byId.has(id)) {
+        byId.set(id, row);
+      }
+    }
+    return [...byId.values()];
+  }
+
   rowsCourants(): unknown[] {
     if (this.receiveOnlyMode) {
-      return this.onglet === 'repondus' ? this.repondus() : this.recus;
+      if (this.onglet === 'repondus') {
+        return this.repondus();
+      }
+      return this.recusEtLegacyAttente();
     }
     switch (this.onglet) {
       case 'tout':

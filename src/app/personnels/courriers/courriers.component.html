@@ -21,7 +21,7 @@
   </p>
 
   @if (isDirecteurOdcRole) {
-    <app-validation-courriers-directeur [embedded]="true" />
+    <app-validation-courriers-directeur [embedded]="true" (workflowChanged)="onDirecteurOdcWorkflowChanged()" />
   }
 
   <div class="section-body">
@@ -180,9 +180,17 @@
                         <span class="badge bg-warning text-dark">
                           <i class="fas fa-edit me-1"></i>Révision admin
                         </span>
+                      } @else if(row.statut === 'ATTENTE_VALIDATION_REPONSE_DIRECTEUR_ODC') {
+                        <span class="badge bg-primary">
+                          <i class="fas fa-reply me-1"></i>Réponse à valider
+                        </span>
+                      } @else if(row.statut === 'ATTENTE_TRAITEMENT_RESPONSABLE_ODK') {
+                        <span class="badge bg-secondary">
+                          <i class="fas fa-user me-1"></i>Attente ODK
+                        </span>
                       } @else if(row.statut === 'TRANSMIS_DCIRE') {
                         <span class="badge bg-dark">
-                          <i class="fas fa-paper-plane me-1"></i>Transmis
+                          <i class="fas fa-paper-plane me-1"></i>Transmis DCIRE
                         </span>
                       } @else if(row.statut === 'ENVOYER') {
                         <span class="badge bg-warning">
@@ -219,19 +227,40 @@
                           <i class="fas fa-check me-1"></i>Reçu / Valider
                         </button>
                       }
+                      @if(isDcireRole && estCourrierEnAttenteDechargeDcire(row)) {
+                        <button class="btn btn-sm btn-success h-auto me-1" (click)="validerDechargeReponseDcire(row)"
+                                title="Décharge / scan validés — retour ODC pour envoi">
+                          <i class="fas fa-stamp me-1"></i>Valider décharge
+                        </button>
+                      }
+                      @if(isDirecteurOdcRole && peutDeleguerCourrierOdc(row)) {
+                        <button class="btn btn-sm btn-primary h-auto me-1" (click)="openDeleguerCourrierOdc(row)"
+                                title="Déléguer à une entité ODC">
+                          <i class="fas fa-share me-1"></i>Déléguer
+                        </button>
+                      }
+                      @if(isDirecteurOdcRole && peutConfirmerEnvoiPhysiqueOdc(row)) {
+                        <button class="btn btn-sm btn-success h-auto me-1" (click)="confirmerEnvoiPhysiqueOdc(row)"
+                                title="Envoi physique effectué (expéditeur externe hors app)">
+                          <i class="fas fa-paper-plane me-1"></i>Clôturer envoi
+                        </button>
+                      }
                       @if(isDcireRole && isCourrierPhysiquementADcire(row) && !estCourrierExterneSortantAuHub(row) && !estFluxExterneHubEnAttente(row) && row.statut !== 'ARCHIVER' && row.statut !== 'REPONDU' && row.statut !== 'ATTENTE_VALIDATION_ODC' && row.statut !== 'ATTENTE_VALIDATION_DIRECTEUR_ODC' && row.statut !== 'EN_REVISION_ADMIN_COURRIER') {
                         <button class="btn btn-sm btn-primary h-auto me-1" (click)="openTransmitToOdc(row)"
                                 title="Transmettre à une direction">
                           <i class="fas fa-share me-1"></i>Transmettre
                         </button>
                       }
-                      @if(row.statut !== 'ARCHIVER' && row.statut !== 'REPONDU' && row.statut !== 'ATTENTE_VALIDATION_ODC' && row.statut !== 'ATTENTE_VALIDATION_DIRECTEUR_ODC' && row.statut !== 'EN_REVISION_ADMIN_COURRIER') {
-                        <button class="btn btn-tbl-edit h-auto" (click)='ImputeModal(row, rowIndex, "repondre")' title="répondre ce courrier">
+                      @if(peutRepondreAuCourrier(row)) {
+                        <button class="btn btn-tbl-edit h-auto" (click)='ImputeModal(row, rowIndex, "repondre")'
+                                [title]="isDirecteurOdcRole ? 'Saisir la réponse officielle ODC' : 'Répondre à ce courrier'">
                           <i class="fas fa-reply me-1"></i>
                         </button>
-                        <button class="btn btn-tbl-edit h-auto" (click)='ImputeModal(row, rowIndex, entiteCibleModal)' title="Transmettre le courrier à un service">
-                          <i class="fas fa-edit"></i>
-                        </button>
+                        @if (!isDirecteurOdcRole) {
+                          <button class="btn btn-tbl-edit h-auto" (click)='ImputeModal(row, rowIndex, entiteCibleModal)' title="Transmettre le courrier à un service">
+                            <i class="fas fa-edit"></i>
+                          </button>
+                        }
                       }
                       @if(peutModifierMetadonneesCourrier(row)) {
                         <button class="btn btn-tbl-edit h-auto" (click)="openEditCourrierMetaModal(row)" title="Modifier numéro, objet ou expéditeur">
@@ -656,11 +685,6 @@
             <option [ngValue]="null" disabled>— Choisir —</option>
             <option *ngFor="let d of ciblesEmissionDcire" [ngValue]="d.id">{{ d.nom }}</option>
           </select>
-          <p class="small text-muted mb-0 mt-1">Périmètre Orange Digital Center : passage par le responsable ODK.</p>
-        </div>
-        <div class="mb-2">
-          <label>Numéro <span class="text-danger">*</span></label>
-          <input class="form-control" formControlName="numero" />
         </div>
         <div class="mb-2">
           <label>Objet <span class="text-danger">*</span></label>

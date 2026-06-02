@@ -8,7 +8,7 @@
       "class": "",
       "groupTitle": false,
       "submenu": [],
-      "roles": ["SUPERADMIN", "ADMIN", "DIRECTEUR", "DIRECTEUR_ODC", "DIRECTEUR_FONDATION", "DIRECTEUR_RSE", "DIRECTEUR_DCI"]
+      "roles": ["SUPERADMIN", "ADMIN", "DIRECTEUR", "DIRECTEUR_ODC"]
     },
     {
       "path": "/entite",
@@ -34,7 +34,7 @@
     },
     {
       "path": "/structure/fondation/courriers",
-      "title": "Courriers reçus",
+      "title": "Gestion Courriers",
       "iconType": "feather",
       "icon": "inbox",
       "class": "",
@@ -44,7 +44,7 @@
     },
     {
       "path": "/structure/rse/courriers",
-      "title": "Courriers reçus",
+      "title": "Gestion Courriers",
       "iconType": "feather",
       "icon": "inbox",
       "class": "",
@@ -54,7 +54,7 @@
     },
     {
       "path": "/structure/dci/courriers",
-      "title": "Courriers reçus",
+      "title": "Gestion Courriers",
       "iconType": "feather",
       "icon": "inbox",
       "class": "",

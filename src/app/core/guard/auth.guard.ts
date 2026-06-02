@@ -34,7 +34,12 @@ import {
   UrlTree
 } from '@angular/router';
 import { AuthService } from '../service/auth.service';
-import { canonicalizeAppRoles, decodeJwtPayload, rolesFromJwtPayload } from '../utils/app-roles';
+import {
+  canonicalizeAppRoles,
+  decodeJwtPayload,
+  rolesFromJwtPayload,
+  structureCourriersPathForRoles,
+} from '../utils/app-roles';
 
 @Injectable({
   providedIn: 'root',
@@ -113,12 +118,25 @@ export class AuthGuard implements CanActivate {
       return false;
     }
 
+    const structureCourriersPath = structureCourriersPathForRoles(effectiveRoles);
+    if (structureCourriersPath) {
+      if (
+        state.url.startsWith('/dashboard/main') ||
+        state.url === '/dashboard' ||
+        state.url === '/'
+      ) {
+        return this.router.parseUrl(structureCourriersPath);
+      }
+    }
+
     if (effectiveRoles.includes('RESPONSABLE_ODK')) {
       if (
         state.url.startsWith('/dashboard/main') ||
         state.url === '/dashboard' ||
         state.url === '/' ||
-        state.url.startsWith('/responsable-odk/dashboard')
+        state.url.startsWith('/courrier') ||
+        state.url.startsWith('/responsable-odk/dashboard') ||
+        state.url.startsWith('/responsable-odk/courriers')
       ) {
         return this.router.parseUrl('/responsable-odk/activites');
       }

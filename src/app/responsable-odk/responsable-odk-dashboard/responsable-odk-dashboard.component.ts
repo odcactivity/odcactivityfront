@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { GlobalService } from '@core/service/global.service';
 import { ToastrService } from 'ngx-toastr';
 import { forkJoin } from 'rxjs';
@@ -24,10 +24,14 @@ export class ResponsableOdkDashboardComponent implements OnInit {
 
   constructor(
     private readonly global: GlobalService,
-    private readonly toast: ToastrService
+    private readonly toast: ToastrService,
+    private readonly route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
+    if (this.route.snapshot.data['responsableTab'] === 'courriers') {
+      this.toast.info('Les courriers ODC sont gérés par le directeur ODC.');
+    }
     this.loadAll();
   }
 
