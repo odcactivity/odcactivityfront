@@ -130,7 +130,7 @@ export class AuthGuard implements CanActivate {
     }
 
     if (effectiveRoles.includes('RESPONSABLE_ODK')) {
-      if (state.url.startsWith('/courrier') || state.url.startsWith('/responsable-odk/courriers')) {
+      if (state.url.startsWith('/courrier')) {
         return this.router.parseUrl('/responsable-odk/activites');
       }
       if (state.url === '/' || state.url === '/dashboard') {

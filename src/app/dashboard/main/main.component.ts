@@ -173,6 +173,7 @@ export class MainComponent implements OnInit {
     return (
       this.currentRoles.includes('SUPERADMIN') ||
       this.currentRoles.includes('ADMIN') ||
+      this.currentRoles.includes('DIRECTEUR_ODC') ||
       this.currentRoles.includes('DIRECTEUR_FONDATION') ||
       this.currentRoles.includes('DIRECTEUR_RSE') ||
       this.currentRoles.includes('DIRECTEUR_DCI')
@@ -180,7 +181,11 @@ export class MainComponent implements OnInit {
   }
 
   get courrierStructureFilterLocked(): boolean {
-    if (this.currentRoles.includes('SUPERADMIN') || this.currentRoles.includes('ADMIN')) {
+    if (
+      this.currentRoles.includes('SUPERADMIN') ||
+      this.currentRoles.includes('ADMIN') ||
+      this.currentRoles.includes('DIRECTEUR_ODC')
+    ) {
       return false;
     }
     if (
@@ -952,12 +957,15 @@ export class MainComponent implements OnInit {
     breakdown.sort((a, b) => b.total - a.total);
 
     const titres = breakdown.map((b) => b.titre);
+    const participantsTotal = participantsForActs.length;
+    // Si aucune inscription n'existe encore, afficher au moins la dynamique des activités.
+    const totalCourbe = participantsTotal > 0 ? participantsTotal : actsInBucket.length;
 
     return {
       entiteShort: slot.labelShort,
       entiteFull: slot.labelFull,
       bucketLabel,
-      total: participantsForActs.length,
+      total: totalCourbe,
       hommes,
       femmes,
       titres,
@@ -1073,9 +1081,7 @@ export class MainComponent implements OnInit {
   }
 
   private filterEntitesForCourrierScope(entites: Entite[]): Entite[] {
-    if (this.currentRoles.includes('DIRECTEUR_ODC')) {
-      return filterEntitesOdcPiliers(entites);
-    }
+    // Directeur ODC : même périmètre dashboard courrier que l'admin.
     return this.filterEntitesByScope(entites);
   }
 

@@ -1,20 +1,22 @@
 <section class="main-content p-4 responsable-odk-page">
   <h4 class="mb-3">Espace responsable ODK</h4>
 
-  <ul class="nav nav-tabs mb-3 odk-tabs flex-nowrap">
-    <li class="nav-item">
-      <button type="button" class="nav-link" [class.active]="tab === 'attente'" (click)="setTab('attente')">
-        À traiter ({{ activites.length }})
-      </button>
-    </li>
-    <li class="nav-item">
-      <button type="button" class="nav-link" [class.active]="tab === 'transmises'" (click)="setTab('transmises')">
-        Historique transmises ({{ activitesTransmises.length }})
-      </button>
-    </li>
-  </ul>
+  @if (view === 'activites') {
+    <ul class="nav nav-tabs mb-3 odk-tabs flex-nowrap">
+      <li class="nav-item">
+        <button type="button" class="nav-link" [class.active]="tab === 'attente'" (click)="setTab('attente')">
+          À traiter ({{ activites.length }})
+        </button>
+      </li>
+      <li class="nav-item">
+        <button type="button" class="nav-link" [class.active]="tab === 'transmises'" (click)="setTab('transmises')">
+          Historique transmises ({{ activitesTransmises.length }})
+        </button>
+      </li>
+    </ul>
+  }
 
-  @if (courriersDelegues.length > 0) {
+  @if (view === 'courriers' && courriersDelegues.length > 0) {
     <div class="alert alert-info py-2">
       <strong>Courriers délégués ({{ courriersDelegues.length }})</strong> — préparation hors application, pièce jointe téléchargeable.
     </div>
@@ -24,7 +26,7 @@
     <div class="text-center py-4"><span class="spinner-border"></span></div>
   }
 
-  @if (!loading && tab === 'attente') {
+  @if (view === 'activites' && !loading && tab === 'attente') {
     @if (activites.length === 0) {
       <div class="alert alert-info">Aucune activité en attente.</div>
     }
@@ -53,7 +55,7 @@
     }
   }
 
-  @if (!loading && tab === 'transmises') {
+  @if (view === 'activites' && !loading && tab === 'transmises') {
     @if (activitesTransmises.length === 0) {
       <div class="alert alert-info">Aucune activité transmise au directeur ODC pour le moment.</div>
     }
@@ -86,7 +88,7 @@
     }
   }
 
-  @if (!loading) {
+  @if (view === 'courriers' && !loading) {
     <h5 class="mt-4 mb-2">Courriers délégués par le directeur ODC</h5>
     @if (courriersDelegues.length === 0) {
       <div class="alert alert-secondary">Aucun courrier délégué pour le moment.</div>

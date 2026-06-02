@@ -7,6 +7,7 @@ import { ToastrService } from 'ngx-toastr';
 import { forkJoin } from 'rxjs';
 
 type Tab = 'attente' | 'transmises';
+type ResponsableView = 'activites' | 'courriers';
 
 @Component({
   selector: 'app-responsable-odk-dashboard',
@@ -17,6 +18,7 @@ type Tab = 'attente' | 'transmises';
 })
 export class ResponsableOdkDashboardComponent implements OnInit {
   tab: Tab = 'attente';
+  view: ResponsableView = 'activites';
   activites: any[] = [];
   activitesTransmises: any[] = [];
   courriersDelegues: any[] = [];
@@ -30,6 +32,8 @@ export class ResponsableOdkDashboardComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    const routed = this.route.snapshot.data['responsableTab'] as ResponsableView | undefined;
+    this.view = routed === 'courriers' ? 'courriers' : 'activites';
     this.loadAll();
   }
 
