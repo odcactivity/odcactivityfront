@@ -27,9 +27,7 @@ export class ValidationCourriersDirecteurComponent implements OnInit {
   suggestionText = '';
   suggestionReponseText = '';
 
-  servicesOdc: { id: number; nom: string }[] = [];
   deleguerCourrierId: number | null = null;
-  deleguerServiceId: number | null = null;
   deleguerNote = '';
 
   constructor(
@@ -39,14 +37,6 @@ export class ValidationCourriersDirecteurComponent implements OnInit {
 
   ngOnInit(): void {
     this.load();
-    this.global.getServicesOdcPourDirecteur().subscribe({
-      next: (list) => {
-        this.servicesOdc = Array.isArray(list) ? list : [];
-      },
-      error: () => {
-        this.servicesOdc = [];
-      },
-    });
   }
 
   load(): void {
@@ -146,29 +136,26 @@ export class ValidationCourriersDirecteurComponent implements OnInit {
 
   openDeleguer(courrierId: number): void {
     this.deleguerCourrierId = courrierId;
-    this.deleguerServiceId = null;
     this.deleguerNote = '';
   }
 
   confirmerDelegation(): void {
-    if (this.deleguerCourrierId == null || this.deleguerServiceId == null) {
-      this.toast.warning('Choisissez une entité ODC.');
+    if (this.deleguerCourrierId == null) {
       return;
     }
-    this.global
-      .postCourrierDeleguerServiceDirecteurOdc(
-        this.deleguerCourrierId,
-        this.deleguerServiceId,
-        this.deleguerNote
-      )
-      .subscribe({
-        next: () => {
-          this.toast.success('Courrier délégué à l’entité.');
-          this.deleguerCourrierId = null;
-          this.emitChanged();
-        },
-        error: (err) => this.toast.error(err?.error?.message || 'Délégation impossible.'),
-      });
+    const note = (this.deleguerNote || '').trim();
+    if (!note) {
+      this.toast.warning('Indiquez dans la note à quelle entité le courrier est adressé.');
+      return;
+    }
+    this.global.postCourrierDeleguerResponsableOdkDirecteurOdc(this.deleguerCourrierId, note).subscribe({
+      next: () => {
+        this.toast.success('Courrier délégué au responsable ODK (préparation hors application).');
+        this.deleguerCourrierId = null;
+        this.emitChanged();
+      },
+      error: (err) => this.toast.error(err?.error?.message || 'Délégation impossible.'),
+    });
   }
 
   peutValiderDcire(row: any): boolean {

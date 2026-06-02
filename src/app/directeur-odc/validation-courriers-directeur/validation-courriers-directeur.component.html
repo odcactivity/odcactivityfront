@@ -83,15 +83,13 @@
         <p class="small text-muted mb-2">
           Trace la remise physique au responsable d'entité. La réponse officielle sera saisie ici par le directeur ODC.
         </p>
-        <label class="form-label">Entité ODC (Kalanso, FabLab, …)</label>
-        <select class="form-select mb-2" [(ngModel)]="deleguerServiceId">
-          <option [ngValue]="null" disabled>— Choisir —</option>
-          @for (s of servicesOdc; track s.id) {
-            <option [ngValue]="s.id">{{ s.nom }}</option>
-          }
-        </select>
-        <label class="form-label">Note (optionnelle)</label>
-        <textarea class="form-control mb-2" rows="2" [(ngModel)]="deleguerNote" placeholder="Ex. remis au responsable Kalanso le …"></textarea>
+        <label class="form-label">Note (obligatoire)</label>
+        <textarea
+          class="form-control mb-2"
+          rows="2"
+          [(ngModel)]="deleguerNote"
+          placeholder="Ex. Courrier adressé à Kalanso (Mme X). Remis au responsable le 02/06."
+        ></textarea>
         <div class="d-flex gap-2">
           <button type="button" class="btn btn-primary btn-sm" (click)="confirmerDelegation()">Confirmer</button>
           <button type="button" class="btn btn-outline-secondary btn-sm" (click)="deleguerCourrierId = null">Annuler</button>

@@ -19,6 +19,7 @@ export class ResponsableOdkDashboardComponent implements OnInit {
   tab: Tab = 'attente';
   activites: any[] = [];
   activitesTransmises: any[] = [];
+  courriersDelegues: any[] = [];
   loading = false;
   noteActivite = '';
 
@@ -30,9 +31,10 @@ export class ResponsableOdkDashboardComponent implements OnInit {
 
   ngOnInit(): void {
     if (this.route.snapshot.data['responsableTab'] === 'courriers') {
-      this.toast.info('Les courriers ODC sont gérés par le directeur ODC.');
+      this.toast.info('ODC courriers.');
     }
     this.loadAll();
+    this.load();
   }
 
   setTab(t: Tab): void {
@@ -50,11 +52,40 @@ export class ResponsableOdkDashboardComponent implements OnInit {
         this.activites = Array.isArray(attente) ? attente : [];
         this.activitesTransmises = Array.isArray(transmises) ? transmises : [];
         this.loading = false;
+    this.global.get('activite/responsable-odk/en-attente').subscribe({
+      next: (d) => {
+        this.activites = Array.isArray(d) ? d : [];
+        this.global.getCourriersDeleguesResponsableOdk().subscribe({
+          next: (c) => {
+            this.courriersDelegues = Array.isArray(c) ? c : [];
+            this.loading = false;
+          },
+          error: () => {
+            this.courriersDelegues = [];
+            this.loading = false;
+          },
+        });
       },
       error: () => {
         this.loading = false;
         this.toast.error('Impossible de charger les activités.');
       },
+    });
+  }
+
+  telechargerCourrier(row: any): void {
+    const id = row?.id;
+    if (id == null) {
+      return;
+    }
+    this.global.openCourrierFile(Number(id)).subscribe({
+      next: (resp) => {
+        const blob = resp.body ?? new Blob();
+        const url = window.URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        setTimeout(() => window.URL.revokeObjectURL(url), 5000);
+      },
+      error: () => this.toast.error('Téléchargement impossible.'),
     });
   }
 

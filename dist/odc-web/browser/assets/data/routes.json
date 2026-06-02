@@ -33,6 +33,16 @@
       "roles": ["RESPONSABLE_ODK"]
     },
     {
+      "path": "/responsable-odk/courriers",
+      "title": "Courriers délégués",
+      "iconType": "feather",
+      "icon": "inbox",
+      "class": "",
+      "groupTitle": false,
+      "submenu": [],
+      "roles": ["RESPONSABLE_ODK"]
+    },
+    {
       "path": "/structure/fondation/courriers",
       "title": "Gestion Courriers",
       "iconType": "feather",

@@ -14,6 +14,12 @@
     </li>
   </ul>
 
+  @if (courriersDelegues.length > 0) {
+    <div class="alert alert-info py-2">
+      <strong>Courriers délégués ({{ courriersDelegues.length }})</strong> — préparation hors application, pièce jointe téléchargeable.
+    </div>
+  }
+
   @if (loading) {
     <div class="text-center py-4"><span class="spinner-border"></span></div>
   }
@@ -75,8 +81,27 @@
               <i class="far fa-trash-alt me-1"></i> Supprimer
             </button>
           }
+  @if (!loading) {
+    <h5 class="mt-4 mb-2">Courriers délégués par le directeur ODC</h5>
+    @if (courriersDelegues.length === 0) {
+      <div class="alert alert-secondary">Aucun courrier délégué pour le moment.</div>
+    }
+    @for (c of courriersDelegues; track c.id) {
+      <div class="card mb-3 shadow-sm">
+        <div class="card-body">
+          <h6 class="card-title mb-1">{{ c.objet }}</h6>
+          <p class="mb-1"><strong>N°</strong> {{ c.numero }}</p>
+          @if (c.noteResponsableOdk) {
+            <div class="alert alert-warning py-2 small mb-2" style="white-space: pre-wrap">
+              {{ c.noteResponsableOdk }}
+            </div>
+          }
+          <button type="button" class="btn btn-outline-primary btn-sm" (click)="telechargerCourrier(c)">
+            Télécharger / Imprimer
+          </button>
         </div>
       </div>
     }
   }
 </section>
+</div>

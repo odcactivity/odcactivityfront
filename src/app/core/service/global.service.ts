@@ -207,6 +207,32 @@ export class GlobalService {
       .pipe(catchError(this.handleError.bind(this)));
   }
 
+  getCourriersDeleguesResponsableOdk(): Observable<any[]> {
+    return this.http
+      .get<any[]>(`${this.baseUrl}/api/courriers/responsable-odk/courriers-delegues`)
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  postCourrierDeleguerResponsableOdkDirecteurOdc(courrierId: number, note?: string): Observable<any> {
+    let params = new HttpParams();
+    if (note && note.trim()) {
+      params = params.set('note', note.trim());
+    }
+    return this.http
+      .post(`${this.baseUrl}/api/courriers/odc-directeur/${courrierId}/deleguer-responsable-odk`, {}, { params })
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  /** Télécharger la pièce jointe du courrier. */
+  openCourrierFile(courrierId: number): Observable<HttpResponse<Blob>> {
+    return this.http
+      .get(`${this.baseUrl}/api/courriers/${courrierId}/ouvrir`, {
+        responseType: 'blob',
+        observe: 'response',
+      })
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
   /** Fichier du courrier en validation ODC (sans effet sur le statut). */
   getCourrierFichierValidationDirecteurOdc(courrierId: number): Observable<HttpResponse<Blob>> {
     return this.http

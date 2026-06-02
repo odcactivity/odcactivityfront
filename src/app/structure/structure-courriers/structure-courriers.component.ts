@@ -248,17 +248,38 @@ export class StructureCourriersComponent implements OnInit, OnDestroy {
     if (!row || this.maDirectionId == null) {
       return false;
     }
-    const ent = row['entite'] as Record<string, unknown> | undefined;
-    const id = typeof ent?.['id'] === 'number' ? ent['id'] : Number(ent?.['id']);
-    if (Number.isFinite(id) && id === this.maDirectionId) {
+    const entRaw = row['entite'] as unknown;
+    // entite peut être un objet OU un id (selon API / sérialisation)
+    const entId =
+      typeof entRaw === 'number'
+        ? entRaw
+        : typeof (entRaw as any)?.id === 'number'
+          ? (entRaw as any).id
+          : Number((entRaw as any)?.id);
+    const entIdFlat = typeof row['entiteId'] === 'number' ? (row['entiteId'] as number) : Number(row['entiteId']);
+    const directionInitialId =
+      typeof (row['directionInitial'] as any)?.id === 'number'
+        ? (row['directionInitial'] as any).id
+        : Number((row['directionInitial'] as any)?.id ?? row['directionInitialId']);
+
+    if (Number.isFinite(entId) && entId === this.maDirectionId) {
       return true;
     }
-    const parent = ent?.['parent'] as Record<string, unknown> | undefined;
-    const pid = typeof parent?.['id'] === 'number' ? parent['id'] : Number(parent?.['id']);
+    if (Number.isFinite(entIdFlat) && entIdFlat === this.maDirectionId) {
+      return true;
+    }
+    // Certains courriers DCIRE vers structure peuvent rester “rattachés” à directionInitial
+    if (Number.isFinite(directionInitialId) && directionInitialId === this.maDirectionId) {
+      return true;
+    }
+
+    const entObj = typeof entRaw === 'object' && entRaw != null ? (entRaw as any) : null;
+    const parent = entObj?.parent as any;
+    const pid = typeof parent?.id === 'number' ? parent.id : Number(parent?.id);
     if (Number.isFinite(pid) && pid === this.maDirectionId) {
       return true;
     }
-    const parentIdFlat = typeof ent?.['parentId'] === 'number' ? ent['parentId'] : Number(ent?.['parentId']);
+    const parentIdFlat = typeof entObj?.parentId === 'number' ? entObj.parentId : Number(entObj?.parentId);
     return Number.isFinite(parentIdFlat) && parentIdFlat === this.maDirectionId;
   }
 
