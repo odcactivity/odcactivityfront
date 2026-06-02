@@ -97,7 +97,7 @@ export class SigninComponent implements OnInit {
 
           // Redirection en fonction du rôle
           if (roles?.includes('RESPONSABLE_ODK')) {
-            this.router.navigateByUrl('/responsable-odk/activites').then(() => {
+            this.router.navigateByUrl('/responsable-odk/dashboard').then(() => {
               this.cdRef.detectChanges();
             });
           } else {

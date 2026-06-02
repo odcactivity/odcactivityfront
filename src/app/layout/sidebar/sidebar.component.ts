@@ -108,8 +108,13 @@ export class SidebarComponent implements OnInit {
   }
 
   /** Les personnels (sans rôle de gestion) ne voient pas la gestion des courriers. */
-  private itemVisibleForUser(item: { path?: string; roles?: string[] }): boolean {
+  private itemVisibleForUser(item: { path?: string; roles?: string[]; title?: string }): boolean {
     if (!this.checkRoles(item.roles)) {
+      return false;
+    }
+    // Demande produit: l'ADMIN ne doit pas voir l'onglet « Activité » dans le sidebar
+    // (certains comptes ADMIN reçoivent aussi SUPERADMIN côté autorités).
+    if (this.useRole.includes('ADMIN') && item.title === 'Activité') {
       return false;
     }
     if (item.path === '/courrier') {

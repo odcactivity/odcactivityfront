@@ -23,6 +23,26 @@
       "roles": ["DIRECTEUR"]
     },
     {
+      "path": "/responsable-odk/dashboard",
+      "title": "Dashboard",
+      "iconType": "feather",
+      "icon": "monitor",
+      "class": "",
+      "groupTitle": false,
+      "submenu": [],
+      "roles": ["RESPONSABLE_ODK"]
+    },
+    {
+      "path": "/activite",
+      "title": "Liste activités",
+      "iconType": "feather",
+      "icon": "list",
+      "class": "",
+      "groupTitle": false,
+      "submenu": [],
+      "roles": ["RESPONSABLE_ODK"]
+    },
+    {
       "path": "/responsable-odk/activites",
       "title": "Gestion activités",
       "iconType": "feather",

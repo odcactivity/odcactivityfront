@@ -57,8 +57,10 @@ export const APP_ROUTE: Route[] = [
 
       {
         path: 'responsable-odk/dashboard',
-        redirectTo: 'responsable-odk/activites',
-        pathMatch: 'full',
+        loadComponent: () =>
+          import('./personnels/dash-activite/dash-activite.component').then(
+            (c) => c.DashActiviteComponent
+          ),
       },
       {
         path: 'responsable-odk/activites',

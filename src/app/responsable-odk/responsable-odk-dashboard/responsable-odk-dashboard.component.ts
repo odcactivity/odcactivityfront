@@ -101,6 +101,46 @@ export class ResponsableOdkDashboardComponent implements OnInit {
       });
   }
 
+  peutSupprimerTransmise(row: { statut?: string }): boolean {
+    return row?.statut === 'En_Validation_Directeur_ODC';
+  }
+
+  libelleStatutTransmise(row: {
+    statut?: string;
+    directeurOdcDecision?: string;
+    suggestionDirecteurOdc?: string;
+  }): string {
+    if (row?.statut === 'En_Validation_Directeur_ODC') {
+      return 'En attente directeur ODC';
+    }
+    if (row?.directeurOdcDecision === 'VALIDEE') {
+      return 'Validée par le directeur ODC';
+    }
+    if (row?.directeurOdcDecision === 'REFUSEE') {
+      return 'Refusée par le directeur ODC';
+    }
+    if (row?.suggestionDirecteurOdc) {
+      return 'Retour suggestion directeur → à retravailler';
+    }
+    return row?.statut || 'Transmise';
+  }
+
+  classeBadgeTransmise(row: {
+    statut?: string;
+    directeurOdcDecision?: string;
+  }): string {
+    if (row?.statut === 'En_Validation_Directeur_ODC') {
+      return 'bg-warning text-dark';
+    }
+    if (row?.directeurOdcDecision === 'VALIDEE') {
+      return 'bg-success';
+    }
+    if (row?.directeurOdcDecision === 'REFUSEE') {
+      return 'bg-danger';
+    }
+    return 'bg-secondary';
+  }
+
   supprimerActiviteTransmise(row: any): void {
     const id = row?.id;
     if (id == null) {
