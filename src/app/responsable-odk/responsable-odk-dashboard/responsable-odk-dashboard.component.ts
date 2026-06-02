@@ -5,8 +5,6 @@ import { ActivatedRoute } from '@angular/router';
 import { GlobalService } from '@core/service/global.service';
 import { ToastrService } from 'ngx-toastr';
 
-type Tab = 'activites' | 'courriers';
-
 @Component({
   selector: 'app-responsable-odk-dashboard',
   standalone: true,
@@ -15,14 +13,9 @@ type Tab = 'activites' | 'courriers';
   styleUrl: './responsable-odk-dashboard.component.scss',
 })
 export class ResponsableOdkDashboardComponent implements OnInit {
-  tab: Tab = 'activites';
   activites: any[] = [];
-  courriers: any[] = [];
-  services: { id: number; nom: string }[] = [];
   loading = false;
   noteActivite = '';
-  noteCourrier = '';
-  serviceId: number | null = null;
 
   constructor(
     private readonly global: GlobalService,
@@ -31,48 +24,24 @@ export class ResponsableOdkDashboardComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    const tab = this.route.snapshot.data['responsableTab'] as Tab | undefined;
-    if (tab === 'activites' || tab === 'courriers') {
-      this.tab = tab;
+    if (this.route.snapshot.data['responsableTab'] === 'courriers') {
+      this.toast.info('Les courriers ODC sont gérés par le directeur ODC.');
     }
-    this.load();
-  }
-
-  setTab(t: Tab): void {
-    this.tab = t;
     this.load();
   }
 
   load(): void {
     this.loading = true;
-    if (this.tab === 'activites') {
-      this.global.get('activite/responsable-odk/en-attente').subscribe({
-        next: (d) => {
-          this.activites = Array.isArray(d) ? d : [];
-          this.loading = false;
-        },
-        error: () => {
-          this.loading = false;
-          this.toast.error('Impossible de charger les activités.');
-        },
-      });
-    } else {
-      this.global.get('api/courriers/responsable-odk/services-odc').subscribe({
-        next: (s) => {
-          this.services = Array.isArray(s) ? s : [];
-        },
-      });
-      this.global.get('api/courriers/responsable-odk/courriers/en-attente').subscribe({
-        next: (d) => {
-          this.courriers = Array.isArray(d) ? d : [];
-          this.loading = false;
-        },
-        error: () => {
-          this.loading = false;
-          this.toast.error('Impossible de charger les courriers.');
-        },
-      });
-    }
+    this.global.get('activite/responsable-odk/en-attente').subscribe({
+      next: (d) => {
+        this.activites = Array.isArray(d) ? d : [];
+        this.loading = false;
+      },
+      error: () => {
+        this.loading = false;
+        this.toast.error('Impossible de charger les activités.');
+      },
+    });
   }
 
   transmettreActivite(row: any): void {
@@ -118,26 +87,4 @@ export class ResponsableOdkDashboardComponent implements OnInit {
       });
   }
 
-  affecterCourrier(row: any): void {
-    const id = row?.id;
-    if (id == null || this.serviceId == null) {
-      this.toast.warning('Choisissez un service ODC.');
-      return;
-    }
-    let url = `api/courriers/responsable-odk/courriers/${id}/affecter-service?serviceEntiteId=${this.serviceId}`;
-    if (this.noteCourrier?.trim()) {
-      url += `&note=${encodeURIComponent(this.noteCourrier.trim())}`;
-    }
-    this.global.post(url, {}).subscribe({
-      next: () => {
-        this.toast.success('Courrier affecté au service.');
-        this.noteCourrier = '';
-        this.serviceId = null;
-        this.load();
-      },
-      error: (e: { error?: { message?: string } }) => {
-        this.toast.error(e?.error?.message || 'Échec de l’affectation.');
-      },
-    });
-  }
 }

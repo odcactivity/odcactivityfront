@@ -17,6 +17,7 @@ import Swal from 'sweetalert2';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ValidationCourriersDirecteurComponent } from '../../directeur-odc/validation-courriers-directeur/validation-courriers-directeur.component';
+import { structureCourriersPathForRoles } from '@core/utils/app-roles';
 
 interface selectActivitySupportInterface {
   id: number;
@@ -38,6 +39,7 @@ interface selectActivitySupportInterface {
 export class CourriersComponent {
 
   @ViewChild(DatatableComponent, { static: false }) table!: DatatableComponent;
+  @ViewChild(ValidationCourriersDirecteurComponent) validationDirecteurOdc?: ValidationCourriersDirecteurComponent;
 
 selectedCourrier: any;
 
@@ -254,12 +256,9 @@ loading = false;
       this.router.navigate(['/dashboard/main'], { replaceUrl: true });
       return;
     }
-    if (
-      r.includes('DIRECTEUR_FONDATION') ||
-      r.includes('DIRECTEUR_RSE') ||
-      r.includes('DIRECTEUR_DCI')
-    ) {
-      this.router.navigate(['/dashboard/main'], { replaceUrl: true });
+    const structurePath = structureCourriersPathForRoles(r);
+    if (structurePath) {
+      this.router.navigate([structurePath], { replaceUrl: true });
       return;
     }
 
@@ -281,7 +280,6 @@ loading = false;
     /** Expéditeur officiel des courriers sortants DCIRE (figé). */
     this.registerExterne = this.fb.group({
       cibleDirectionId: [null, [Validators.required]],
-      numero: ['', [Validators.required]],
       objet: ['', [Validators.required]],
       expediteur: [{ value: 'KEÏTA DCIRE', disabled: false }],
       fichier: [''],
@@ -713,6 +711,125 @@ loading = false;
     return row?.destinataireOdc === 'EXTERNE';
   }
 
+  /** Réponse ODC validée — en attente décharge / scan à la DCIRE. */
+  estCourrierEnAttenteDechargeDcire(row: any): boolean {
+    if (!this.isDcireRole || row?.statut !== 'TRANSMIS_DCIRE') {
+      return false;
+    }
+    return this.isCourrierPhysiquementADcire(row) && !this.estCourrierExterneSortantAuHub(row);
+  }
+
+  validerDechargeReponseDcire(row: any): void {
+    if (!row?.id) {
+      return;
+    }
+    this.glogalService.postCourrierValiderDechargeReponseDcire(row.id).subscribe({
+      next: () => {
+        this.toastr.success('Décharge validée — courrier renvoyé à l’ODC pour envoi.');
+        this.refreshCourriersDcire();
+      },
+      error: (err) => {
+        this.toastr.error(err?.error?.message || 'Validation impossible.');
+      },
+    });
+  }
+
+  onDirecteurOdcWorkflowChanged(): void {
+    this.loadOdcCourriersMerged();
+  }
+
+  private rowServiceOdcAffecte(row: any): boolean {
+    return row?.serviceOdcAffecte != null || row?.serviceOdcAffecteId != null;
+  }
+
+  peutDeleguerCourrierOdc(row: any): boolean {
+    if (!this.isDirecteurOdcRole || row?.statut !== 'ENVOYER' || this.rowServiceOdcAffecte(row)) {
+      return false;
+    }
+    const entId = this.rowEntiteId(row);
+    if (entId == null) {
+      return false;
+    }
+    return this.odcDirections.some((d) => Number(d.id) === entId);
+  }
+
+  peutConfirmerEnvoiPhysiqueOdc(row: any): boolean {
+    if (!this.isDirecteurOdcRole) {
+      return false;
+    }
+    if (row?.statut === 'REPONDU') {
+      return true;
+    }
+    if (row?.statut !== 'ENVOYER' || this.peutDeleguerCourrierOdc(row)) {
+      return false;
+    }
+    return this.rowServiceOdcAffecte(row);
+  }
+
+  openDeleguerCourrierOdc(row: any): void {
+    if (!row?.id) {
+      return;
+    }
+    this.validationDirecteurOdc?.openDeleguer(Number(row.id));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  /** Courrier émis par la DCIRE pour le périmètre ODC (réponse réservée au directeur ODC). */
+  isCourrierFluxOdc(row: any): boolean {
+    const cibleId =
+      row?.cibleInterneDirectionId ??
+      row?.cibleInterneDirection?.id ??
+      row?.directionInitial?.id ??
+      row?.directionInitialId;
+    if (cibleId != null && this.odcDirections.some((d) => Number(d.id) === Number(cibleId))) {
+      return true;
+    }
+    const entId = this.rowEntiteId(row);
+    if (entId != null && this.odcDirections.some((d) => Number(d.id) === entId)) {
+      return true;
+    }
+    return this.rowServiceOdcAffecte(row);
+  }
+
+  peutRepondreAuCourrier(row: any): boolean {
+    const s = row?.statut;
+    if (
+      s === 'ARCHIVER' ||
+      s === 'REPONDU' ||
+      s === 'ATTENTE_VALIDATION_ODC' ||
+      s === 'ATTENTE_VALIDATION_DIRECTEUR_ODC' ||
+      s === 'EN_REVISION_ADMIN_COURRIER' ||
+      s === 'ATTENTE_VALIDATION_REPONSE_DIRECTEUR_ODC'
+    ) {
+      return false;
+    }
+    if (this.isDirecteurOdcRole && this.isCourrierFluxOdc(row)) {
+      return s === 'ENVOYER' || s === 'IMPUTER';
+    }
+    if (this.isDcireRole && this.isCourrierPhysiquementADcire(row)) {
+      return true;
+    }
+    if (this.isCourrierFluxOdc(row)) {
+      return false;
+    }
+    return !this.isDirecteurOdcRole;
+  }
+
+  confirmerEnvoiPhysiqueOdc(row: any): void {
+    if (!row?.id) {
+      return;
+    }
+    this.glogalService.postCourrierConfirmerEnvoiPhysiqueOdc(row.id).subscribe({
+      next: () => {
+        this.toastr.success('Envoi physique confirmé — courrier archivé.');
+        this.loadOdcCourriersMerged();
+      },
+      error: (err) => {
+        this.toastr.error(err?.error?.message || 'Action impossible.');
+      },
+    });
+  }
+
   validerTransmissionVersDcire(row: any): void {
     if (!row?.id) {
       return;
@@ -808,13 +925,18 @@ loading = false;
     if (form.invalid) {
       return;
     }
+    const raw = form.getRawValue();
+    const cibleId = raw.cibleDirectionId;
+    if (cibleId == null || cibleId === '') {
+      this.toastr.warning('Choisissez une structure destinataire.');
+      return;
+    }
     const fd = new FormData();
-    fd.append('cibleDirectionId', String(form.value.cibleDirectionId));
-    fd.append('numero', form.value.numero);
-    fd.append('objet', form.value.objet);
-    fd.append('expediteur', (form.getRawValue().expediteur || 'KEÏTA DCIRE').toString().trim());
-    if (form.value.fichier) {
-      fd.append('fichier', form.value.fichier);
+    fd.append('cibleDirectionId', String(cibleId));
+    fd.append('objet', raw.objet);
+    fd.append('expediteur', (raw.expediteur || 'KEÏTA DCIRE').toString().trim());
+    if (raw.fichier) {
+      fd.append('fichier', raw.fichier);
     }
     this.loadingIndicator = true;
     this.glogalService.postMultipart('api/courriers/dcire/emission', fd).subscribe({
@@ -1015,8 +1137,11 @@ loading = false;
     // Si c'est pour répondre au courrier, ouvrir la modal de réponse
     if (content === 'repondre') {
       this.selectedCourrier = row;
+      const user = this.authService.getCurrentUserFromStorage() as { email?: string } | null;
+      const email =
+        (user?.email || this.currenUserData?.email || row.expediteurEmail || '').toString().trim();
       this.reponse = {
-        emailExpediteur: row.expediteurEmail || '',
+        emailExpediteur: email,
         objet: `Re: ${row.objet || ''}`,
         message: '',
         fichier: null,
@@ -1312,40 +1437,29 @@ envoyerReponse(modal: any) {
     next: (response) => {
       this.loading = false;
       modal.close();
-      this.toastr.success('Réponse envoyée avec succès');
-      
-      console.log('📝 Réponse backend:', response);
-      
-      // 🔥 Ajouter le courrier à la liste des répondus localement
-      if (this.selectedCourrier?.id && !this.courriersRepondusLocalement.includes(this.selectedCourrier.id)) {
-        this.courriersRepondusLocalement.push(this.selectedCourrier.id);
-        console.log('📋 Courriers répondus localement:', this.courriersRepondusLocalement);
-      }
-      
-      // Mettre à jour le statut du courrier en local avec la bonne constante
-      this.selectedCourrier.statut = 'REPONDU';
-      
-      // Réinitialiser le formulaire de réponse
+      this.toastr.success(
+        this.isDirecteurOdcRole && this.isCourrierFluxOdc(this.selectedCourrier)
+          ? 'Réponse enregistrée — transmission DCIRE ou clôture selon le flux.'
+          : 'Réponse envoyée avec succès'
+      );
+
       this.reponse = {
         emailExpediteur: '',
         objet: '',
         message: '',
         fichier: null,
-        attachments: []
+        attachments: [],
       };
-      
-      // Forcer le basculement vers la vue "envoyes" et recharger les données
-      console.log('🔄 Basculement vers la vue RÉPONDUS...');
-      this.typeliste = 'envoyes';
-      
-      // Forcer le rechargement depuis le backend pour voir si le statut a été mis à jour
+
       setTimeout(() => {
         if (this.isDcireRole) {
           this.refreshCourriersDcire();
+        } else if (this.isDirecteurOdcRole) {
+          this.onDirecteurOdcWorkflowChanged();
         } else {
           this.handleList('envoyes');
         }
-      }, 500);
+      }, 400);
     },
     error: (err) => {
       this.loading = false;
@@ -1358,8 +1472,12 @@ envoyerReponse(modal: any) {
 
   deleteRecord(row: any) {
     this.glogalService.delete("api/courriers/delete", row.id!).subscribe({
-      next: (response) => {
-        this.salles = response;
+      next: () => {
+        if (this.isDcireRole) {
+          this.refreshCourriersDcire();
+        } else {
+          this.loadOdcCourriersMerged();
+        }
         this.loadingIndicator = true;
         setTimeout(() => {
           this.loadingIndicator = false;

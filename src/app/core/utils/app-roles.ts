@@ -75,6 +75,21 @@ export function rolesFromJwtPayload(payload: Record<string, unknown> | null | un
   return [];
 }
 
+/** Page courriers pour Fondation / RSE / DCI (sans le dashboard général). */
+export function structureCourriersPathForRoles(roles: string[]): string | null {
+  const r = canonicalizeAppRoles(roles);
+  if (r.includes('DIRECTEUR_FONDATION')) {
+    return '/structure/fondation/courriers';
+  }
+  if (r.includes('DIRECTEUR_RSE')) {
+    return '/structure/rse/courriers';
+  }
+  if (r.includes('DIRECTEUR_DCI')) {
+    return '/structure/dci/courriers';
+  }
+  return null;
+}
+
 /** Rôles effectifs : stockage local + JWT (comme le menu latéral). */
 export function resolveEffectiveRolesFromUser(
   user: { roles?: unknown; bearer?: string } | null | undefined
