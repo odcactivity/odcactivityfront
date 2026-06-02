@@ -1,6 +1,14 @@
-<app-header></app-header>
-<app-sidebar></app-sidebar>
-<app-right-sidebar></app-right-sidebar>
-<div [dir]="direction">
-  <router-outlet></router-outlet>
+<div class="app-shell" [attr.dir]="direction">
+  <aside class="app-shell__aside" aria-label="Navigation">
+    <app-sidebar></app-sidebar>
+  </aside>
+
+  <div class="app-shell__workspace">
+    <app-header></app-header>
+    <main class="app-shell__main">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+
+  <app-right-sidebar></app-right-sidebar>
 </div>

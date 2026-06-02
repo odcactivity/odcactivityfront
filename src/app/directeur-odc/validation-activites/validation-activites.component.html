@@ -59,7 +59,10 @@
                     Voir le détail
                   </button>
                   <button type="button" class="btn btn-success btn-sm me-1" (click)="valider(a.id)">Valider</button>
-                  <button type="button" class="btn btn-outline-danger btn-sm" (click)="rejeter(a.id)">Refuser</button>
+                  <button type="button" class="btn btn-outline-danger btn-sm me-1" (click)="rejeter(a.id)">Refuser</button>
+                  <button type="button" class="btn btn-danger btn-sm" (click)="supprimer(a)">
+                    <i class="far fa-trash-alt me-1"></i> Supprimer
+                  </button>
                 </td>
               </tr>
             }
@@ -188,7 +191,10 @@
           Suggestion
         </button>
         <button type="button" class="btn btn-success me-1" (click)="validerFromModal()">Valider</button>
-        <button type="button" class="btn btn-outline-danger" (click)="rejeterFromModal()">Refuser</button>
+        <button type="button" class="btn btn-outline-danger me-1" (click)="rejeterFromModal()">Refuser</button>
+        <button type="button" class="btn btn-danger" (click)="supprimer(detail ?? detailForRow, true)">
+          <i class="far fa-trash-alt me-1"></i> Supprimer
+        </button>
       </div>
     }
   </div>

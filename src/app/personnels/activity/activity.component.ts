@@ -590,16 +590,13 @@ export class ActivityComponent {
     // console.log("modification++++++++++", form.value);
     if (form?.value?.id) {
       // Utiliser les IDs sélectionnés directement depuis selectedEtapeIds
-      const etapesObjects = (this.selectedEtapeIds || []).map((id: number) => ({ id }));
+      const etapeIds = (this.selectedEtapeIds?.length ? this.selectedEtapeIds : form.value.etape) || [];
 
-      // Créer l'objet à envoyer au backend
       const updatedActivite = {
         ...form.value,
-        etapes: etapesObjects,
+        etapes: etapeIds.map((id: number) => ({ id })),
       };
-      // console.log("updatedActivite avec etapes ==========:", updatedActivite.etape);
-      // console.log("select etape=====",etapesObjects)
-      this.glogalService.updateP("activite", updatedActivite.id, updatedActivite.etape, updatedActivite).subscribe({
+      this.glogalService.updateP("activite", updatedActivite.id, etapeIds, updatedActivite).subscribe({
         next: () => {
           this.modalService.dismissAll();
           this.editRecordSuccess();

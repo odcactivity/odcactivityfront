@@ -33,16 +33,6 @@
       "roles": ["RESPONSABLE_ODK"]
     },
     {
-      "path": "/responsable-odk/courriers",
-      "title": "Gestion courriers",
-      "iconType": "feather",
-      "icon": "inbox",
-      "class": "",
-      "groupTitle": false,
-      "submenu": [],
-      "roles": ["RESPONSABLE_ODK"]
-    },
-    {
       "path": "/structure/fondation/courriers",
       "title": "Courriers reçus",
       "iconType": "feather",

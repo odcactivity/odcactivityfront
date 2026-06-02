@@ -168,4 +168,27 @@ export class ValidationActivitesComponent implements OnInit {
       error: () => this.toast.error('Refus impossible.')
     });
   }
+
+  supprimer(row: any, fromModal = false): void {
+    const id = row?.id;
+    if (id == null) {
+      return;
+    }
+    if (!confirm(`Supprimer définitivement l'activité « ${row.nom} » ?`)) {
+      return;
+    }
+    this.global.delete('activite/directeur-odc', id).subscribe({
+      next: () => {
+        this.toast.success('Activité supprimée.');
+        if (fromModal) {
+          this.closeModal();
+        }
+        this.load();
+        this.loadHistorique();
+      },
+      error: (e: { error?: { message?: string } }) => {
+        this.toast.error(e?.error?.message || 'Suppression impossible.');
+      },
+    });
+  }
 }

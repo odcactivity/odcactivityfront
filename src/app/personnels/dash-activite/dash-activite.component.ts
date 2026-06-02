@@ -93,12 +93,12 @@ addDays(date: Date | string, days: number): Date {
 }
 
   getAllActivite() {
-    this.globaleService.get("activite").subscribe({
+    this.globaleService.get("activite/calendrier").subscribe({
       next: (value: Activity[]) => {
         this.activiteList = value;
-        console.log('Response Activite', this.activiteList);
-        this.transformActivitiesToEvents(); // Appeler la fonction de transformation
-        this.calendarOptions.events = this.calendarEvents; // Assigner les événements transformés aux options du calendrier
+        console.log('Response Activite calendrier', this.activiteList);
+        this.transformActivitiesToEvents();
+        this.calendarOptions.events = this.calendarEvents;
       },
       error: (err: any) => {
         console.log(err);
@@ -107,7 +107,9 @@ addDays(date: Date | string, days: number): Date {
   }
 
   transformActivitiesToEvents() {
-    this.calendarEvents = this.activiteList.map(activity => {
+    this.calendarEvents = this.activiteList
+      .filter((activity) => activity.statut !== 'Rejetee')
+      .map(activity => {
       let color: string = 'gray'; // Couleur par défaut
 
       // Définir la couleur selon le statut (sensible à la casse)

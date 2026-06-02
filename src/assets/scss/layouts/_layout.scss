@@ -189,12 +189,12 @@ body.sidebar-gone {
     }
   }
 
-  .navbar {
+  body:not(:has(.app-shell)) .navbar {
     left: 60px;
   }
 
-  .main-content,
-  .main-footer {
+  body:not(:has(.app-shell)) .main-content,
+  body:not(:has(.app-shell)) .main-footer {
     padding-left: 90px;
   }
 
@@ -707,7 +707,8 @@ body.layout-3 {
   }
 }
 
-.main-content {
+/* Hors .app-shell (pages legacy) : padding gauche pour sidebar fixe */
+body:not(:has(.app-shell)) .main-content {
   padding-left: 285px;
   padding-right: 29px;
   padding-top: 70px;
@@ -931,9 +932,12 @@ body:not(.sidebar-mini) .sidebar-style-2 {
   }
 
   .main-content {
-    padding-left: 30px;
-    padding-right: 30px;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
     width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    box-sizing: border-box;
   }
 
   .main-footer {

@@ -1,19 +1,18 @@
-<div class="container-fluid py-3">
+<section class="main-content p-4 responsable-odk-page">
   <h4 class="mb-3">Espace responsable ODK</h4>
-  <p class="text-muted small mb-0">
-  Gestion opérationnelle des activités et des courriers DCIRE avant validation par le directeur ODC.
+  <p class="text-muted small mb-3">
+    Vérification des activités créées par le personnel avant transmission au directeur ODC.
   </p>
-  <p class="text-muted small">Aucune statistique globale ici — réservée à l’administration et au directeur ODC.</p>
 
-  <ul class="nav nav-tabs mb-3">
+  <ul class="nav nav-tabs mb-3 odk-tabs flex-nowrap">
     <li class="nav-item">
-      <button type="button" class="nav-link" [class.active]="tab === 'activites'" (click)="setTab('activites')">
-        Gestion activités ({{ activites.length }})
+      <button type="button" class="nav-link" [class.active]="tab === 'attente'" (click)="setTab('attente')">
+        À traiter ({{ activites.length }})
       </button>
     </li>
     <li class="nav-item">
-      <button type="button" class="nav-link" [class.active]="tab === 'courriers'" (click)="setTab('courriers')">
-        Gestion courriers ({{ courriers.length }})
+      <button type="button" class="nav-link" [class.active]="tab === 'transmises'" (click)="setTab('transmises')">
+        Transmises au directeur ({{ activitesTransmises.length }})
       </button>
     </li>
   </ul>
@@ -22,7 +21,7 @@
     <div class="text-center py-4"><span class="spinner-border"></span></div>
   }
 
-  @if (!loading && tab === 'activites') {
+  @if (!loading && tab === 'attente') {
     @if (activites.length === 0) {
       <div class="alert alert-info">Aucune activité en attente.</div>
     }
@@ -38,37 +37,39 @@
           }
           <label class="form-label small">Note / commentaire</label>
           <textarea class="form-control mb-2" rows="2" [(ngModel)]="noteActivite"></textarea>
-          <button type="button" class="btn btn-success btn-sm me-2" (click)="transmettreActivite(a)">
-            Transmettre au directeur ODC
-          </button>
-          <button type="button" class="btn btn-outline-danger btn-sm" (click)="retourActivite(a)">
-            Retour au personnel
-          </button>
+          <div class="d-flex flex-wrap gap-2">
+            <button type="button" class="btn btn-success btn-sm" (click)="transmettreActivite(a)">
+              Transmettre au directeur ODC
+            </button>
+            <button type="button" class="btn btn-outline-warning btn-sm" (click)="retourActivite(a)">
+              Retour au personnel
+            </button>
+          </div>
         </div>
       </div>
     }
   }
 
-  @if (!loading && tab === 'courriers') {
-    @if (courriers.length === 0) {
-      <div class="alert alert-info">Aucun courrier DCIRE en attente.</div>
+  @if (!loading && tab === 'transmises') {
+    @if (activitesTransmises.length === 0) {
+      <div class="alert alert-info">Aucune activité transmise au directeur ODC.</div>
     }
-    @for (c of courriers; track c.id) {
+    @for (a of activitesTransmises; track a.id) {
       <div class="card mb-3 shadow-sm">
-        <div class="card-body">
-          <h5 class="card-title">{{ c.objet }}</h5>
-          <p class="mb-1"><strong>N°</strong> {{ c.numero }}</p>
-          <label class="form-label small">Service destinataire</label>
-          <select class="form-select mb-2" [(ngModel)]="serviceId">
-            <option [ngValue]="null">Choisir un service</option>
-            @for (s of services; track s.id) {
-              <option [ngValue]="s.id">{{ s.nom }}</option>
-            }
-          </select>
-          <textarea class="form-control mb-2" rows="2" [(ngModel)]="noteCourrier"></textarea>
-          <button type="button" class="btn btn-primary btn-sm" (click)="affecterCourrier(c)">Affecter au service</button>
+        <div class="card-body d-flex flex-wrap justify-content-between align-items-start gap-2">
+          <div>
+            <h5 class="card-title mb-1">{{ a.nom }}</h5>
+            <p class="mb-1 small text-muted">
+              {{ a.dateDebut | date:'dd/MM/yyyy' }} — {{ a.dateFin | date:'dd/MM/yyyy' }}
+              · Salle : {{ a.salleId?.nom || '—' }}
+            </p>
+            <span class="badge bg-warning text-dark">En validation directeur ODC</span>
+          </div>
+          <button type="button" class="btn btn-outline-danger btn-sm" (click)="supprimerActiviteTransmise(a)">
+            <i class="far fa-trash-alt me-1"></i> Supprimer
+          </button>
         </div>
       </div>
     }
   }
-</div>
+</section>

@@ -66,15 +66,11 @@ export const APP_ROUTE: Route[] = [
           import('./responsable-odk/responsable-odk-dashboard/responsable-odk-dashboard.component').then(
             (c) => c.ResponsableOdkDashboardComponent
           ),
-        data: { responsableTab: 'activites' },
       },
       {
         path: 'responsable-odk/courriers',
-        loadComponent: () =>
-          import('./responsable-odk/responsable-odk-dashboard/responsable-odk-dashboard.component').then(
-            (c) => c.ResponsableOdkDashboardComponent
-          ),
-        data: { responsableTab: 'courriers' },
+        redirectTo: 'responsable-odk/activites',
+        pathMatch: 'full',
       },
       { path: 'directeur-odc/validation-activites', loadComponent: () => import('./directeur-odc/validation-activites/validation-activites.component').then(c => c.ValidationActivitesComponent) },
       { path: 'directeur-odc/validation-courriers', redirectTo: 'courrier', pathMatch: 'full' },

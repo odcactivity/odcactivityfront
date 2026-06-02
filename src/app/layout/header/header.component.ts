@@ -90,6 +90,9 @@ export class HeaderComponent implements OnInit, AfterViewInit {
   nomComplet = 'Utilisateur';
 
   ngAfterViewInit() {
+    this.syncSidebarLayoutForViewport();
+    window.addEventListener('resize', () => this.syncSidebarLayoutForViewport());
+
     // set theme on startup
     if (localStorage.getItem('theme')) {
       this.renderer.removeClass(this.document.body, this.config.layout.variant);
@@ -144,6 +147,14 @@ export class HeaderComponent implements OnInit, AfterViewInit {
     this.langStoreValue = lang;
     this.languageService.setLanguage(lang);
   }
+  /** Évite que `sidebar-gone` (mobile) laisse le contenu sous la sidebar en desktop. */
+  private syncSidebarLayoutForViewport(): void {
+    if (window.innerWidth >= 1025) {
+      this.renderer.removeClass(this.document.body, 'sidebar-gone');
+      this.renderer.removeClass(this.document.body, 'sidebar-show');
+    }
+  }
+
   mobileMenuSidebarOpen(event: Event, className: string) {
     if (window.innerWidth < 1025) {
       const hasClass = (event.target as HTMLInputElement).classList.contains(
