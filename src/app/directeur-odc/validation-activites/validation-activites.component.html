@@ -94,8 +94,13 @@
                 <td>{{ a.nom }}</td>
                 <td>{{ a.dateDebut | date: 'dd/MM/yyyy' }} – {{ a.dateFin | date: 'dd/MM/yyyy' }}</td>
                 <td>{{ a.directeurOdcTraiteLe | date: 'dd/MM/yyyy HH:mm' }}</td>
-                <td class="text-end">
-                  <button type="button" class="btn btn-link btn-sm p-0" (click)="openDetail(a)">Voir le détail</button>
+                <td class="text-end text-nowrap">
+                  <button type="button" class="btn btn-outline-primary btn-sm me-1" (click)="openDetail(a)">
+                    Voir le détail
+                  </button>
+                  <button type="button" class="btn btn-outline-danger btn-sm" (click)="supprimer(a)">
+                    <i class="far fa-trash-alt me-1"></i> Supprimer
+                  </button>
                 </td>
               </tr>
             }
@@ -125,8 +130,13 @@
                 <td>{{ a.nom }}</td>
                 <td>{{ a.dateDebut | date: 'dd/MM/yyyy' }} – {{ a.dateFin | date: 'dd/MM/yyyy' }}</td>
                 <td>{{ a.directeurOdcTraiteLe | date: 'dd/MM/yyyy HH:mm' }}</td>
-                <td class="text-end">
-                  <button type="button" class="btn btn-link btn-sm p-0" (click)="openDetail(a)">Voir le détail</button>
+                <td class="text-end text-nowrap">
+                  <button type="button" class="btn btn-outline-primary btn-sm me-1" (click)="openDetail(a)">
+                    Voir le détail
+                  </button>
+                  <button type="button" class="btn btn-outline-danger btn-sm" (click)="supprimer(a)">
+                    <i class="far fa-trash-alt me-1"></i> Supprimer
+                  </button>
                 </td>
               </tr>
             }
@@ -182,20 +192,20 @@
   </div>
   <div class="modal-footer d-flex flex-wrap gap-2 justify-content-between">
     <button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss()">Fermer</button>
-    @if (detail?.statut === 'En_Validation_Directeur_ODC' || detailForRow?.statut === 'En_Validation_Directeur_ODC') {
-      <div class="w-100">
-        <textarea class="form-control form-control-sm mb-2" rows="2" [(ngModel)]="suggestionTexte"
+    <div class="d-flex flex-wrap gap-2 align-items-start">
+      @if (detail?.statut === 'En_Validation_Directeur_ODC' || detailForRow?.statut === 'En_Validation_Directeur_ODC') {
+        <textarea class="form-control form-control-sm mb-0" rows="2" style="min-width: 220px" [(ngModel)]="suggestionTexte"
                   placeholder="Suggestion pour le responsable ODK"></textarea>
-        <button type="button" class="btn btn-warning btn-sm me-1"
+        <button type="button" class="btn btn-warning btn-sm"
                 (click)="suggerer(detail?.id ?? detailForRow?.id, suggestionTexte); modal.dismiss()">
           Suggestion
         </button>
-        <button type="button" class="btn btn-success me-1" (click)="validerFromModal()">Valider</button>
-        <button type="button" class="btn btn-outline-danger me-1" (click)="rejeterFromModal()">Refuser</button>
-        <button type="button" class="btn btn-danger" (click)="supprimer(detail ?? detailForRow, true)">
-          <i class="far fa-trash-alt me-1"></i> Supprimer
-        </button>
-      </div>
-    }
+        <button type="button" class="btn btn-success btn-sm" (click)="validerFromModal()">Valider</button>
+        <button type="button" class="btn btn-outline-danger btn-sm" (click)="rejeterFromModal()">Refuser</button>
+      }
+      <button type="button" class="btn btn-danger btn-sm" (click)="supprimer(detail ?? detailForRow, true)">
+        <i class="far fa-trash-alt me-1"></i> Supprimer
+      </button>
+    </div>
   </div>
 </ng-template>

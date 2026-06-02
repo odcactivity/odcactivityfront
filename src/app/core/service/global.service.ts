@@ -280,10 +280,15 @@ export class GlobalService {
       catchError(this.handleError.bind(this))
     );
   }
-  updateP(name: string, id: number, listes: Object, object: Object): Observable<Object> {
-    return this.http.put(`${this.baseUrl}/${name}/${id}/${listes}`, object).pipe(
-      catchError(this.handleError.bind(this))
-    );
+  updateP(name: string, id: number, listes: unknown, object: Object): Observable<Object> {
+    const ids = (Array.isArray(listes) ? listes : [])
+      .map((x) => Number(x))
+      .filter((x) => Number.isFinite(x) && x > 0);
+    const url =
+      ids.length > 0
+        ? `${this.baseUrl}/${name}/${id}/${ids.join(',')}`
+        : `${this.baseUrl}/${name}/${id}`;
+    return this.http.put(url, object).pipe(catchError(this.handleError.bind(this)));
   }
 
 

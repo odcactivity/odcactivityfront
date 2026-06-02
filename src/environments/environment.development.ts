@@ -3,7 +3,7 @@
 // The list of file replacements can be found in `angular.json`.
 
 export const environment = {
-  appBuildTag: '2026-06-02-workflow-activites-v1',
+  appBuildTag: '2026-06-02-directeur-supprimer-v1',
   production: false,
   //uploadUrl: 'http://localhost:8089',
   //apiUrl: 'http://localhost:8089',

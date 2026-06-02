@@ -605,17 +605,12 @@ export class ActivityComponent {
           }, 500);
           this.getAllActivite();
         },
-        error: (err: { status: number; error: any; message?: string }) => {
+        error: (err: unknown) => {
           console.error('Erreur lors de la mise à jour :', err);
 
-          let message = 'Une erreur est survenue. Veuillez réessayer.';
+          let message = this.glogalService.extractMessageFromError(err)
+            || 'Une erreur est survenue. Veuillez réessayer.';
           let title = '<span class="text-red-500">Échec</span>';
-
-          if (err.error?.message) {
-            message = err.error.message;
-          } else if (err.message) {
-            message = err.message;
-          }
 
           Swal.fire({
             icon: 'error',
