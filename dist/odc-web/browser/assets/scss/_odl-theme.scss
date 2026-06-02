@@ -396,29 +396,14 @@ a.text-primary,
   box-shadow: none !important;
 }
 
-/* IMPORTANT: décaler le contenu à droite du sidebar pour qu'il ne soit jamais masqué */
+/* Contenu des pages (le décalage sidebar est géré par .app-shell en flex) */
 .main-content {
   background-color: #fafafa;
-  margin-left: var(--odl-sidebar-width) !important;
-  width: calc(100vw - var(--odl-sidebar-width)) !important;
-  max-width: calc(100vw - var(--odl-sidebar-width)) !important;
-  padding: 1.5rem !important;
-  padding-top: 90px !important;
-  min-height: calc(100vh - 60px);
-  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
+  padding: 1.5rem;
   box-sizing: border-box;
-}
-/* Sidebar réduite (60px) */
-body.side-closed .main-content {
-  margin-left: 60px !important;
-  width: calc(100vw - 60px) !important;
-  max-width: calc(100vw - 60px) !important;
-}
-/* Mobile : sidebar masquée */
-body.sidebar-gone .main-content {
-  margin-left: 0 !important;
-  width: 100% !important;
-  max-width: 100% !important;
+  overflow-x: hidden;
 }
 
 /* Breadcrumb ODL */

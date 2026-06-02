@@ -30,11 +30,7 @@ export class ResponsableOdkDashboardComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    if (this.route.snapshot.data['responsableTab'] === 'courriers') {
-      this.toast.info('ODC courriers.');
-    }
     this.loadAll();
-    this.load();
   }
 
   setTab(t: Tab): void {
@@ -47,28 +43,22 @@ export class ResponsableOdkDashboardComponent implements OnInit {
     forkJoin({
       attente: this.global.get('activite/responsable-odk/en-attente'),
       transmises: this.global.get('activite/responsable-odk/transmises-directeur'),
+      courriersDelegues: this.global.getCourriersDeleguesResponsableOdk(),
     }).subscribe({
-      next: ({ attente, transmises }) => {
+      next: ({ attente, transmises, courriersDelegues }) => {
         this.activites = Array.isArray(attente) ? attente : [];
         this.activitesTransmises = Array.isArray(transmises) ? transmises : [];
-        this.loading = false;
-    this.global.get('activite/responsable-odk/en-attente').subscribe({
-      next: (d) => {
-        this.activites = Array.isArray(d) ? d : [];
-        this.global.getCourriersDeleguesResponsableOdk().subscribe({
-          next: (c) => {
-            this.courriersDelegues = Array.isArray(c) ? c : [];
-            this.loading = false;
-          },
-          error: () => {
-            this.courriersDelegues = [];
-            this.loading = false;
-          },
-        });
+        this.courriersDelegues = Array.isArray(courriersDelegues) ? courriersDelegues : [];
       },
       error: () => {
+        this.activites = [];
+        this.activitesTransmises = [];
+        this.courriersDelegues = [];
         this.loading = false;
-        this.toast.error('Impossible de charger les activités.');
+        this.toast.error('Impossible de charger les données.');
+      },
+      complete: () => {
+        this.loading = false;
       },
     });
   }
