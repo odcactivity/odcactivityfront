@@ -325,6 +325,7 @@ body .sidebar.main-sidebar .menu .list li .ml-menu li.active a .sidebarIcon {
 .navbar.main-navbar,
 .main-navbar.sticky,
 .main-navbar.navbar.sticky {
+  z-index: 891 !important;
   background: var(--odl-background) !important;
   background-image: none !important;
   border-bottom: 1px solid var(--odl-border);

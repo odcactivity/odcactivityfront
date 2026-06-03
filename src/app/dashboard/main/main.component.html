@@ -136,8 +136,8 @@
     <ng-container *ngIf="showCourrierDashboard">
       <div class="card mb-4 odl-dashboard-card">
         <div class="card-header">
-          <h4 class="mb-1">Vue d’ensemble des courriers</h4>
-          <p class="odl-dashboard-subtitle mb-0">
+          <h4 class="mb-0">Vue d’ensemble des courriers</h4>
+          <p class="odl-dashboard-subtitle mb-0" *ngIf="!courrierStatsOdcProductTriple">
             <ng-container *ngIf="courrierStatsRecuReponduOnly; else courrierStatsComplet">
               Courriers reçus et réponses enregistrées.
             </ng-container>
@@ -146,61 +146,98 @@
         </div>
         <div class="card-body">
           <div class="row g-3">
-            <div class="col-xl col-lg-4 col-md-6 col-sm-6" *ngIf="!courrierStatsRecuReponduOnly">
-              <div class="odl-stat-card">
-                <div class="odl-stat-icon odl-stat-icon-courrier-emis">
-                  <i class="fas fa-paper-plane"></i>
-                </div>
-                <div class="odl-stat-content">
-                  <p class="odl-stat-label">Émis</p>
-                  <p class="odl-stat-value odl-stat-value-courrier-emis">{{ courrierEmis }}</p>
-                </div>
-              </div>
-            </div>
-            <div class="col-xl col-lg-4 col-md-6 col-sm-6" [class.col-md-6]="courrierStatsRecuReponduOnly">
-              <div class="odl-stat-card">
-                <div class="odl-stat-icon odl-stat-icon-courrier-repondu">
-                  <i class="fas fa-reply"></i>
-                </div>
-                <div class="odl-stat-content">
-                  <p class="odl-stat-label">Répondu</p>
-                  <p class="odl-stat-value odl-stat-value-courrier-repondu">{{ courrierRepondu }}</p>
+            <ng-container *ngIf="courrierStatsOdcProductTriple; else courrierStatsLegacy">
+              <div class="col-xl-4 col-lg-4 col-md-6 col-sm-6">
+                <div class="odl-stat-card">
+                  <div class="odl-stat-icon odl-stat-icon-courrier-recu">
+                    <i class="fas fa-inbox"></i>
+                  </div>
+                  <div class="odl-stat-content">
+                    <p class="odl-stat-label">Reçu</p>
+                    <p class="odl-stat-value odl-stat-value-courrier-recu">{{ courrierRecu }}</p>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div class="col-xl col-lg-4 col-md-6 col-sm-6" *ngIf="!courrierStatsRecuReponduOnly">
-              <div class="odl-stat-card">
-                <div class="odl-stat-icon odl-stat-icon-courrier-attente">
-                  <i class="fas fa-hourglass-half"></i>
-                </div>
-                <div class="odl-stat-content">
-                  <p class="odl-stat-label">En attente</p>
-                  <p class="odl-stat-value odl-stat-value-courrier-attente">{{ courrierEnAttente }}</p>
-                </div>
-              </div>
-            </div>
-            <div class="col-xl col-lg-4 col-md-6 col-sm-6" [class.col-md-6]="courrierStatsRecuReponduOnly">
-              <div class="odl-stat-card">
-                <div class="odl-stat-icon odl-stat-icon-courrier-recu">
-                  <i class="fas fa-inbox"></i>
-                </div>
-                <div class="odl-stat-content">
-                  <p class="odl-stat-label">Reçu</p>
-                  <p class="odl-stat-value odl-stat-value-courrier-recu">{{ courrierRecu }}</p>
+              <div class="col-xl-4 col-lg-4 col-md-6 col-sm-6">
+                <div class="odl-stat-card">
+                  <div class="odl-stat-icon odl-stat-icon-courrier-repondu">
+                    <i class="fas fa-reply"></i>
+                  </div>
+                  <div class="odl-stat-content">
+                    <p class="odl-stat-label">Répondu</p>
+                    <p class="odl-stat-value odl-stat-value-courrier-repondu">{{ courrierRepondu }}</p>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div class="col-xl col-lg-4 col-md-6 col-sm-6" *ngIf="!courrierStatsRecuReponduOnly">
-              <div class="odl-stat-card">
-                <div class="odl-stat-icon odl-stat-icon-courrier-valide">
-                  <i class="fas fa-clipboard-check"></i>
-                </div>
-                <div class="odl-stat-content">
-                  <p class="odl-stat-label">Validé</p>
-                  <p class="odl-stat-value odl-stat-value-courrier-valide">{{ courrierValide }}</p>
+              <div class="col-xl-4 col-lg-4 col-md-6 col-sm-6">
+                <div class="odl-stat-card">
+                  <div class="odl-stat-icon odl-stat-icon-courrier-attente">
+                    <i class="fas fa-clock"></i>
+                  </div>
+                  <div class="odl-stat-content">
+                    <p class="odl-stat-label">Non répondus</p>
+                    <p class="odl-stat-value odl-stat-value-courrier-attente">{{ courrierNonRepondu }}</p>
+                  </div>
                 </div>
               </div>
-            </div>
+            </ng-container>
+            <ng-template #courrierStatsLegacy>
+              <div class="col-xl col-lg-4 col-md-6 col-sm-6" *ngIf="!courrierStatsRecuReponduOnly">
+                <div class="odl-stat-card">
+                  <div class="odl-stat-icon odl-stat-icon-courrier-emis">
+                    <i class="fas fa-paper-plane"></i>
+                  </div>
+                  <div class="odl-stat-content">
+                    <p class="odl-stat-label">Émis</p>
+                    <p class="odl-stat-value odl-stat-value-courrier-emis">{{ courrierEmis }}</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-xl col-lg-4 col-md-6 col-sm-6" [class.col-md-6]="courrierStatsRecuReponduOnly">
+                <div class="odl-stat-card">
+                  <div class="odl-stat-icon odl-stat-icon-courrier-repondu">
+                    <i class="fas fa-reply"></i>
+                  </div>
+                  <div class="odl-stat-content">
+                    <p class="odl-stat-label">Répondu</p>
+                    <p class="odl-stat-value odl-stat-value-courrier-repondu">{{ courrierRepondu }}</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-xl col-lg-4 col-md-6 col-sm-6" *ngIf="!courrierStatsRecuReponduOnly">
+                <div class="odl-stat-card">
+                  <div class="odl-stat-icon odl-stat-icon-courrier-attente">
+                    <i class="fas fa-hourglass-half"></i>
+                  </div>
+                  <div class="odl-stat-content">
+                    <p class="odl-stat-label">En attente</p>
+                    <p class="odl-stat-value odl-stat-value-courrier-attente">{{ courrierEnAttente }}</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-xl col-lg-4 col-md-6 col-sm-6" [class.col-md-6]="courrierStatsRecuReponduOnly">
+                <div class="odl-stat-card">
+                  <div class="odl-stat-icon odl-stat-icon-courrier-recu">
+                    <i class="fas fa-inbox"></i>
+                  </div>
+                  <div class="odl-stat-content">
+                    <p class="odl-stat-label">Reçu</p>
+                    <p class="odl-stat-value odl-stat-value-courrier-recu">{{ courrierRecu }}</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-xl col-lg-4 col-md-6 col-sm-6" *ngIf="!courrierStatsRecuReponduOnly">
+                <div class="odl-stat-card">
+                  <div class="odl-stat-icon odl-stat-icon-courrier-valide">
+                    <i class="fas fa-clipboard-check"></i>
+                  </div>
+                  <div class="odl-stat-content">
+                    <p class="odl-stat-label">Validé</p>
+                    <p class="odl-stat-value odl-stat-value-courrier-valide">{{ courrierValide }}</p>
+                  </div>
+                </div>
+              </div>
+            </ng-template>
           </div>
         </div>
       </div>

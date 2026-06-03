@@ -74,11 +74,28 @@
                       TOUT
                     </button>
 
-                    @if (!isDcireRole) {
+                    @if (!isDcireRole && !isOdcProductCourrierRole) {
                       <button [class]="typeliste ==='recus' ? 'btn btn-warning' : 'btn btn shadow-sm btn-dark'"
                               (click)="handleList('recus')" style="min-width: 100px;">
                         <i class="fas fa-inbox me-1"></i>
                         REÇUS
+                      </button>
+                    }
+                    @if (isOdcProductCourrierRole) {
+                      <button [class]="typeliste ==='recus' ? 'btn btn-warning' : 'btn btn shadow-sm btn-dark'"
+                              (click)="handleList('recus')" style="min-width: 100px;">
+                        <i class="fas fa-inbox me-1"></i>
+                        REÇUS
+                      </button>
+                      <button [class]="typeliste ==='envoyes' ? 'btn btn-warning' : 'btn btn shadow-sm btn-dark'"
+                              (click)="handleList('envoyes')" style="min-width: 110px;">
+                        <i class="fas fa-paper-plane me-1"></i>
+                        REPONDUS
+                      </button>
+                      <button [class]="typeliste ==='nonRepondus' ? 'btn btn-warning' : 'btn btn shadow-sm btn-dark'"
+                              (click)="handleList('nonRepondus')" style="min-width: 130px;">
+                        <i class="fas fa-clock me-1"></i>
+                        NON RÉPONDUS
                       </button>
                     }
                     @if (isDcireRole) {
@@ -100,7 +117,14 @@
                       ACTIFS
                     </button>
 
-                    @if (!isDcireRole && isSuperAdminRole) {
+                    @if (isDirecteurOdcRole) {
+                      <button [class]="typeliste ==='delegues' ? 'btn btn-warning' : 'btn btn shadow-sm btn-dark'"
+                              (click)="handleList('delegues')" style="min-width: 120px;">
+                        <i class="fas fa-share me-1"></i>
+                        DÉLÉGUÉ
+                      </button>
+                    }
+                    @if (!isDcireRole && isAdminCourrierRole) {
                       <button [class]="typeliste ==='validation' ? 'btn btn-warning' : 'btn btn shadow-sm btn-dark'"
                               (click)="handleList('validation')" style="min-width: 120px;">
                         <i class="fas fa-user-check me-1"></i>
@@ -114,11 +138,13 @@
                       ARCHIVES
                     </button>
 
-                    <button [class]="typeliste ==='envoyes' ? 'btn btn-warning' : 'btn btn shadow-sm btn-dark'"
-                            (click)="handleList('envoyes')" style="min-width: 100px;">
-                      <i class="fas fa-paper-plane me-1"></i>
-                      REPONDUS
-                    </button>
+                    @if (!isOdcProductCourrierRole) {
+                      <button [class]="typeliste ==='envoyes' ? 'btn btn-warning' : 'btn btn shadow-sm btn-dark'"
+                              (click)="handleList('envoyes')" style="min-width: 100px;">
+                        <i class="fas fa-paper-plane me-1"></i>
+                        REPONDUS
+                      </button>
+                    }
                   </div>
                 </div>
               </div>
@@ -129,7 +155,7 @@
               <ngx-datatable #table class="material" [rows]="Courriers" [loadingIndicator]="loadingIndicator"
                              columnMode="force" [headerHeight]="60" [footerHeight]="80" rowHeight="auto" [limit]="10"
                              [scrollbarH]="scrollBarHorizontal" [reorderable]="reorderable" [selected]="selected"
-                             [selectionType]="selection" (select)='onSelect($event)' (activate)="onCourrierActivate($event)">
+                             [selectionType]="selection" (select)='onSelect($event)'>
                 <ngx-datatable-column [width]="70" [sortable]="false" [draggable]="false" [resizeable]="false"
                                       [canAutoResize]="false" [headerCheckboxable]="true" [checkboxable]="true">
                 </ngx-datatable-column>
@@ -285,21 +311,6 @@
                 </ngx-datatable-column>
               </ngx-datatable>
             </div>
-            @if (courrierReponsesDetail.length > 0 && lastDetailCourrierId) {
-              <div class="card mt-3 p-3">
-                <h6 class="mb-2">Réponses enregistrées (cliquez sur une ligne du tableau pour afficher l’historique)</h6>
-                @for (rep of courrierReponsesDetail; track rep.id) {
-                  <div class="border-bottom pb-2 mb-2">
-                    <p class="small mb-1"><strong>Objet :</strong> {{ rep.objet }}</p>
-                    <p class="small mb-1 text-muted">De : {{ rep.email }} — {{ rep.dateReponse | date: 'short' }}</p>
-                    <p class="small mb-1" style="white-space: pre-wrap">{{ rep.message }}</p>
-                    @if (rep.fichierJoint) {
-                      <p class="small mb-0 text-muted">Pièce : {{ rep.fichierJoint }}</p>
-                    }
-                  </div>
-                }
-              </div>
-            }
           </div>
         </div>
       </div>
