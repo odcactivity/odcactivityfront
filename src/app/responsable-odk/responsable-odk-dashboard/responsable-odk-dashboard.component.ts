@@ -76,8 +76,27 @@ export class ResponsableOdkDashboardComponent implements OnInit {
       next: (resp) => {
         const blob = resp.body ?? new Blob();
         const url = window.URL.createObjectURL(blob);
-        window.open(url, '_blank');
-        setTimeout(() => window.URL.revokeObjectURL(url), 5000);
+
+        // Extraction du nom de fichier depuis l'en-tête Content-Disposition
+        const contentDisposition = resp.headers.get('content-disposition');
+        let filename = `courrier_${id}.pdf`;
+        if (contentDisposition) {
+          const matches = /filename="([^"]*)"/.exec(contentDisposition);
+          if (matches && matches[1]) {
+            filename = matches[1];
+          }
+        }
+
+        // Téléchargement forcé via un lien invisible (évite le .crdownload)
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        // Libération de la mémoire après un délai suffisant (15s)
+        setTimeout(() => window.URL.revokeObjectURL(url), 15000);
       },
       error: () => this.toast.error('Téléchargement impossible.'),
     });
