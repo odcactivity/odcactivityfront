@@ -373,7 +373,10 @@ export class EntiteComponent {
     this.glogalService.get('entite/directions').subscribe({
       next: (data: Entite[]) => {
         console.log('Directions reçues:', data);
-        this.directions = data;
+        this.directions = data.filter(d => {
+          const name = this.normalizeEntiteLabel(d.nom);
+          return !(name.includes('dcire') || name.includes('dci re'));
+        });
         
         // Initialiser immédiatement les compteurs d'activités à 0
         this.directions.forEach(direction => {

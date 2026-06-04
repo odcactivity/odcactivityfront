@@ -1,59 +1,57 @@
-/* Cartes Entité – style ODL */
-/* Cartes Entité – style ODL, un peu moins orangé */
+/* Cartes Entité – Style Premium Modern */
 .card-hover {
   border-radius: 1.25rem;
   overflow: hidden;
   cursor: pointer;
-  border: 1px solid #E5E5E5;
+  border: 1px solid rgba(0, 0, 0, 0.05);
   background: #FFFFFF;
-  box-shadow:
-    0 12px 30px rgba(15, 23, 42, 0.25);
-  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
 }
 
 .card-hover:hover {
-  transform: translateY(-4px) scale(1.01);
-  border-color: rgba(0, 0, 0, 0.08);
-  box-shadow:
-    0 20px 45px rgba(15, 23, 42, 0.35);
+  transform: translateY(-6px);
+  border-color: rgba(249, 115, 22, 0.3);
+  box-shadow: 0 20px 40px rgba(249, 115, 22, 0.08), 0 1px 3px rgba(249, 115, 22, 0.05);
 }
 
-/* Bordure uniquement sur les images des cartes (logo Divisions / DCIRE) */
-.card-img-top {
-  transition: transform 0.4s ease;
-  border: 1px solid #E5E5E5;
-  border-radius: 4px;
+.entite-card-image-wrapper {
+  height: 180px;
+  background: #FDFDFD;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  transition: background 0.3s ease;
 }
 
-.card-hover:hover .card-img-top {
-  transform: scale(1.03);
+.card-hover:hover .entite-card-image-wrapper {
+  background: #FFFFFF;
 }
 
-.card-body {
-  transition: background 0.3s ease, color 0.3s ease;
+.entite-card-logo {
+  max-height: 100%;
+  max-width: 85%;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.03));
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-hover:hover .entite-card-logo {
+  transform: scale(1.06);
 }
 
 .entite-card-body {
-  background: #111827; /* fond sombre neutre, accent orange gardé seulement sur les icônes/compteurs */
+  background: #111827; /* sleek dark neutral background */
+  padding: 1.5rem !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.3s ease;
 }
 
 .card-hover:hover .entite-card-body {
-  background: linear-gradient(to bottom, #030712, #111827);
-}
-
-/* Assombrir les images avec un overlay dédié */
-.entite-card-image-wrapper {
-  position: relative;
-}
-
-.entite-card-image-overlay {
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
-}
-
-/* Bandeau texte / compte d’activités */
-.card-body h3.card-title {
-  font-size: 0.95rem;
-  font-weight: 700;
   letter-spacing: 0.02em;
 }
 
