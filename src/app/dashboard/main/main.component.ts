@@ -178,6 +178,14 @@ export class MainComponent implements OnInit {
     );
   }
 
+  /** Hub DCIRE : émet uniquement — Émis, Répondu, Non répondu (pas de « reçu » entrant). */
+  get courrierStatsDcireTriple(): boolean {
+    if (this.courrierStatsOdcProductTriple) {
+      return false;
+    }
+    return this.currentRoles.includes('DIRECTEUR') || this.currentRoles.includes('DCIRE');
+  }
+
   /** Divisions Fondation / RSE / DCI : stats courrier limitées à Reçu + Répondu. */
   get courrierStatsRecuReponduOnly(): boolean {
     return (
@@ -209,6 +217,9 @@ export class MainComponent implements OnInit {
     if (this.courrierStatsOdcProductTriple) {
       return ['recu', 'repondu', 'nonRepondu'];
     }
+    if (this.courrierStatsDcireTriple) {
+      return ['emis', 'repondu', 'nonRepondu'];
+    }
     if (this.courrierStatsRecuReponduOnly) {
       return ['recu', 'repondu'];
     }
@@ -219,6 +230,9 @@ export class MainComponent implements OnInit {
     if (this.courrierStatsOdcProductTriple) {
       return ['Reçu', 'Répondu', 'Non répondus'];
     }
+    if (this.courrierStatsDcireTriple) {
+      return ['Émis', 'Répondu', 'Non répondu'];
+    }
     if (this.courrierStatsRecuReponduOnly) {
       return ['Reçu', 'Répondu'];
     }
@@ -228,6 +242,9 @@ export class MainComponent implements OnInit {
   private activeCourrierColors(): string[] {
     if (this.courrierStatsOdcProductTriple) {
       return ['#2563eb', '#16a34a', '#d97706'];
+    }
+    if (this.courrierStatsDcireTriple) {
+      return ['#0d9488', '#16a34a', '#d97706'];
     }
     if (this.courrierStatsRecuReponduOnly) {
       return ['#2563eb', '#16a34a'];

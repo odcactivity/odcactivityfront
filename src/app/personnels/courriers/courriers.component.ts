@@ -244,7 +244,9 @@ loading = false;
       return;
     }
 
-    if (!this.isDcireRole) {
+    if (this.isDcireRole) {
+      this.typeliste = 'emis';
+    } else {
       this.typeliste = 'recus';
     }
 
@@ -607,27 +609,38 @@ loading = false;
     return this.rowStructureOrigineId(row) === this.dcireDirectionId;
   }
 
-  /** Hub DCIRE : émission seule pour l’instant (pas d’onglet « reçus » actif). */
-  private estCourrierRecuParDcireHub(_row: any): boolean {
-    return false;
+  /** Réponse reçue d’une structure destinataire (courrier émis par le hub). */
+  estCourrierReponduParDcireHub(row: any): boolean {
+    if (!this.estCourrierEmisParDcireHub(row)) {
+      return false;
+    }
+    const s = row?.statut;
+    return s === 'REPONDU' || s === 'TRANSMIS_DCIRE' || s === 'ARCHIVER';
+  }
+
+  /** Émis par DCIRE, en attente de réponse de la structure destinataire. */
+  estCourrierNonReponduParDcireHub(row: any): boolean {
+    if (!this.estCourrierEmisParDcireHub(row) || this.estCourrierReponduParDcireHub(row)) {
+      return false;
+    }
+    const s = row?.statut;
+    return s === 'ENVOYER' || s === 'IMPUTER' || s === 'EN_COURS';
   }
 
   private applyDcireTabFilter(bruts: any[]): any[] {
     switch (this.typeliste) {
       case 'tous':
         return [...bruts];
-      case 'recus':
-        return bruts.filter((c) => this.estCourrierRecuParDcireHub(c));
-      case 'valides':
-        return bruts.filter((c) => c.statut === 'EN_COURS' || c.statut === 'IMPUTER');
+      case 'emis':
+        return bruts.filter(
+          (c) => this.estCourrierEmisParDcireHub(c) && c.statut !== 'ARCHIVER'
+        );
+      case 'nonRepondus':
+        return bruts.filter((c) => this.estCourrierNonReponduParDcireHub(c));
       case 'archives':
         return bruts.filter((c) => c.statut === 'ARCHIVER');
       case 'envoyes':
-        return bruts.filter(
-          (c) =>
-            this.estCourrierEmisParDcireHub(c) &&
-            (c.statut === 'REPONDU' || c.statut === 'TRANSMIS_DCIRE' || c.statut === 'ARCHIVER')
-        );
+        return bruts.filter((c) => this.estCourrierReponduParDcireHub(c));
       case 'validation':
         return [];
       case 'actifs':
