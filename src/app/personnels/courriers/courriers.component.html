@@ -99,15 +99,20 @@
                       </button>
                     }
                     @if (isDcireRole) {
-                      <button [class]="typeliste ==='recus' ? 'btn btn-warning' : 'btn btn shadow-sm btn-dark'"
-                              (click)="handleList('recus')" style="min-width: 100px;">
-                        <i class="fas fa-inbox me-1"></i>
-                        REÇUS
+                      <button [class]="typeliste ==='emis' ? 'btn btn-warning' : 'btn btn shadow-sm btn-dark'"
+                              (click)="handleList('emis')" style="min-width: 100px;">
+                        <i class="fas fa-paper-plane me-1"></i>
+                        ÉMIS
                       </button>
-                      <button [class]="typeliste ==='valides' ? 'btn btn-warning' : 'btn btn shadow-sm btn-dark'"
-                              (click)="handleList('valides')" style="min-width: 110px;">
-                        <i class="fas fa-check-circle me-1"></i>
-                        VALIDÉS
+                      <button [class]="typeliste ==='envoyes' ? 'btn btn-warning' : 'btn btn shadow-sm btn-dark'"
+                              (click)="handleList('envoyes')" style="min-width: 110px;">
+                        <i class="fas fa-reply me-1"></i>
+                        REPONDUS
+                      </button>
+                      <button [class]="typeliste ==='nonRepondus' ? 'btn btn-warning' : 'btn btn shadow-sm btn-dark'"
+                              (click)="handleList('nonRepondus')" style="min-width: 130px;">
+                        <i class="fas fa-clock me-1"></i>
+                        NON RÉPONDUS
                       </button>
                     }
 
@@ -138,7 +143,7 @@
                       ARCHIVES
                     </button>
 
-                    @if (!isOdcProductCourrierRole) {
+                    @if (!isOdcProductCourrierRole && !isDcireRole) {
                       <button [class]="typeliste ==='envoyes' ? 'btn btn-warning' : 'btn btn shadow-sm btn-dark'"
                               (click)="handleList('envoyes')" style="min-width: 100px;">
                         <i class="fas fa-paper-plane me-1"></i>

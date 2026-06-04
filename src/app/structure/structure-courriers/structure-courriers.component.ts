@@ -290,6 +290,16 @@ export class StructureCourriersComponent implements OnInit, OnDestroy {
     return String(row['statut'] || '') === 'ENVOYER' && this.estDetenuParMaStructure(row);
   }
 
+  private estCourrierAdresseDepuisDcire(row: Record<string, unknown>): boolean {
+    const exp = String(row['expediteur'] || '').toUpperCase();
+    if (exp.includes('KEÏTA') || exp.includes('DCIRE')) {
+      return true;
+    }
+    const so = row['structureOrigine'] as { nom?: string } | undefined;
+    const nom = String(so?.nom || '').toUpperCase();
+    return nom.includes('DCIRE') || nom.replace(/\s/g, '').includes('DCIRE');
+  }
+
   peutRepondre(row: Record<string, unknown> | null): boolean {
     if (!row) {
       return false;
@@ -301,7 +311,29 @@ export class StructureCourriersComponent implements OnInit, OnDestroy {
     if (!this.estDetenuParMaStructure(row)) {
       return false;
     }
+    if (this.receiveOnlyMode && !this.estCourrierAdresseDepuisDcire(row)) {
+      return false;
+    }
     return s === 'ENVOYER' || s === 'EN_COURS' || s === 'IMPUTER';
+  }
+
+  scrollVersFormulaireReponse(): void {
+    setTimeout(() => {
+      document.getElementById('structure-reponse-courrier')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 80);
+  }
+
+  preparerReponse(row: unknown): void {
+    this.selectRow(row);
+    if (this.peutRepondre(this.selected)) {
+      const num = String(this.selected?.['numero'] || '');
+      if (!this.replyObjet.trim()) {
+        this.replyObjet = num ? `Re: ${num}` : 'Réponse au courrier';
+      }
+      this.scrollVersFormulaireReponse();
+    } else {
+      this.toast.warning('Ce courrier ne peut pas recevoir de réponse pour le moment.');
+    }
   }
 
   accuserReceptionOp(): void {
@@ -349,7 +381,10 @@ export class StructureCourriersComponent implements OnInit, OnDestroy {
         this.replyFichier = null;
         this.load();
       },
-      error: () => this.toast.error('Envoi de la réponse impossible.'),
+      error: (err: { error?: { message?: string } }) => {
+        const msg = err?.error?.message || 'Envoi de la réponse impossible.';
+        this.toast.error(msg);
+      },
     });
   }
 

@@ -153,6 +153,11 @@
                 <td><code class="small">{{ $any(r).statut }}</code></td>
               }
               <td>
+                @if (receiveOnlyMode && peutRepondre($any(r))) {
+                  <button type="button" class="btn btn-sm btn-success me-1" (click)="preparerReponse(r); $event.stopPropagation()">
+                    <i class="fas fa-reply me-1"></i>Répondre
+                  </button>
+                }
                 <button type="button" class="btn btn-sm btn-outline-secondary me-1" (click)="openPiece($any(r)); $event.stopPropagation()">
                   Pièce jointe
                 </button>
@@ -239,7 +244,7 @@
   }
 
   @if (selected && (onglet === 'recus' || onglet === 'tout' || onglet === 'repondus') && peutRepondre(selected)) {
-    <div class="card p-3 border-success mb-3">
+    <div id="structure-reponse-courrier" class="card p-3 border-success mb-3">
       <h6 class="mb-2">Répondre au courrier {{ $any(selected).numero }}</h6>
       <p class="small text-muted mb-3">Votre e-mail de compte est utilisé comme expéditeur de la réponse.</p>
       <div class="mb-2">
