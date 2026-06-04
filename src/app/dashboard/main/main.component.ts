@@ -65,6 +65,7 @@ export class MainComponent implements OnInit {
   courrierRepondu = 0;
   courrierEnAttente = 0;
   courrierRecu = 0;
+  courrierNonRepondu = 0;
   courrierValide = 0;
   selectedCourrierPeriod: PeriodKey = 'semaine';
   selectedCourrierStructureId: number | null = null;
@@ -168,12 +169,18 @@ export class MainComponent implements OnInit {
    * Directeur (JWT = DIRECTEUR, y compris hub DCIRE) : périmètre imposé côté API.
    * Directeur ODC : même confort que l’admin ODC, avec choix des structures ODC.
    */
-  /** Admin et divisions Fondation / RSE / DCI : stats courrier limitées à Reçu + Répondu. */
-  get courrierStatsRecuReponduOnly(): boolean {
+  /** Produit ODC (admin + directeur ODC) : Reçu, Répondu, Non répondus. */
+  get courrierStatsOdcProductTriple(): boolean {
     return (
       this.currentRoles.includes('SUPERADMIN') ||
       this.currentRoles.includes('ADMIN') ||
-      this.currentRoles.includes('DIRECTEUR_ODC') ||
+      this.currentRoles.includes('DIRECTEUR_ODC')
+    );
+  }
+
+  /** Divisions Fondation / RSE / DCI : stats courrier limitées à Reçu + Répondu. */
+  get courrierStatsRecuReponduOnly(): boolean {
+    return (
       this.currentRoles.includes('DIRECTEUR_FONDATION') ||
       this.currentRoles.includes('DIRECTEUR_RSE') ||
       this.currentRoles.includes('DIRECTEUR_DCI')
@@ -198,7 +205,10 @@ export class MainComponent implements OnInit {
     return this.currentRoles.includes('DIRECTEUR');
   }
 
-  private activeCourrierCatKeys(): (typeof MainComponent.COURRIER_CAT_KEYS)[number][] {
+  private activeCourrierCatKeys(): string[] {
+    if (this.courrierStatsOdcProductTriple) {
+      return ['recu', 'repondu', 'nonRepondu'];
+    }
     if (this.courrierStatsRecuReponduOnly) {
       return ['recu', 'repondu'];
     }
@@ -206,6 +216,9 @@ export class MainComponent implements OnInit {
   }
 
   private activeCourrierChartLabels(): string[] {
+    if (this.courrierStatsOdcProductTriple) {
+      return ['Reçu', 'Répondu', 'Non répondus'];
+    }
     if (this.courrierStatsRecuReponduOnly) {
       return ['Reçu', 'Répondu'];
     }
@@ -213,6 +226,9 @@ export class MainComponent implements OnInit {
   }
 
   private activeCourrierColors(): string[] {
+    if (this.courrierStatsOdcProductTriple) {
+      return ['#2563eb', '#16a34a', '#d97706'];
+    }
     if (this.courrierStatsRecuReponduOnly) {
       return ['#2563eb', '#16a34a'];
     }
@@ -361,6 +377,7 @@ export class MainComponent implements OnInit {
           this.courrierRepondu = Number(t?.['repondu']) || 0;
           this.courrierEnAttente = Number(t?.['enAttente']) || 0;
           this.courrierRecu = Number(t?.['recu']) || 0;
+          this.courrierNonRepondu = Number(t?.['nonRepondu']) || 0;
           this.courrierValide = Number(t?.['valide']) || 0;
           this.buildCourrierPieChart();
         },
@@ -369,6 +386,7 @@ export class MainComponent implements OnInit {
           this.courrierRepondu = 0;
           this.courrierEnAttente = 0;
           this.courrierRecu = 0;
+          this.courrierNonRepondu = 0;
           this.courrierValide = 0;
         }
       });
@@ -422,12 +440,13 @@ export class MainComponent implements OnInit {
   }
 
   private buildCourrierPieChart(): void {
-    const all = {
+    const all: Record<string, number> = {
       emis: this.courrierEmis,
       repondu: this.courrierRepondu,
       enAttente: this.courrierEnAttente,
       recu: this.courrierRecu,
-      valide: this.courrierValide
+      valide: this.courrierValide,
+      nonRepondu: this.courrierNonRepondu
     };
     const s = this.activeCourrierCatKeys().map((k) => all[k]);
     this.courrierPieOptions = {
@@ -604,7 +623,7 @@ export class MainComponent implements OnInit {
           let rows = details.filter((d: CourrierDashboardDetailRow) =>
             that.detailMatchesCourrierSeries(d, key, catLabel)
           );
-          const countBucket = Number(b?.[key]) || 0;
+          const countBucket = Number((b as Record<string, unknown>)?.[String(key)]) || 0;
           const ySerie = opts.w?.globals?.series?.[si]?.[j];
           const countChart = typeof ySerie === 'number' && !Number.isNaN(ySerie) ? ySerie : countBucket;
           if (rows.length === 0 && countChart > 0 && details.length > 0) {

@@ -78,9 +78,6 @@ loading = false;
   listType: string = '1';
   scrollBarHorizontal = window.innerWidth < 1200;
   selectedRowData!: selectActivitySupportInterface;
-  /** Détail des réponses pour la ligne activée (clic sur la ligne). */
-  courrierReponsesDetail: any[] = [];
-  lastDetailCourrierId: number | null = null;
   @ViewChild('editCourrierMetaTpl') editCourrierMetaTpl!: TemplateRef<unknown>;
   editCourrierMeta = { numero: '', objet: '', expediteur: '' };
   filteredData: any[] = [];
@@ -98,10 +95,14 @@ loading = false;
 
   /** Hub DCIRE : même rôle JWT « DIRECTEUR » que les autres directions ; le périmètre courrier suit la logique DCIRE côté API / entités. */
   isDcireRole = false;
-  /** Direction ODC (validation transmission) */
+  /** Admin courrier (onglet validation, pas le directeur ODC seul). */
+  isAdminCourrierRole = false;
+  /** Direction ODC (validation transmission) — admin + directeur ODC */
   isSuperAdminRole = false;
   /** Directeur produit ODC : bloc validation intégré sur cette page */
   isDirecteurOdcRole = false;
+  /** Admin + directeur ODC : mêmes onglets courrier (reçus / non répondus / répondus). */
+  isOdcProductCourrierRole = false;
   odcDirections: Entite[] = [];
   /** Fondation, RSE, DCI, etc. — réception à la DCIRE */
   externalDirections: Entite[] = [];
@@ -154,25 +155,6 @@ loading = false;
     } else {
       this.isRowSelected = true;
     }
-  }
-
-  onCourrierActivate(ev: { type?: string; row?: { id?: number } }): void {
-    if (ev?.type !== 'click' || ev.row?.id == null) {
-      return;
-    }
-    const id = Number(ev.row.id);
-    if (!Number.isFinite(id)) {
-      return;
-    }
-    this.lastDetailCourrierId = id;
-    this.glogalService.getCourrierReponses(id).subscribe({
-      next: (r) => {
-        this.courrierReponsesDetail = Array.isArray(r) ? r : [];
-      },
-      error: () => {
-        this.courrierReponsesDetail = [];
-      },
-    });
   }
 
   peutModifierMetadonneesCourrier(row: { statut?: string }): boolean {
@@ -319,11 +301,12 @@ loading = false;
     const rawRoles = this.authService.getCurrentUserFromStorage()?.roles || [];
     const roles = rawRoles.map((r: string) => String(r).trim().toUpperCase());
     this.isDcireRole = roles.includes('DIRECTEUR');
+    this.isAdminCourrierRole = roles.includes('SUPERADMIN') || roles.includes('ADMIN');
     this.isSuperAdminRole =
-      roles.includes('SUPERADMIN') ||
-      roles.includes('ADMIN') ||
-      roles.includes('DIRECTEUR_ODC');
+      this.isAdminCourrierRole || roles.includes('DIRECTEUR_ODC');
     this.isDirecteurOdcRole = roles.includes('DIRECTEUR_ODC');
+    this.isOdcProductCourrierRole =
+      this.isAdminCourrierRole || this.isDirecteurOdcRole;
   }
 
   getAllEntite() {
@@ -397,7 +380,9 @@ loading = false;
           }
         }
         let merged = [...byId.values()];
-        if (this.typeliste === 'recus') {
+        if (this.isOdcProductCourrierRole) {
+          merged = this.applyDirecteurOdcTabFilter(merged);
+        } else if (this.typeliste === 'recus') {
           merged = merged.filter((c) => this.estCourrierRecuSurPilierOdc(c));
         }
         this.Courriers = merged;
@@ -544,6 +529,15 @@ loading = false;
   }
 
   private mapTypelisteToVueParam(): string {
+    if (
+      this.isOdcProductCourrierRole &&
+      (this.typeliste === 'recus' ||
+        this.typeliste === 'nonRepondus' ||
+        this.typeliste === 'envoyes' ||
+        this.typeliste === 'delegues')
+    ) {
+      return 'TOUS';
+    }
     switch (this.typeliste) {
       case 'validation':
         return 'VALIDATION';
@@ -551,6 +545,8 @@ loading = false;
         return 'ARCHIVES';
       case 'envoyes':
         return 'REPONDUS';
+      case 'delegues':
+        return 'TOUS';
       case 'tous':
         return 'TOUS';
       case 'recus':
@@ -562,18 +558,76 @@ loading = false;
     }
   }
 
+  private applyDirecteurOdcTabFilter(rows: any[]): any[] {
+    switch (this.typeliste) {
+      case 'recus':
+        return rows.filter((c) => this.estCourrierRecuTotalDirecteurOdc(c));
+      case 'nonRepondus':
+        return rows.filter((c) => this.estCourrierNonReponduParDirecteurOdc(c));
+      case 'envoyes':
+        return rows.filter((c) => this.estCourrierReponduParDirecteurOdc(c));
+      case 'delegues':
+        return rows.filter((c) => this.estCourrierDelegueParDirecteurOdc(c));
+      default:
+        return rows;
+    }
+  }
+
+  /** Tous les courriers DCIRE → ODC reçus sur le pilier (historique complet). */
+  estCourrierRecuTotalDirecteurOdc(row: any): boolean {
+    return this.estCourrierEmissionDcireVersOdc(row) && row?.statut !== 'ARCHIVER';
+  }
+
+  /** En attente de réponse du directeur ODC. */
+  estCourrierNonReponduParDirecteurOdc(row: any): boolean {
+    if (!this.estCourrierEmissionDcireVersOdc(row) || this.estCourrierReponduParDirecteurOdc(row)) {
+      return false;
+    }
+    return this.estCourrierRecuSurPilierOdc(row);
+  }
+
+  /** Courriers ayant reçu une réponse du directeur ODC (trace historique). */
+  estCourrierReponduParDirecteurOdc(row: any): boolean {
+    if (!this.estCourrierEmissionDcireVersOdc(row)) {
+      return false;
+    }
+    const s = row?.statut;
+    return s === 'REPONDU' || s === 'TRANSMIS_DCIRE' || s === 'ARCHIVER';
+  }
+
+  estCourrierDelegueParDirecteurOdc(row: any): boolean {
+    return row?.delegueResponsableOdk === true || row?.delegueResponsableOdk === 'true';
+  }
+
+  /** Courrier émis par le hub DCIRE (KEÏTA) vers une structure de la division. */
+  private estCourrierEmisParDcireHub(row: any): boolean {
+    if (this.dcireDirectionId == null) {
+      return false;
+    }
+    return this.rowStructureOrigineId(row) === this.dcireDirectionId;
+  }
+
+  /** Hub DCIRE : émission seule pour l’instant (pas d’onglet « reçus » actif). */
+  private estCourrierRecuParDcireHub(_row: any): boolean {
+    return false;
+  }
+
   private applyDcireTabFilter(bruts: any[]): any[] {
     switch (this.typeliste) {
       case 'tous':
         return [...bruts];
       case 'recus':
-        return bruts.filter((c) => c.statut === 'TRANSMIS_DCIRE' || c.statut === 'ENVOYER');
+        return bruts.filter((c) => this.estCourrierRecuParDcireHub(c));
       case 'valides':
         return bruts.filter((c) => c.statut === 'EN_COURS' || c.statut === 'IMPUTER');
       case 'archives':
         return bruts.filter((c) => c.statut === 'ARCHIVER');
       case 'envoyes':
-        return bruts.filter((c) => c.statut === 'REPONDU');
+        return bruts.filter(
+          (c) =>
+            this.estCourrierEmisParDcireHub(c) &&
+            (c.statut === 'REPONDU' || c.statut === 'TRANSMIS_DCIRE' || c.statut === 'ARCHIVER')
+        );
       case 'validation':
         return [];
       case 'actifs':
@@ -662,7 +716,36 @@ loading = false;
     return false;
   }
 
+  /** Émission DCIRE vers un pilier ODC (workflow directeur ODC / admin). */
+  private estCourrierEmissionDcireVersOdc(row: any): boolean {
+    if (!row || row.statut === 'ARCHIVER') {
+      return false;
+    }
+    const initId = this.rowDirectionInitialId(row);
+    if (initId == null || !this.odcDirections.some((d) => Number(d.id) === initId)) {
+      return false;
+    }
+    const origId = this.rowStructureOrigineId(row);
+    if (this.dcireDirectionId != null && origId != null && origId === this.dcireDirectionId) {
+      return true;
+    }
+    const exp = String(row.expediteur || '').toUpperCase();
+    return exp.includes('KEÏTA') || exp.includes('DCIRE');
+  }
+
   estCourrierRecuSurPilierOdc(row: any): boolean {
+    if (this.estCourrierReponduParDirecteurOdc(row)) {
+      return false;
+    }
+    if (this.estCourrierEmissionDcireVersOdc(row)) {
+      const s = row?.statut;
+      return (
+        s === 'ENVOYER' ||
+        s === 'IMPUTER' ||
+        s === 'EN_COURS' ||
+        s === 'ATTENTE_VALIDATION_REPONSE_DIRECTEUR_ODC'
+      );
+    }
     if (!row || !this.rowDetenuSurPilierOdcCharge(row)) {
       return false;
     }
