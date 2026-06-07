@@ -208,8 +208,34 @@ export class GlobalService {
   }
 
   getCourriersDeleguesResponsableOdk(): Observable<any[]> {
+    return this.getCourriersDeleguesResponsableEntite();
+  }
+
+  getCourriersDeleguesResponsableEntite(): Observable<any[]> {
     return this.http
-      .get<any[]>(`${this.baseUrl}/api/courriers/responsable-odk/courriers-delegues`)
+      .get<any[]>(`${this.baseUrl}/api/courriers/responsable-entite/courriers-delegues`)
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  getCourriersArchivesResponsableEntite(): Observable<any[]> {
+    return this.http
+      .get<any[]>(`${this.baseUrl}/api/courriers/responsable-entite/courriers-archives`)
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  patchCourrierArchiverResponsableEntite(courrierId: number): Observable<void> {
+    return this.http
+      .patch<void>(`${this.baseUrl}/api/courriers/responsable-entite/${courrierId}/archiver`, {})
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  getCourriersDcire(entiteId?: number | null): Observable<any[]> {
+    let params = new HttpParams();
+    if (entiteId != null) {
+      params = params.set('entiteId', String(entiteId));
+    }
+    return this.http
+      .get<any[]>(`${this.baseUrl}/api/courriers/dcire`, { params })
       .pipe(catchError(this.handleError.bind(this)));
   }
 
@@ -448,6 +474,10 @@ export class GlobalService {
     // console.log('Extraction du message d\'erreur:', error); // Supprimé
 
     let message = 'Une erreur est survenue.';
+
+    if (typeof error === 'string' && error.trim()) {
+      return error.trim();
+    }
 
     // Si c'est une Error créée par handleError
     if (error instanceof Error) {

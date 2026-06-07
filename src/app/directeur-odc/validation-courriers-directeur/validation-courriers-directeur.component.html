@@ -81,14 +81,21 @@
       <div class="card p-3 mt-3 border-warning">
         <h6 class="mb-2">Déléguer le courrier #{{ deleguerCourrierId }}</h6>
         <p class="small text-muted mb-2">
-          Trace la remise physique au responsable d'entité. La réponse officielle sera saisie ici par le directeur ODC.
+          Choisissez l’entité destinataire (FabLab, Orange Fab, Multimedia, Kalanso…) ou laissez vide avec une note pour Kalanso uniquement.
         </p>
-        <label class="form-label">Note (obligatoire)</label>
+        <label class="form-label">Entité responsable</label>
+        <select class="form-select mb-2" [(ngModel)]="deleguerServiceEntiteId">
+          <option [ngValue]="null">— Délégation Kalanso (note obligatoire) —</option>
+          @for (s of servicesOdc; track s.id) {
+            <option [ngValue]="s.id">{{ s.nom }}</option>
+          }
+        </select>
+        <label class="form-label">Note (optionnelle si entité choisie)</label>
         <textarea
           class="form-control mb-2"
           rows="2"
           [(ngModel)]="deleguerNote"
-          placeholder="Ex. Courrier adressé à Kalanso (Mme X). Remis au responsable le 02/06."
+          placeholder="Ex. Courrier adressé à FabLab — remis au responsable le 02/06."
         ></textarea>
         <div class="d-flex gap-2">
           <button type="button" class="btn btn-primary btn-sm" (click)="confirmerDelegation()">Confirmer</button>

@@ -40,6 +40,11 @@ import {
   rolesFromJwtPayload,
   structureCourriersPathForRoles,
 } from '../utils/app-roles';
+import {
+  dashboardPathForRoles,
+  activitesPathForRoles,
+  RESPONSABLE_ENTITE_PROFILES,
+} from '../utils/responsable-entite-config';
 
 @Injectable({
   providedIn: 'root',
@@ -118,6 +123,15 @@ export class AuthGuard implements CanActivate {
       return false;
     }
 
+    const adminRoutes = ['/utilisateur', '/role'];
+    const isAdminRoute = adminRoutes.some((path) => state.url.startsWith(path));
+    const isAdmin =
+      effectiveRoles.includes('SUPERADMIN') || effectiveRoles.includes('ADMIN');
+    if (isAdminRoute && !isAdmin) {
+      const fallback = isPersonnel ? '/dashboardActivite' : '/dashboard/main';
+      return this.router.parseUrl(fallback);
+    }
+
     const structureCourriersPath = structureCourriersPathForRoles(effectiveRoles);
     if (structureCourriersPath) {
       if (
@@ -129,18 +143,22 @@ export class AuthGuard implements CanActivate {
       }
     }
 
-    if (effectiveRoles.includes('RESPONSABLE_ODK')) {
-      if (state.url.startsWith('/courrier')) {
-        return this.router.parseUrl('/responsable-odk/activites');
+    const responsableDashboard = dashboardPathForRoles(effectiveRoles);
+    const responsableActivites = activitesPathForRoles(effectiveRoles);
+    if (responsableDashboard) {
+      if (state.url.startsWith('/courrier') && responsableActivites) {
+        return this.router.parseUrl(responsableActivites);
       }
       if (state.url === '/' || state.url === '/dashboard') {
-        return this.router.parseUrl('/responsable-odk/dashboard');
+        return this.router.parseUrl(responsableDashboard);
       }
     }
 
-    if (state.url.startsWith('/responsable-odk') && !effectiveRoles.includes('RESPONSABLE_ODK')) {
-      const fallback = isPersonnel ? '/dashboardActivite' : '/dashboard/main';
-      return this.router.parseUrl(fallback);
+    for (const profile of RESPONSABLE_ENTITE_PROFILES) {
+      if (state.url.startsWith(`/${profile.routePrefix}`) && !effectiveRoles.includes(profile.role)) {
+        const fallback = isPersonnel ? '/dashboardActivite' : '/dashboard/main';
+        return this.router.parseUrl(fallback);
+      }
     }
 
     return true;

@@ -461,15 +461,37 @@ export class ActivityComponent {
     if (form.invalid) return;
     this.loadingIndicator = true;
     // Étape 1 : Création de l'activité
+    const fichier = this.selectedFile ?? form.value.fichier;
+    const userId = this.getCurrentUserId();
     this.glogalService.post('activite', form.value).subscribe({
       next: (activite: Activity) => {
-        console.log("Activité créée :", activite);
-        // Validation : uniquement le directeur ODC (workflow hors formulaire personnel)
-        this.addRecordSuccess();
-        this.modalService.dismissAll();
-        this.reloadActivities();
-        form.reset();
-        this.loadingIndicator = false;
+        const finish = () => {
+          this.addRecordSuccess();
+          this.modalService.dismissAll();
+          this.reloadActivities();
+          form.reset();
+          this.selectedFile = null;
+          this.loadingIndicator = false;
+        };
+        if (!fichier || !activite?.id || userId == null) {
+          finish();
+          return;
+        }
+        const validation = {
+          commentaire: 'Pièce jointe à la création de l’activité',
+          date: new Date(),
+          statut: 0,
+          envoyeurId: userId,
+          activiteId: activite.id,
+          utilisateurId: userId,
+        };
+        this.glogalService.createValidation(validation as any, fichier, 'create').subscribe({
+          next: () => finish(),
+          error: () => {
+            this.toastr.warning('Activité créée, mais le fichier joint n’a pas pu être enregistré.');
+            finish();
+          },
+        });
       }, error: (err: unknown) => {
         const msg = err instanceof Error ? err.message : this.glogalService.extractMessageFromError(err);
         this.toastr.error(msg, 'Création d’activité');

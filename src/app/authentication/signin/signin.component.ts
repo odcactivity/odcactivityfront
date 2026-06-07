@@ -4,6 +4,7 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators, FormsModule, Reactive
 import { FeatherModule } from 'angular-feather';
 import { AuthService } from '@core';
 import { structureCourriersPathForRoles } from '@core/utils/app-roles';
+import { dashboardPathForRoles } from '@core/utils/responsable-entite-config';
 import { GlobalService } from "@core/service/global.service";
 import {isPlatformBrowser, NgIf} from '@angular/common';
 import Swal from 'sweetalert2';
@@ -96,8 +97,9 @@ export class SigninComponent implements OnInit {
           const roles = currentUserWithRoles.roles;
 
           // Redirection en fonction du rôle
-          if (roles?.includes('RESPONSABLE_ODK')) {
-            this.router.navigateByUrl('/responsable-odk/dashboard').then(() => {
+          const responsableDash = dashboardPathForRoles(roles || []);
+          if (responsableDash) {
+            this.router.navigateByUrl(responsableDash).then(() => {
               this.cdRef.detectChanges();
             });
           } else {

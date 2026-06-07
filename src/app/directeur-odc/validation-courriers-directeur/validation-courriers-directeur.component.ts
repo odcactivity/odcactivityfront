@@ -29,6 +29,8 @@ export class ValidationCourriersDirecteurComponent implements OnInit {
 
   deleguerCourrierId: number | null = null;
   deleguerNote = '';
+  deleguerServiceEntiteId: number | null = null;
+  servicesOdc: { id: number; nom: string }[] = [];
 
   constructor(
     private readonly global: GlobalService,
@@ -37,6 +39,14 @@ export class ValidationCourriersDirecteurComponent implements OnInit {
 
   ngOnInit(): void {
     this.load();
+    this.global.getServicesOdcPourDirecteur().subscribe({
+      next: (rows) => {
+        this.servicesOdc = Array.isArray(rows) ? rows : [];
+      },
+      error: () => {
+        this.servicesOdc = [];
+      },
+    });
   }
 
   load(): void {
@@ -137,6 +147,7 @@ export class ValidationCourriersDirecteurComponent implements OnInit {
   openDeleguer(courrierId: number): void {
     this.deleguerCourrierId = courrierId;
     this.deleguerNote = '';
+    this.deleguerServiceEntiteId = null;
   }
 
   confirmerDelegation(): void {
@@ -144,13 +155,30 @@ export class ValidationCourriersDirecteurComponent implements OnInit {
       return;
     }
     const note = (this.deleguerNote || '').trim();
+    if (this.deleguerServiceEntiteId != null) {
+      this.global
+        .postCourrierDeleguerServiceDirecteurOdc(
+          this.deleguerCourrierId,
+          this.deleguerServiceEntiteId,
+          note || undefined
+        )
+        .subscribe({
+          next: () => {
+            this.toast.success('Courrier délégué au responsable de l’entité sélectionnée.');
+            this.deleguerCourrierId = null;
+            this.emitChanged();
+          },
+          error: (err) => this.toast.error(err?.error?.message || 'Délégation impossible.'),
+        });
+      return;
+    }
     if (!note) {
-      this.toast.warning('Indiquez dans la note à quelle entité le courrier est adressé.');
+      this.toast.warning('Choisissez une entité ou indiquez une note pour la délégation Kalanso.');
       return;
     }
     this.global.postCourrierDeleguerResponsableOdkDirecteurOdc(this.deleguerCourrierId, note).subscribe({
       next: () => {
-        this.toast.success('Courrier délégué au responsable ODK (préparation hors application).');
+        this.toast.success('Courrier délégué au responsable ODK (Kalanso).');
         this.deleguerCourrierId = null;
         this.emitChanged();
       },

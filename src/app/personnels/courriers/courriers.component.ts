@@ -18,6 +18,7 @@ import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ValidationCourriersDirecteurComponent } from '../../directeur-odc/validation-courriers-directeur/validation-courriers-directeur.component';
 import { structureCourriersPathForRoles } from '@core/utils/app-roles';
+import { activitesPathForRoles } from '@core/utils/responsable-entite-config';
 
 interface selectActivitySupportInterface {
   id: number;
@@ -110,6 +111,9 @@ loading = false;
   ciblesInternesBrouillon: Entite[] = [];
   ciblesEmissionDcire: Entite[] = [];
   dcireDirectionId: number | null = null;
+  /** Filtre DCIRE par entité (direction ou service ODC). */
+  dcireEntiteFilterId: number | null = null;
+  dcireEntiteOptions: { id: number; nom: string }[] = [];
   /** Liste brute côté DCIRE (filtrée par onglet) */
   private courriersDcireBruts: any[] = [];
   transmitOdcDirectionId: number | null = null;
@@ -230,8 +234,9 @@ loading = false;
       this.router.navigate(['/dashboardActivite'], { replaceUrl: true });
       return;
     }
-    if (r.includes('RESPONSABLE_ODK')) {
-      this.router.navigate(['/responsable-odk/activites'], { replaceUrl: true });
+    const responsableActivites = activitesPathForRoles(r);
+    if (responsableActivites) {
+      this.router.navigate([responsableActivites], { replaceUrl: true });
       return;
     }
     if (r.includes('SUPERADMIN') || r.includes('ADMIN')) {
@@ -328,6 +333,12 @@ loading = false;
         );
         const dc = this.directions.find((e) => this.isDcireDirectionName(e.nom));
         this.dcireDirectionId = dc?.id ?? null;
+        if (this.isDcireRole) {
+          this.dcireEntiteOptions = value
+            .filter((e) => e.id != null)
+            .map((e) => ({ id: e.id as number, nom: String(e.nom || '—') }))
+            .sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
+        }
 
         const finishEntiteLoad = () => {
           this.patchRegisterOdcDirectionDefaults();
@@ -650,12 +661,16 @@ loading = false;
     }
   }
 
+  onDcireEntiteFilterChange(): void {
+    this.refreshCourriersDcire();
+  }
+
   refreshCourriersDcire(): void {
     if (!this.isDcireRole) {
       return;
     }
     this.loadingIndicator = true;
-    this.glogalService.get('api/courriers/dcire').subscribe({
+    this.glogalService.getCourriersDcire(this.dcireEntiteFilterId).subscribe({
       next: (rows: any[]) => {
         this.courriersDcireBruts = Array.isArray(rows) ? rows : [];
         this.Courriers = this.applyDcireTabFilter(this.courriersDcireBruts);

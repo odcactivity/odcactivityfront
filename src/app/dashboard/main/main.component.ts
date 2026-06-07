@@ -12,6 +12,7 @@ import { catchError } from 'rxjs/operators';
 import { Activity } from '@core/models/Activity';
 import { Entite } from '@core/models/Entite';
 import { canonicalizeAppRoles, resolveEffectiveRolesFromUser } from '@core/utils/app-roles';
+import { dashboardPathForRoles } from '@core/utils/responsable-entite-config';
 import { filterEntitesOdcPiliers, isOdcPillarEntiteName } from '@core/utils/odc-entite';
 
 type PeriodKey = 'semaine' | 'mois' | 'annee';
@@ -145,8 +146,9 @@ export class MainComponent implements OnInit {
 
   ngOnInit() {
     this.currentRoles = resolveEffectiveRolesFromUser(this.authService.getCurrentUserFromStorage());
-    if (this.currentRoles.includes('RESPONSABLE_ODK')) {
-      void this.router.navigate(['/responsable-odk/activites'], { replaceUrl: true });
+    const responsableDash = dashboardPathForRoles(this.currentRoles);
+    if (responsableDash) {
+      void this.router.navigate([responsableDash], { replaceUrl: true });
       return;
     }
     this.getNombreUitlisateur();
@@ -349,7 +351,13 @@ export class MainComponent implements OnInit {
       this.buildEntityChart();
 
       this.structureOptionsCourrier = this.filterEntitesForCourrierScope(rawEntites)
-        .filter((e) => String(e.type || '').toUpperCase() === 'DIRECTION' && e.id != null)
+        .filter((e) => {
+          const type = String(e.type || '').toUpperCase();
+          if (this.courrierStatsDcireTriple) {
+            return (type === 'DIRECTION' || type === 'SERVICE') && e.id != null;
+          }
+          return type === 'DIRECTION' && e.id != null;
+        })
         .map((e) => ({ id: e.id as number, nom: String(e.nom || '—') }))
         .sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
       this.loadCourrierDashboardBlock();

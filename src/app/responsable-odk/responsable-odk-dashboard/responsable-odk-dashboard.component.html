@@ -1,5 +1,5 @@
 <section class="main-content p-4 responsable-odk-page">
-  <h4 class="mb-3">Espace responsable ODK</h4>
+  <h4 class="mb-3">{{ pageTitle }}</h4>
 
   @if (view === 'activites') {
     <ul class="nav nav-tabs mb-3 odk-tabs flex-nowrap">
@@ -16,10 +16,19 @@
     </ul>
   }
 
-  @if (view === 'courriers' && courriersDelegues.length > 0) {
-    <div class="alert alert-info py-2">
-      <strong>Courriers délégués ({{ courriersDelegues.length }})</strong> — préparation hors application, pièce jointe téléchargeable.
-    </div>
+  @if (view === 'courriers') {
+    <ul class="nav nav-tabs mb-3 odk-tabs flex-nowrap">
+      <li class="nav-item">
+        <button type="button" class="nav-link" [class.active]="courrierTab === 'actifs'" (click)="setCourrierTab('actifs')">
+          Délégués ({{ courriersDelegues.length }})
+        </button>
+      </li>
+      <li class="nav-item">
+        <button type="button" class="nav-link" [class.active]="courrierTab === 'archives'" (click)="setCourrierTab('archives')">
+          Archivés ({{ courriersArchives.length }})
+        </button>
+      </li>
+    </ul>
   }
 
   @if (loading) {
@@ -28,19 +37,34 @@
 
   @if (view === 'activites' && !loading && tab === 'attente') {
     @if (activites.length === 0) {
-      <div class="alert alert-info">Aucune activité en attente.</div>
+      <div class="alert alert-info">Aucune activité en attente pour votre entité.</div>
     }
     @for (a of activites; track a.id) {
       <div class="card mb-3 shadow-sm">
         <div class="card-body">
           <h5 class="card-title">{{ a.nom }}</h5>
+          <p class="mb-1"><strong>Entité :</strong> {{ a.entite?.nom || '—' }}</p>
           <p class="mb-1"><strong>Salle :</strong> {{ a.salleId?.nom || '—' }}</p>
           <p class="mb-1"><strong>Dates :</strong> {{ a.dateDebut | date:'dd/MM/yyyy' }} — {{ a.dateFin | date:'dd/MM/yyyy' }}</p>
           <p class="mb-2 text-muted">{{ a.description }}</p>
+          @if (fichiersActivite(a).length > 0) {
+            <div class="mb-2">
+              <strong class="small">Fichiers joints :</strong>
+              @for (f of fichiersActivite(a); track f.id) {
+                <button
+                  type="button"
+                  class="btn btn-link btn-sm p-0 ms-2"
+                  (click)="telechargerFichierActivite(f.id!, f.fichierjoint)"
+                >
+                  <i class="far fa-paperclip me-1"></i>{{ f.fichierjoint }}
+                </button>
+              }
+            </div>
+          }
           @if (a.suggestionDirecteurOdc) {
             <div class="alert alert-warning py-2 small">Suggestion directeur ODC : {{ a.suggestionDirecteurOdc }}</div>
           }
-          <label class="form-label small">Note / commentaire</label>
+          <label class="form-label small">Note / avis pour le personnel</label>
           <textarea class="form-control mb-2" rows="2" [(ngModel)]="noteActivite"></textarea>
           <div class="d-flex flex-wrap gap-2">
             <button type="button" class="btn btn-success btn-sm" (click)="transmettreActivite(a)">
@@ -88,8 +112,7 @@
     }
   }
 
-  @if (view === 'courriers' && !loading) {
-    <h5 class="mt-4 mb-2">Courriers délégués par le directeur ODC</h5>
+  @if (view === 'courriers' && !loading && courrierTab === 'actifs') {
     @if (courriersDelegues.length === 0) {
       <div class="alert alert-secondary">Aucun courrier délégué pour le moment.</div>
     }
@@ -103,8 +126,33 @@
               {{ c.noteResponsableOdk }}
             </div>
           }
+          <div class="d-flex flex-wrap gap-2">
+            <button type="button" class="btn btn-outline-primary btn-sm" (click)="telechargerCourrier(c)">
+              Télécharger / Imprimer
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" (click)="archiverCourrier(c)">
+              Archiver
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+  }
+
+  @if (view === 'courriers' && !loading && courrierTab === 'archives') {
+    @if (courriersArchives.length === 0) {
+      <div class="alert alert-secondary">Aucun courrier archivé.</div>
+    }
+    @for (c of courriersArchives; track c.id) {
+      <div class="card mb-3 shadow-sm border-secondary">
+        <div class="card-body">
+          <h6 class="card-title mb-1">{{ c.objet }}</h6>
+          <p class="mb-1"><strong>N°</strong> {{ c.numero }}</p>
+          @if (c.dateArchivage) {
+            <p class="mb-2 small text-muted">Archivé le {{ c.dateArchivage | date:'dd/MM/yyyy' }}</p>
+          }
           <button type="button" class="btn btn-outline-primary btn-sm" (click)="telechargerCourrier(c)">
-            Télécharger / Imprimer
+            Télécharger
           </button>
         </div>
       </div>

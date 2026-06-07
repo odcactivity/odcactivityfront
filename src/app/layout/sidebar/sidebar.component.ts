@@ -7,6 +7,12 @@ import { FeatherModule } from 'angular-feather';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '@core';
 import { canonicalizeAppRoles, decodeJwtPayload, rolesFromJwtPayload } from '@core/utils/app-roles';
+import {
+  buildResponsableEntiteMenuItems,
+  isResponsableEntiteMenuPath,
+  profileFromRoles,
+} from '@core/utils/responsable-entite-config';
+import { RouteInfo } from './sidebar.metadata';
 import { SidebarService } from './sidebar.service';
 
 @Component({
@@ -74,6 +80,15 @@ export class SidebarComponent implements OnInit {
         if (r === 'RESPONSABLE_ODK') {
           return 'Responsable ODK';
         }
+        if (r === 'RESPONSABLE_FABLAB') {
+          return 'Responsable FabLab';
+        }
+        if (r === 'RESPONSABLE_OFAB') {
+          return 'Responsable Orange Fab';
+        }
+        if (r === 'RESPONSABLE_MULTIMEDIA') {
+          return 'Responsable Multimedia';
+        }
         if (r === 'DIRECTEUR_FONDATION' || r === 'DIRECTEUR_RSE' || r === 'DIRECTEUR_DCI') {
           return 'Direction';
         }
@@ -89,7 +104,8 @@ export class SidebarComponent implements OnInit {
     }
 
     this.sidebarService.getRouteInfo().subscribe((routes) => {
-      this.sidebarItems = routes
+      const merged = this.mergeResponsableEntiteMenu(routes);
+      this.sidebarItems = merged
         .filter((item) => this.itemVisibleForUser(item))
         .map((item) => ({
           ...item,
@@ -97,6 +113,28 @@ export class SidebarComponent implements OnInit {
           open: false,
         }));
     });
+  }
+
+  /** Injecte le menu responsable depuis le code (évite sidebar vide si routes.json S3 est obsolète). */
+  private mergeResponsableEntiteMenu(routes: RouteInfo[]): RouteInfo[] {
+    const profile = profileFromRoles(this.useRole);
+    if (!profile) {
+      return routes;
+    }
+
+    const injected = buildResponsableEntiteMenuItems(profile) as RouteInfo[];
+    const injectedPaths = new Set(injected.map((item) => item.path));
+    const rest = routes.filter((item) => {
+      if (injectedPaths.has(item.path)) {
+        return false;
+      }
+      if (isResponsableEntiteMenuPath(item.path)) {
+        return false;
+      }
+      return true;
+    });
+
+    return [...injected, ...rest];
   }
 
   checkRoles(roles?: string[]): boolean {

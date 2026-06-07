@@ -1,6 +1,6 @@
 export const environment = {
   /** Affiché en pied de page : permet de vérifier que le bon build est déployé. */
-  appBuildTag: '2026-06-02-responsable-odk-menu-v1',
+  appBuildTag: '2026-06-06-fix-create-utilisateur-v1',
 
   //uploadUrl: 'http://activiteodc-env.eba-qpcww8sx.us-east-1.elasticbeanstalk.com',
   //apiUrl: 'http://activiteodc-env.eba-qpcww8sx.us-east-1.elasticbeanstalk.com',

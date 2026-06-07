@@ -39,6 +39,12 @@ export function canonicalizeAppRoles(roles: unknown): string[] {
   if (set.has('SUPERADMIN') && !set.has('ADMIN')) {
     set.add('ADMIN');
   }
+  if (set.has('RESPONSABLE_ORANGE_FAB')) {
+    set.add('RESPONSABLE_OFAB');
+  }
+  if (set.has('RESPONSABLE_ORANGE_FABLAB')) {
+    set.add('RESPONSABLE_FABLAB');
+  }
   return [...set];
 }
 

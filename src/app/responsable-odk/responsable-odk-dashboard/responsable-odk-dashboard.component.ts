@@ -2,11 +2,19 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
+import { AuthService } from '@core';
 import { GlobalService } from '@core/service/global.service';
+import {
+  profileForRole,
+  profileFromRoles,
+  ResponsableEntiteProfile,
+} from '@core/utils/responsable-entite-config';
+import { resolveEffectiveRolesFromUser } from '@core/utils/app-roles';
 import { ToastrService } from 'ngx-toastr';
 import { forkJoin } from 'rxjs';
 
 type Tab = 'attente' | 'transmises';
+type CourrierTab = 'actifs' | 'archives';
 type ResponsableView = 'activites' | 'courriers';
 
 @Component({
@@ -18,52 +26,104 @@ type ResponsableView = 'activites' | 'courriers';
 })
 export class ResponsableOdkDashboardComponent implements OnInit {
   tab: Tab = 'attente';
+  courrierTab: CourrierTab = 'actifs';
   view: ResponsableView = 'activites';
+  profile: ResponsableEntiteProfile = {
+    role: 'RESPONSABLE_ODK',
+    routePrefix: 'responsable-odk',
+    title: 'Responsable ODK (Kalanso)',
+  };
   activites: any[] = [];
   activitesTransmises: any[] = [];
   courriersDelegues: any[] = [];
+  courriersArchives: any[] = [];
   loading = false;
   noteActivite = '';
 
   constructor(
     private readonly global: GlobalService,
     private readonly toast: ToastrService,
-    private readonly route: ActivatedRoute
+    private readonly route: ActivatedRoute,
+    private readonly auth: AuthService
   ) {}
 
   ngOnInit(): void {
+    const roles = resolveEffectiveRolesFromUser(this.auth.getCurrentUserFromStorage());
+    const fromRoute = this.route.snapshot.data['responsableRole'] as string | undefined;
+    this.profile =
+      profileForRole(fromRoute) ??
+      profileFromRoles(roles) ??
+      this.profile;
     const routed = this.route.snapshot.data['responsableTab'] as ResponsableView | undefined;
     this.view = routed === 'courriers' ? 'courriers' : 'activites';
     this.loadAll();
+  }
+
+  get pageTitle(): string {
+    return `Espace ${this.profile.title}`;
   }
 
   setTab(t: Tab): void {
     this.tab = t;
   }
 
-  /** Charge les deux listes pour des compteurs d'onglets toujours à jour. */
+  setCourrierTab(t: CourrierTab): void {
+    this.courrierTab = t;
+  }
+
   loadAll(): void {
     this.loading = true;
     forkJoin({
-      attente: this.global.get('activite/responsable-odk/en-attente'),
-      transmises: this.global.get('activite/responsable-odk/transmises-directeur'),
-      courriersDelegues: this.global.getCourriersDeleguesResponsableOdk(),
+      attente: this.global.get('activite/responsable-entite/en-attente'),
+      transmises: this.global.get('activite/responsable-entite/transmises-directeur'),
+      courriersDelegues: this.global.getCourriersDeleguesResponsableEntite(),
+      courriersArchives: this.global.getCourriersArchivesResponsableEntite(),
     }).subscribe({
-      next: ({ attente, transmises, courriersDelegues }) => {
+      next: ({ attente, transmises, courriersDelegues, courriersArchives }) => {
         this.activites = Array.isArray(attente) ? attente : [];
         this.activitesTransmises = Array.isArray(transmises) ? transmises : [];
         this.courriersDelegues = Array.isArray(courriersDelegues) ? courriersDelegues : [];
+        this.courriersArchives = Array.isArray(courriersArchives) ? courriersArchives : [];
       },
       error: () => {
         this.activites = [];
         this.activitesTransmises = [];
         this.courriersDelegues = [];
+        this.courriersArchives = [];
         this.loading = false;
         this.toast.error('Impossible de charger les données.');
       },
       complete: () => {
         this.loading = false;
       },
+    });
+  }
+
+  fichiersActivite(row: { activitevalidation?: { id?: number; fichierjoint?: string }[] }): {
+    id?: number;
+    fichierjoint?: string;
+  }[] {
+    const list = row?.activitevalidation;
+    if (!Array.isArray(list)) {
+      return [];
+    }
+    return list.filter((v) => v?.fichierjoint);
+  }
+
+  telechargerFichierActivite(validationId: number, nom?: string): void {
+    this.global.getValidationFileResponse(validationId).subscribe({
+      next: (resp) => {
+        const blob = resp.body ?? new Blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = nom || `piece_jointe_${validationId}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => window.URL.revokeObjectURL(url), 15000);
+      },
+      error: () => this.toast.error('Téléchargement du fichier joint impossible.'),
     });
   }
 
@@ -76,8 +136,6 @@ export class ResponsableOdkDashboardComponent implements OnInit {
       next: (resp) => {
         const blob = resp.body ?? new Blob();
         const url = window.URL.createObjectURL(blob);
-
-        // Extraction du nom de fichier depuis l'en-tête Content-Disposition
         const contentDisposition = resp.headers.get('content-disposition');
         let filename = `courrier_${id}.pdf`;
         if (contentDisposition) {
@@ -86,19 +144,33 @@ export class ResponsableOdkDashboardComponent implements OnInit {
             filename = matches[1];
           }
         }
-
-        // Téléchargement forcé via un lien invisible (évite le .crdownload)
         const a = document.createElement('a');
         a.href = url;
         a.download = filename;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-
-        // Libération de la mémoire après un délai suffisant (15s)
         setTimeout(() => window.URL.revokeObjectURL(url), 15000);
       },
       error: () => this.toast.error('Téléchargement impossible.'),
+    });
+  }
+
+  archiverCourrier(row: any): void {
+    const id = row?.id;
+    if (id == null) {
+      return;
+    }
+    if (!confirm(`Archiver le courrier « ${row.objet || row.numero} » ?`)) {
+      return;
+    }
+    this.global.patchCourrierArchiverResponsableEntite(Number(id)).subscribe({
+      next: () => {
+        this.toast.success('Courrier archivé.');
+        this.loadAll();
+      },
+      error: (e: { error?: { message?: string } }) =>
+        this.toast.error(e?.error?.message || 'Archivage impossible.'),
     });
   }
 
@@ -193,7 +265,7 @@ export class ResponsableOdkDashboardComponent implements OnInit {
     if (!confirm(`Supprimer l'activité « ${row.nom} » transmise au directeur ODC ?`)) {
       return;
     }
-    this.global.delete('activite/responsable-odk', id).subscribe({
+    this.global.delete('activite/responsable-entite', id).subscribe({
       next: () => {
         this.toast.success('Activité supprimée.');
         this.loadAll();

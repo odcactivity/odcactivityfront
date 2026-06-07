@@ -31,17 +31,20 @@ export class ErrorInterceptor implements HttpInterceptor {
 
         let errorMessage = 'Une erreur est survenue';
 
-        if (err.error) {
+        if (err.status === 0) {
+          errorMessage =
+            'Impossible de joindre le serveur (réseau ou API indisponible). Vérifiez la connexion et que le backend Elastic Beanstalk est en ligne.';
+        } else if (err.error) {
           if (typeof err.error === 'string') {
             errorMessage = err.error;
-          } else if (err.error.message) {
+          } else if (typeof err.error === 'object' && err.error.message) {
             errorMessage = err.error.message;
           }
         } else if (err.message) {
           errorMessage = err.message;
         }
 
-        return throwError(() => errorMessage);
+        return throwError(() => new Error(errorMessage));
       })
     );
   }

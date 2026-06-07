@@ -107,18 +107,18 @@ export class UtilisateurComponent {
   }
 
   getAllRole(){
-    // this.loadingIndicator = true;
-    this.glogalService.get('role').subscribe({
+    this.glogalService.get('utilisateur/roles-formulaire').subscribe({
       next:(value: Role[]) =>{
         this.role = value;
-        console.log("role",this.role)
-
-        // this.filteredData = [...value];
-        // setTimeout(() =>{
-        //   this.loadingIndicator = false;
-        // },500);
+      },
+      error: () => {
+        this.glogalService.get('role').subscribe({
+          next: (fallback: Role[]) => {
+            this.role = fallback;
+          }
+        });
       }
-    })
+    });
   }
 
   getAllEntite(){
@@ -135,12 +135,39 @@ export class UtilisateurComponent {
     })
   }
 
+  private buildUtilisateurPayload(form: UntypedFormGroup): Record<string, unknown> {
+    const v = form.getRawValue();
+    const roleId = Number(v.role);
+    const entiteId = Number(v.entite);
+    if (!Number.isFinite(roleId) || roleId <= 0) {
+      throw new Error('Sélectionnez un rôle valide.');
+    }
+    if (!Number.isFinite(entiteId) || entiteId <= 0) {
+      throw new Error('Sélectionnez une entité valide.');
+    }
+    return {
+      nom: v.nom,
+      prenom: v.prenom,
+      email: String(v.email || '').trim().toLowerCase(),
+      genre: v.genre,
+      phone: v.phone,
+      role: { id: roleId },
+      entite: { id: entiteId },
+    };
+  }
+
   onAddRowSave(form: UntypedFormGroup) {
     this.loadingIndicator = true;
-    console.log("Form value", form.value);
-    // const payload = { ...form.value, role: Number(form.value.role),entite:{ id: form.value.entite } // <- transforme l'ID en objet}; // conversion string → number
-  // console.log("Payload envoyé", form.value);
-    this.glogalService.post('utilisateur', form.value).subscribe({
+    let payload: Record<string, unknown>;
+    try {
+      payload = this.buildUtilisateurPayload(form);
+    } catch (e: unknown) {
+      this.loadingIndicator = false;
+      const msg = e instanceof Error ? e.message : 'Formulaire invalide.';
+      Swal.fire({ icon: 'warning', title: 'Attention', text: msg });
+      return;
+    }
+    this.glogalService.post('utilisateur', payload).subscribe({
       next: (response) => {
         // Ajouter la nouvelle role reçue à la liste locale
         this.users.push(response);
@@ -154,17 +181,11 @@ export class UtilisateurComponent {
         // Afficher un toast de succès
         this.addRecordSuccess();
       },
-      error: (err: { status: number; error: any; message?: string }) => {
+      error: (err: unknown) => {
         console.error('Erreur reçue:', err);
 
-        let message = 'Une erreur est survenue. Veuillez réessayer.';
-        let title = '<span class="text-red-500">Échec</span>';
-
-        if (err.error?.message) {
-          message = err.error.message;
-        } else if (err.message) {
-          message = err.message;
-        }
+        let message = this.glogalService.extractMessageFromError(err);
+        const title = '<span class="text-red-500">Échec</span>';
 
         Swal.fire({
           icon: 'error',
@@ -215,8 +236,12 @@ export class UtilisateurComponent {
 
   onEditSave(form: UntypedFormGroup) {
     if (form?.value?.id) {
-      // Préparer l'objet mis à jour (ici l'exemple suppose que `form.value` contient les nouvelles données)
-      const updatedUtilisateur = form.value;
+      const v = form.getRawValue();
+      const updatedUtilisateur = {
+        ...v,
+        role: v.role != null ? { id: Number(v.role) } : null,
+        entite: v.entite != null ? { id: Number(v.entite) } : null,
+      };
       // console.log("Updated Utilisateur========", updatedUtilisateur);
       this.glogalService.update("utilisateur", updatedUtilisateur.id, updatedUtilisateur).subscribe({
         next: () => {

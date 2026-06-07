@@ -68,7 +68,7 @@ export const APP_ROUTE: Route[] = [
           import('./responsable-odk/responsable-odk-dashboard/responsable-odk-dashboard.component').then(
             (c) => c.ResponsableOdkDashboardComponent
           ),
-        data: { responsableTab: 'activites' },
+        data: { responsableTab: 'activites', responsableRole: 'RESPONSABLE_ODK' },
       },
       {
         path: 'responsable-odk/courriers',
@@ -76,7 +76,73 @@ export const APP_ROUTE: Route[] = [
           import('./responsable-odk/responsable-odk-dashboard/responsable-odk-dashboard.component').then(
             (c) => c.ResponsableOdkDashboardComponent
           ),
-        data: { responsableTab: 'courriers' },
+        data: { responsableTab: 'courriers', responsableRole: 'RESPONSABLE_ODK' },
+      },
+      {
+        path: 'responsable-fablab/dashboard',
+        loadComponent: () =>
+          import('./personnels/dash-activite/dash-activite.component').then((c) => c.DashActiviteComponent),
+        data: { responsableRole: 'RESPONSABLE_FABLAB' },
+      },
+      {
+        path: 'responsable-fablab/activites',
+        loadComponent: () =>
+          import('./responsable-odk/responsable-odk-dashboard/responsable-odk-dashboard.component').then(
+            (c) => c.ResponsableOdkDashboardComponent
+          ),
+        data: { responsableTab: 'activites', responsableRole: 'RESPONSABLE_FABLAB' },
+      },
+      {
+        path: 'responsable-fablab/courriers',
+        loadComponent: () =>
+          import('./responsable-odk/responsable-odk-dashboard/responsable-odk-dashboard.component').then(
+            (c) => c.ResponsableOdkDashboardComponent
+          ),
+        data: { responsableTab: 'courriers', responsableRole: 'RESPONSABLE_FABLAB' },
+      },
+      {
+        path: 'responsable-ofab/dashboard',
+        loadComponent: () =>
+          import('./personnels/dash-activite/dash-activite.component').then((c) => c.DashActiviteComponent),
+        data: { responsableRole: 'RESPONSABLE_OFAB' },
+      },
+      {
+        path: 'responsable-ofab/activites',
+        loadComponent: () =>
+          import('./responsable-odk/responsable-odk-dashboard/responsable-odk-dashboard.component').then(
+            (c) => c.ResponsableOdkDashboardComponent
+          ),
+        data: { responsableTab: 'activites', responsableRole: 'RESPONSABLE_OFAB' },
+      },
+      {
+        path: 'responsable-ofab/courriers',
+        loadComponent: () =>
+          import('./responsable-odk/responsable-odk-dashboard/responsable-odk-dashboard.component').then(
+            (c) => c.ResponsableOdkDashboardComponent
+          ),
+        data: { responsableTab: 'courriers', responsableRole: 'RESPONSABLE_OFAB' },
+      },
+      {
+        path: 'responsable-multimedia/dashboard',
+        loadComponent: () =>
+          import('./personnels/dash-activite/dash-activite.component').then((c) => c.DashActiviteComponent),
+        data: { responsableRole: 'RESPONSABLE_MULTIMEDIA' },
+      },
+      {
+        path: 'responsable-multimedia/activites',
+        loadComponent: () =>
+          import('./responsable-odk/responsable-odk-dashboard/responsable-odk-dashboard.component').then(
+            (c) => c.ResponsableOdkDashboardComponent
+          ),
+        data: { responsableTab: 'activites', responsableRole: 'RESPONSABLE_MULTIMEDIA' },
+      },
+      {
+        path: 'responsable-multimedia/courriers',
+        loadComponent: () =>
+          import('./responsable-odk/responsable-odk-dashboard/responsable-odk-dashboard.component').then(
+            (c) => c.ResponsableOdkDashboardComponent
+          ),
+        data: { responsableTab: 'courriers', responsableRole: 'RESPONSABLE_MULTIMEDIA' },
       },
       { path: 'directeur-odc/validation-activites', loadComponent: () => import('./directeur-odc/validation-activites/validation-activites.component').then(c => c.ValidationActivitesComponent) },
       { path: 'directeur-odc/validation-courriers', redirectTo: 'courrier', pathMatch: 'full' },
