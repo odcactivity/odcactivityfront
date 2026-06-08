@@ -201,7 +201,9 @@ export class MainComponent implements OnInit {
     if (
       this.currentRoles.includes('SUPERADMIN') ||
       this.currentRoles.includes('ADMIN') ||
-      this.currentRoles.includes('DIRECTEUR_ODC')
+      this.currentRoles.includes('DIRECTEUR_ODC') ||
+      this.currentRoles.includes('DIRECTEUR') ||
+      this.currentRoles.includes('DCIRE')
     ) {
       return false;
     }
@@ -212,7 +214,7 @@ export class MainComponent implements OnInit {
     ) {
       return true;
     }
-    return this.currentRoles.includes('DIRECTEUR');
+    return true;
   }
 
   private activeCourrierCatKeys(): string[] {

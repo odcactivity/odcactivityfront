@@ -31,11 +31,19 @@ export class ValidationCourriersDirecteurComponent implements OnInit {
   deleguerNote = '';
   deleguerServiceEntiteId: number | null = null;
   servicesOdc: { id: number; nom: string }[] = [];
-
+  selectedServiceId: number | null = null;
+  // Store original rows for filtering
+  private originalRowsAdmin: any[] = [];
+  private originalRowsReponses: any[] = [];
   constructor(
     private readonly global: GlobalService,
     private readonly toast: ToastrService
   ) {}
+
+  private emitChanged(): void {
+    this.load();
+    this.workflowChanged.emit();
+  }
 
   ngOnInit(): void {
     this.load();
@@ -57,21 +65,22 @@ export class ValidationCourriersDirecteurComponent implements OnInit {
     this.suggestionReponseText = '';
     this.global.getCourriersValidationDirecteurOdc().subscribe({
       next: (d) => {
-        this.rowsAdmin = Array.isArray(d) ? d : [];
+        this.originalRowsAdmin = Array.isArray(d) ? d : [];
+        this.applyServiceFilter();
       },
       error: () => {
+        this.originalRowsAdmin = [];
         this.rowsAdmin = [];
       },
     });
     this.global.getCourrierReponsesEnAttenteDirecteurOdc().subscribe({
       next: (d) => {
-        this.rowsReponses = Array.isArray(d) ? d : [];
-        this.loading = false;
+        this.originalRowsReponses = Array.isArray(d) ? d : [];
+        this.applyServiceFilter();
       },
       error: () => {
+        this.originalRowsReponses = [];
         this.rowsReponses = [];
-        this.loading = false;
-        this.toast.error('Impossible de charger les réponses en attente.');
       },
     });
   }
@@ -236,8 +245,18 @@ export class ValidationCourriersDirecteurComponent implements OnInit {
     });
   }
 
-  private emitChanged(): void {
-    this.load();
-    this.workflowChanged.emit();
+  private applyServiceFilter(): void {
+    if (this.selectedServiceId == null) {
+      this.rowsAdmin = [...this.originalRowsAdmin];
+      this.rowsReponses = [...this.originalRowsReponses];
+    } else {
+      const filterFn = (row: any) => row?.entite?.id === this.selectedServiceId;
+      this.rowsAdmin = this.originalRowsAdmin.filter(filterFn);
+      this.rowsReponses = this.originalRowsReponses.filter(filterFn);
+    }
+  }
+
+  onServiceFilterChange(): void {
+    this.applyServiceFilter();
   }
 }

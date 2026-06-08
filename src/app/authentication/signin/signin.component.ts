@@ -142,7 +142,7 @@ export class SigninComponent implements OnInit {
           });
           Toast.fire({
             icon: "success",
-            title: "Bienvenu dans votre espace sécurisé pour la gestion des activités"
+            title: "Bienvenue dans votre espace sécurisé pour la gestion des activités"
           });
         } else {
           this.toast.open("Aucun token reçu dans la réponse.", "Erreur", { duration: 4000 });
