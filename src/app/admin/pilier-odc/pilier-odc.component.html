@@ -46,61 +46,73 @@
 
   <div *ngIf="!loadingIndicator && services.length > 0" class="row row-cols-1 row-cols-sm-2 row-cols-lg-2 g-3 mt-2">
     <div *ngFor="let service of services" class="col">
-      <div class="card border-0 card-hover cursor-pointer h-100 shadow-sm rounded-3 overflow-hidden" style="transition: all 0.3s ease;">
-        <div class="position-relative overflow-hidden bg-light d-flex align-items-center justify-content-center" style="height: 100px;">
-          <img [src]="getLogoUrl(service.logo)"
-               alt="{{ service.nom }}"
-               class="img-fluid"
-               style="max-height: 70px; object-fit: contain;"
-               (error)="onImageError($event)"
-          />
-          <div class="position-absolute top-0 end-0 m-2">
-            <span class="badge bg-warning text-dark fw-bold px-2 py-1 shadow-sm" style="font-size: 10px;">Pilier ODC</span>
-          </div>
-        </div>
-        
-        <div class="card-body p-2 d-flex flex-column justify-content-between">
-          <div>
-            <h6 class="card-title text-dark fw-bold mb-1">{{ service.nom }}</h6>
-            <p class="card-text text-muted small mb-2 text-truncate-3" style="min-height: 36px; font-size: 12px;">
-              {{ service.description || 'Aucune description fournie.' }}
-            </p>
-            <div class="small text-muted mb-2 d-flex align-items-center gap-2" style="font-size: 11px;">
-              <i class="fas fa-user-tie text-warning"></i>
-              <span>Resp: <strong>{{ service.responsable?.prenom }} {{ service.responsable?.nom }}</strong></span>
+      <div class="card border-0 shadow-sm rounded-3 overflow-hidden h-100 card-hover" style="transition: all 0.3s ease; border: 1px solid rgba(0,0,0,0.06) !important;">
+        <div class="row g-0 h-100">
+          <!-- Logo à gauche (25% à 30% de la largeur) -->
+          <div class="col-4 col-md-3 bg-light d-flex align-items-center justify-content-center p-3 border-end" style="background: linear-gradient(135deg, #fdfbf7 0%, #f5f2eb 100%); min-height: 130px;">
+            <div class="bg-white rounded shadow-sm p-2 d-flex align-items-center justify-content-center" style="width: 75px; height: 75px; border: 1px solid rgba(0,0,0,0.04);">
+              <img [src]="getLogoUrl(service.logo)"
+                   alt="{{ service.nom }}"
+                   class="img-fluid"
+                   style="max-height: 55px; max-width: 55px; object-fit: contain;"
+                   (error)="onImageError($event)"
+              />
             </div>
           </div>
-          
-          <div class="d-flex align-items-center justify-content-between pt-3 border-top mt-auto">
-            <div class="d-flex align-items-center gap-2">
-              <div class="bg-warning-subtle text-warning p-2 rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
-                <i class="fas fa-tasks text-warning" style="font-size: 14px;"></i>
+          <!-- Contenu à droite (70% à 75% de la largeur) -->
+          <div class="col-8 col-md-9 d-flex flex-column p-3 justify-content-between">
+            <div>
+              <div class="d-flex align-items-start justify-content-between mb-1 gap-2">
+                <h6 class="card-title text-dark fw-bold m-0 text-truncate" style="font-size: 14px; max-width: 70%;" title="{{ service.nom }}">{{ service.nom }}</h6>
+                <span class="badge bg-warning-subtle text-dark fw-bold px-2 py-1" style="font-size: 9px; border: 1px solid rgba(255, 102, 0, 0.15); border-radius: 4px;">Pilier ODC</span>
               </div>
-              <div>
-                <div class="text-muted small" style="font-size: 11px; line-height: 1;">Activités</div>
-                <div class="fw-bold text-dark" style="font-size: 15px;">{{ service.id ? (activiteCount[service.id] || 0) : 0 }}</div>
-              </div>
+              <p class="card-text text-muted mb-2 text-truncate-2" style="font-size: 11.5px; line-height: 1.4; min-height: 32px;" title="{{ service.description }}">
+                {{ service.description || 'Aucune description fournie.' }}
+              </p>
             </div>
             
-            <div class="d-flex gap-2">
-              <button
-                type="button"
-                class="btn btn-sm btn-outline-warning d-flex align-items-center justify-content-center"
-                style="width: 32px; height: 32px; border-radius: 8px;"
-                (click)="editRow(service, editRecordModal); $event.stopPropagation()"
-                title="Modifier le service"
-              >
-                <i class="fas fa-edit"></i>
-              </button>
-              <button
-                type="button"
-                class="btn btn-sm btn-outline-danger d-flex align-items-center justify-content-center"
-                style="width: 32px; height: 32px; border-radius: 8px;"
-                (click)="deleteSingleRow(service); $event.stopPropagation()"
-                title="Supprimer le service"
-              >
-                <i class="fas fa-trash"></i>
-              </button>
+            <div class="d-flex align-items-center justify-content-between pt-2 border-top mt-auto">
+              <!-- Métadonnées (Activités & Responsable) -->
+              <div class="d-flex align-items-center gap-3">
+                <div class="d-flex align-items-center gap-1" title="Nombre d'activités">
+                  <i class="fas fa-tasks text-warning" style="font-size: 11px;"></i>
+                  <span class="text-dark fw-semibold" style="font-size: 11px;">
+                    {{ service.id ? (activiteCount[service.id] || 0) : 0 }} activ.
+                  </span>
+                </div>
+                <div class="d-flex align-items-center gap-1" title="Responsable">
+                  <i class="fas fa-user-tie text-muted" style="font-size: 11px;"></i>
+                  <span class="text-muted fw-medium text-truncate" style="font-size: 11px; max-width: 100px;">
+                    @if (service.responsable) {
+                      {{ service.responsable.prenom }} {{ service.responsable.nom }}
+                    } @else {
+                      <span class="text-muted-50 fst-italic">Non assigné</span>
+                    }
+                  </span>
+                </div>
+              </div>
+              
+              <!-- Actions -->
+              <div class="d-flex gap-2">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-warning d-flex align-items-center justify-content-center"
+                  style="width: 28px; height: 28px; border-radius: 6px;"
+                  (click)="editRow(service, editRecordModal); $event.stopPropagation()"
+                  title="Modifier"
+                >
+                  <i class="fas fa-edit" style="font-size: 12px;"></i>
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-danger d-flex align-items-center justify-content-center"
+                  style="width: 28px; height: 28px; border-radius: 6px;"
+                  (click)="deleteSingleRow(service); $event.stopPropagation()"
+                  title="Supprimer"
+                >
+                  <i class="fas fa-trash" style="font-size: 12px;"></i>
+                </button>
+              </div>
             </div>
           </div>
         </div>
