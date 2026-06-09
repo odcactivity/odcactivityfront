@@ -20,9 +20,8 @@
     </div>
     <div class="header-buttons-left">
       <div class="tbl-btn-style">
-        <button class="btn btn-warning text-dark fw-bold rounded-button d-flex align-items-center gap-2" (click)="addRecord(addRecordModal)">
-          <i class="material-icons font-20">add</i>
-          <span>Ajouter un pilier</span>
+        <button class="btn btn-warning text-dark fw-bold rounded-circle d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;" (click)="addRecord(addRecordModal)" title="Ajouter un pilier">
+          <i class="material-icons font-24">add</i>
         </button>
       </div>
     </div>
@@ -45,30 +44,30 @@
     </div>
   </div>
 
-  <div *ngIf="!loadingIndicator && services.length > 0" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mt-2">
+  <div *ngIf="!loadingIndicator && services.length > 0" class="row row-cols-1 row-cols-sm-2 row-cols-lg-2 g-3 mt-2">
     <div *ngFor="let service of services" class="col">
-      <div class="card border-0 card-hover cursor-pointer h-100 shadow-sm rounded-4 overflow-hidden" style="transition: all 0.3s ease;">
-        <div class="position-relative overflow-hidden bg-light d-flex align-items-center justify-content-center" style="height: 180px;">
+      <div class="card border-0 card-hover cursor-pointer h-100 shadow-sm rounded-3 overflow-hidden" style="transition: all 0.3s ease;">
+        <div class="position-relative overflow-hidden bg-light d-flex align-items-center justify-content-center" style="height: 100px;">
           <img [src]="getLogoUrl(service.logo)"
                alt="{{ service.nom }}"
                class="img-fluid"
-               style="max-height: 120px; object-fit: contain;"
+               style="max-height: 70px; object-fit: contain;"
                (error)="onImageError($event)"
           />
           <div class="position-absolute top-0 end-0 m-2">
-            <span class="badge bg-warning text-dark fw-bold px-2 py-1 shadow-sm">Pilier ODC</span>
+            <span class="badge bg-warning text-dark fw-bold px-2 py-1 shadow-sm" style="font-size: 10px;">Pilier ODC</span>
           </div>
         </div>
         
-        <div class="card-body p-4 d-flex flex-column justify-content-between">
+        <div class="card-body p-2 d-flex flex-column justify-content-between">
           <div>
-            <h5 class="card-title text-dark fw-bold mb-2">{{ service.nom }}</h5>
-            <p class="card-text text-muted small mb-3 text-truncate-3" style="min-height: 54px;">
+            <h6 class="card-title text-dark fw-bold mb-1">{{ service.nom }}</h6>
+            <p class="card-text text-muted small mb-2 text-truncate-3" style="min-height: 36px; font-size: 12px;">
               {{ service.description || 'Aucune description fournie.' }}
             </p>
-            <div class="small text-muted mb-3 d-flex align-items-center gap-2">
+            <div class="small text-muted mb-2 d-flex align-items-center gap-2" style="font-size: 11px;">
               <i class="fas fa-user-tie text-warning"></i>
-              <span>Responsable: <strong>{{ service.responsable?.prenom }} {{ service.responsable?.nom }}</strong></span>
+              <span>Resp: <strong>{{ service.responsable?.prenom }} {{ service.responsable?.nom }}</strong></span>
             </div>
           </div>
           

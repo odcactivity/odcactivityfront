@@ -145,7 +145,16 @@ export class PilierOdcComponent implements OnInit {
   getAllUtilisateur(): void {
     this.globalService.get('utilisateur').subscribe({
       next: (value: Utilisateur[]) => {
-        this.users = value;
+        // Filtrer pour n'afficher que le personnel de l'ODC
+        // en excluant le directeur ODC, les directeurs des autres entités (RSE, DCI, DCIRE, Fondation)
+        // et le SUPERADMIN.
+        this.users = value.filter(u => {
+          const roleNom = u.role?.nom || '';
+          if (roleNom === 'DIRECTEUR_ODC') return false;
+          if (roleNom === 'DIRECTEUR' || roleNom === 'DIRECTEUR_RSE' || roleNom === 'DIRECTEUR_DCI' || roleNom === 'DIRECTEUR_FONDATION') return false;
+          if (roleNom === 'SUPERADMIN') return false;
+          return true;
+        });
       },
       error: (err) => {
         console.error('Erreur chargement utilisateurs:', err);

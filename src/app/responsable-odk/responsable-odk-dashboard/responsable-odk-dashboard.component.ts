@@ -40,6 +40,14 @@ export class ResponsableOdkDashboardComponent implements OnInit {
   loading = false;
   noteActivite = '';
 
+  // Réponse courrier
+  reponseOuverte: any = null;
+  reponseEmail = '';
+  reponseObjet = '';
+  reponseMessage = '';
+  reponseFichier: File | null = null;
+  reponseLoading = false;
+
   constructor(
     private readonly global: GlobalService,
     private readonly toast: ToastrService,
@@ -272,6 +280,63 @@ export class ResponsableOdkDashboardComponent implements OnInit {
       },
       error: (e: { error?: { message?: string } }) => {
         this.toast.error(e?.error?.message || 'Suppression impossible.');
+      },
+    });
+  }
+
+  // ─── Réponse à un courrier délégué ───────────────────────────────
+
+  ouvrirReponse(courrier: any): void {
+    this.reponseOuverte = courrier;
+    const user = this.auth.getCurrentUserFromStorage() as { email?: string } | null;
+    this.reponseEmail = user?.email || '';
+    this.reponseObjet = `Re: ${courrier.objet || ''}`;
+    this.reponseMessage = '';
+    this.reponseFichier = null;
+  }
+
+  annulerReponse(): void {
+    this.reponseOuverte = null;
+    this.reponseEmail = '';
+    this.reponseObjet = '';
+    this.reponseMessage = '';
+    this.reponseFichier = null;
+  }
+
+  onReponseFichier(event: any): void {
+    const file = event?.target?.files?.[0];
+    if (file) {
+      this.reponseFichier = file;
+    }
+  }
+
+  envoyerReponse(): void {
+    if (!this.reponseOuverte?.id) {
+      return;
+    }
+    if (!this.reponseEmail.trim() || !this.reponseObjet.trim() || !this.reponseMessage.trim()) {
+      this.toast.warning('Veuillez remplir tous les champs obligatoires.');
+      return;
+    }
+    this.reponseLoading = true;
+    const fd = new FormData();
+    fd.append('courrierId', String(this.reponseOuverte.id));
+    fd.append('email', this.reponseEmail.trim());
+    fd.append('objet', this.reponseObjet.trim());
+    fd.append('message', this.reponseMessage.trim());
+    if (this.reponseFichier) {
+      fd.append('file', this.reponseFichier);
+    }
+    this.global.postCourrierReponseMultipart(fd).subscribe({
+      next: () => {
+        this.reponseLoading = false;
+        this.toast.success('Réponse envoyée avec succès.');
+        this.annulerReponse();
+        this.loadAll();
+      },
+      error: (e: { error?: { message?: string } }) => {
+        this.reponseLoading = false;
+        this.toast.error(e?.error?.message || 'Échec de l\'envoi de la réponse.');
       },
     });
   }
