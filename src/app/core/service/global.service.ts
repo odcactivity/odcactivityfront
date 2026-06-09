@@ -524,7 +524,7 @@ export class GlobalService {
     return this.http.get<any[]>(`${this.baseUrl}/activite/superviseur/${superviseurId}/attente`);
   }
   getFichierUrl(id: number): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/activitevalidation/{id}/fichier`);
+    return this.http.get<any[]>(`${this.baseUrl}/activitevalidation/${id}/fichier`);
 
   }
   getValidationFileResponse(validationId: number): Observable<HttpResponse<Blob>> {

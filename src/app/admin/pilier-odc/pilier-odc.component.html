@@ -1,0 +1,286 @@
+<section class="main-content">
+  <ul class="breadcrumb breadcrumb-style">
+    <li class="breadcrumb-item">
+      <h5 class="page-title m-b-0">Piliers</h5>
+    </li>
+    <li class="breadcrumb-item bcrumb-1">
+      <a routerLink="/dashboard/main">
+        <i class="fas fa-home font-17"></i>
+      </a>
+    </li>
+    <li class="breadcrumb-item">Piliers ODC</li>
+  </ul>
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h4 class="mb-1 text-dark fw-bold">Piliers ODC (Services)</h4>
+      <p class="mb-0 text-muted small">
+        Gérez les différents pôles et services rattachés à la Direction Orange Digital Center.
+      </p>
+    </div>
+    <div class="header-buttons-left">
+      <div class="tbl-btn-style">
+        <button class="btn btn-warning text-dark fw-bold rounded-button d-flex align-items-center gap-2" (click)="addRecord(addRecordModal)">
+          <i class="material-icons font-20">add</i>
+          <span>Ajouter un pilier</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Liste des services ODC -->
+  <div *ngIf="loadingIndicator" class="d-flex justify-content-center align-items-center py-5">
+    <div class="spinner-border text-warning" role="status" style="width: 3rem; height: 3rem;">
+      <span class="visually-hidden">Chargement...</span>
+    </div>
+  </div>
+
+  <div *ngIf="!loadingIndicator && services.length === 0" class="card border-0 p-5 text-center shadow-sm rounded-4">
+    <div class="py-4">
+      <i class="fas fa-cubes fa-4x text-muted mb-3 opacity-50"></i>
+      <h5 class="text-dark fw-semibold">Aucun service ODC configuré</h5>
+      <p class="text-muted small">
+        Commencez par ajouter un nouveau service ou pilier rattaché à l'Orange Digital Center.
+      </p>
+    </div>
+  </div>
+
+  <div *ngIf="!loadingIndicator && services.length > 0" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mt-2">
+    <div *ngFor="let service of services" class="col">
+      <div class="card border-0 card-hover cursor-pointer h-100 shadow-sm rounded-4 overflow-hidden" style="transition: all 0.3s ease;">
+        <div class="position-relative overflow-hidden bg-light d-flex align-items-center justify-content-center" style="height: 180px;">
+          <img [src]="getLogoUrl(service.logo)"
+               alt="{{ service.nom }}"
+               class="img-fluid"
+               style="max-height: 120px; object-fit: contain;"
+               (error)="onImageError($event)"
+          />
+          <div class="position-absolute top-0 end-0 m-2">
+            <span class="badge bg-warning text-dark fw-bold px-2 py-1 shadow-sm">Pilier ODC</span>
+          </div>
+        </div>
+        
+        <div class="card-body p-4 d-flex flex-column justify-content-between">
+          <div>
+            <h5 class="card-title text-dark fw-bold mb-2">{{ service.nom }}</h5>
+            <p class="card-text text-muted small mb-3 text-truncate-3" style="min-height: 54px;">
+              {{ service.description || 'Aucune description fournie.' }}
+            </p>
+            <div class="small text-muted mb-3 d-flex align-items-center gap-2">
+              <i class="fas fa-user-tie text-warning"></i>
+              <span>Responsable: <strong>{{ service.responsable?.prenom }} {{ service.responsable?.nom }}</strong></span>
+            </div>
+          </div>
+          
+          <div class="d-flex align-items-center justify-content-between pt-3 border-top mt-auto">
+            <div class="d-flex align-items-center gap-2">
+              <div class="bg-warning-subtle text-warning p-2 rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                <i class="fas fa-tasks text-warning" style="font-size: 14px;"></i>
+              </div>
+              <div>
+                <div class="text-muted small" style="font-size: 11px; line-height: 1;">Activités</div>
+                <div class="fw-bold text-dark" style="font-size: 15px;">{{ service.id ? (activiteCount[service.id] || 0) : 0 }}</div>
+              </div>
+            </div>
+            
+            <div class="d-flex gap-2">
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-warning d-flex align-items-center justify-content-center"
+                style="width: 32px; height: 32px; border-radius: 8px;"
+                (click)="editRow(service, editRecordModal); $event.stopPropagation()"
+                title="Modifier le service"
+              >
+                <i class="fas fa-edit"></i>
+              </button>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-danger d-flex align-items-center justify-content-center"
+                style="width: 32px; height: 32px; border-radius: 8px;"
+                (click)="deleteSingleRow(service); $event.stopPropagation()"
+                title="Supprimer le service"
+              >
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Formulaire d'ajout de service -->
+  <ng-template #addRecordModal let-modal>
+    <div class="modal-header bg-warning text-dark p-3">
+      <div class="modal-title-container">
+        <h5 class="modal-title fw-bold m-0">Créer un nouveau pilier ODC</h5>
+        <small class="text-dark-50">Ajouter un nouveau service rattaché à l'Orange Digital Center</small>
+      </div>
+      <button type="button" class="close btn-close border-0 bg-transparent text-dark" aria-label="Close" (click)="modal.dismiss()">
+        <span aria-hidden="true" class="font-20">&times;</span>
+      </button>
+    </div>
+    <div class="modal-body p-4">
+      <form [formGroup]="register" (ngSubmit)="onCreateSave(register)">
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label fw-semibold text-dark">Nom du service <span class="text-danger">*</span></label>
+            <input type="text" class="form-control border-warning" placeholder="Ex: Orange Coding School" formControlName="nom">
+            <div *ngIf="!register.get('nom')?.valid && register.get('nom')?.touched" class="text-danger small mt-1">
+              Le nom est obligatoire
+            </div>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label fw-semibold text-dark">Description <span class="text-danger">*</span></label>
+            <textarea class="form-control border-warning" rows="3" placeholder="Description des missions du service..." formControlName="description"></textarea>
+            <div *ngIf="!register.get('description')?.valid && register.get('description')?.touched" class="text-danger small mt-1">
+              La description est obligatoire
+            </div>
+          </div>
+
+          <!-- Logo Upload -->
+          <div class="col-12">
+            <label class="form-label fw-semibold text-dark">Logo / Image <span class="text-danger">*</span></label>
+            <div *ngIf="logoPreview" class="mb-3 p-2 bg-light rounded border border-warning d-flex align-items-center justify-content-between">
+              <div class="d-flex align-items-center">
+                <img [src]="logoPreview" alt="Aperçu" class="img-thumbnail me-3" style="max-height: 80px; max-width: 80px;">
+                <span class="text-dark small fw-semibold">Aperçu sélectionné</span>
+              </div>
+              <button type="button" class="btn btn-sm btn-outline-danger" (click)="resetLogoPreview()">
+                <i class="fas fa-trash me-1"></i> Supprimer
+              </button>
+            </div>
+            <input type="file" (change)="onFileChange($event)" class="form-control border-warning" accept="image/*" formControlName="logo">
+            <div *ngIf="!register.get('logo')?.valid && register.get('logo')?.touched" class="text-danger small mt-1">
+              Le logo est obligatoire
+            </div>
+            <div class="text-muted small mt-1">
+              Formats acceptés: JPG, PNG. Max: 5 Mo.
+            </div>
+          </div>
+
+          <!-- Responsable -->
+          <div class="col-12">
+            <label class="form-label fw-semibold text-dark">Responsable <span class="text-danger">*</span></label>
+            <select class="form-select border-warning" formControlName="responsable">
+              <option [ngValue]="null" disabled>-- Sélectionnez un responsable --</option>
+              <option *ngFor="let u of users" [ngValue]="u">{{ u.prenom }} {{ u.nom }} ({{ u.email }})</option>
+            </select>
+            <div *ngIf="!register.get('responsable')?.valid && register.get('responsable')?.touched" class="text-danger small mt-1">
+              Le responsable est obligatoire
+            </div>
+          </div>
+
+          <!-- Types d'activités autorisés -->
+          <div class="col-12">
+            <label class="form-label fw-semibold text-dark">Types d'activités associées</label>
+            <select class="form-select border-warning" multiple formControlName="typeActivite" style="height: 120px;">
+              <option *ngFor="let ta of allTypeActivite" [ngValue]="ta.id">{{ ta.type }}</option>
+            </select>
+            <div class="text-muted small mt-1">
+              Maintenez la touche Ctrl (ou Cmd sur Mac) pour sélectionner plusieurs types.
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer border-0 p-0 mt-4 bg-light p-3 rounded-3 gap-2">
+          <button type="submit" class="btn btn-warning text-dark fw-bold px-4 py-2" [disabled]="!register.valid || loadingIndicator">
+            <span *ngIf="loadingIndicator" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            <i class="fas fa-save me-2"></i>
+            Enregistrer
+          </button>
+          <button type="button" class="btn btn-dark text-white fw-bold px-4 py-2" (click)="modal.close()">
+            <i class="fas fa-times me-2"></i>Fermer
+          </button>
+        </div>
+      </form>
+    </div>
+  </ng-template>
+
+  <!-- Formulaire d'édition de service -->
+  <ng-template #editRecordModal let-modal>
+    <div class="modal-header bg-warning text-dark p-3">
+      <div class="modal-title-container">
+        <h5 class="modal-title fw-bold m-0">Modifier le pilier ODC</h5>
+        <small class="text-dark-50">Mettre à jour les informations du service ODC</small>
+      </div>
+      <button type="button" class="close btn-close border-0 bg-transparent text-dark" aria-label="Close" (click)="modal.dismiss()">
+        <span aria-hidden="true" class="font-20">&times;</span>
+      </button>
+    </div>
+    <div class="modal-body p-4">
+      <form [formGroup]="register" (ngSubmit)="onUpdateSave(register)">
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label fw-semibold text-dark">Nom du service <span class="text-danger">*</span></label>
+            <input type="text" class="form-control border-warning" formControlName="nom">
+            <div *ngIf="!register.get('nom')?.valid && register.get('nom')?.touched" class="text-danger small mt-1">
+              Le nom est obligatoire
+            </div>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label fw-semibold text-dark">Description <span class="text-danger">*</span></label>
+            <textarea class="form-control border-warning" rows="3" formControlName="description"></textarea>
+            <div *ngIf="!register.get('description')?.valid && register.get('description')?.touched" class="text-danger small mt-1">
+              La description est obligatoire
+            </div>
+          </div>
+
+          <!-- Logo Upload (Optionnel en Edition) -->
+          <div class="col-12">
+            <label class="form-label fw-semibold text-dark">Logo / Image</label>
+            <div *ngIf="logoPreview" class="mb-3 p-2 bg-light rounded border border-warning d-flex align-items-center justify-content-between">
+              <div class="d-flex align-items-center">
+                <img [src]="logoPreview" alt="Aperçu" class="img-thumbnail me-3" style="max-height: 80px; max-width: 80px;">
+                <span class="text-dark small fw-semibold">Logo actuel</span>
+              </div>
+              <button type="button" class="btn btn-sm btn-outline-danger" (click)="resetLogoPreview()">
+                <i class="fas fa-trash me-1"></i> Supprimer
+              </button>
+            </div>
+            <input type="file" (change)="onFileChange($event)" class="form-control border-warning" accept="image/*" formControlName="logo">
+            <div class="text-muted small mt-1">
+              Sélectionnez un nouveau fichier uniquement pour remplacer le logo actuel.
+            </div>
+          </div>
+
+          <!-- Responsable -->
+          <div class="col-12">
+            <label class="form-label fw-semibold text-dark">Responsable <span class="text-danger">*</span></label>
+            <select class="form-select border-warning" formControlName="responsable">
+              <option [ngValue]="null" disabled>-- Sélectionnez un responsable --</option>
+              <option *ngFor="let u of users" [ngValue]="u">{{ u.prenom }} {{ u.nom }} ({{ u.email }})</option>
+            </select>
+            <div *ngIf="!register.get('responsable')?.valid && register.get('responsable')?.touched" class="text-danger small mt-1">
+              Le responsable est obligatoire
+            </div>
+          </div>
+
+          <!-- Types d'activités autorisés -->
+          <div class="col-12">
+            <label class="form-label fw-semibold text-dark">Types d'activités associées</label>
+            <select class="form-select border-warning" multiple formControlName="typeActivite" style="height: 120px;">
+              <option *ngFor="let ta of allTypeActivite" [ngValue]="ta.id">{{ ta.type }}</option>
+            </select>
+            <div class="text-muted small mt-1">
+              Maintenez la touche Ctrl (ou Cmd sur Mac) pour sélectionner plusieurs types.
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer border-0 p-0 mt-4 bg-light p-3 rounded-3 gap-2">
+          <button type="submit" class="btn btn-warning text-dark fw-bold px-4 py-2" [disabled]="!register.valid || loadingIndicator">
+            <span *ngIf="loadingIndicator" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            <i class="fas fa-save me-2"></i>
+            Enregistrer les modifications
+          </button>
+          <button type="button" class="btn btn-dark text-white fw-bold px-4 py-2" (click)="modal.close()">
+            <i class="fas fa-times me-2"></i>Fermer
+          </button>
+        </div>
+      </form>
+    </div>
+  </ng-template>
+</section>

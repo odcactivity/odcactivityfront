@@ -32,3 +32,15 @@ export function isOdcPillarEntiteName(nom: string | undefined): boolean {
 export function filterEntitesOdcPiliers(entites: Entite[]): Entite[] {
   return entites.filter((e) => isOdcPillarEntiteName(e?.nom));
 }
+
+export function isDcireEntiteName(nom: string | undefined): boolean {
+  const n = normalizeEntiteNom(nom);
+  if (!n) {
+    return false;
+  }
+  if (n.includes('DCIRE')) {
+    return true;
+  }
+  const withSpaces = n.replace(/-/g, ' ');
+  return withSpaces.includes('DCI RE');
+}

@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Entite } from '@core/models/Entite';
+import { Courrier } from '@core/models/Courrier';
 import { GlobalService } from '@core/service/global.service';
 import { environment } from 'environments/environment';
 import { ToastrService } from 'ngx-toastr';
@@ -51,9 +52,11 @@ export interface RapportApercuLigne {
 export class RapportGlobalComponent implements OnInit {
   entites: Entite[] = [];
   activites: { id: number; nom: string }[] = [];
+  courriers: Courrier[] = [];
 
   entiteId: number | null = null;
   activiteId: number | null = null;
+  courrierId: number | null = null;
   annee = new Date().getFullYear();
   mois: number | null = 1;
 
@@ -85,6 +88,12 @@ export class RapportGlobalComponent implements OnInit {
       },
       error: () => {}
     });
+    this.http.get<Courrier[]>(`${environment.apiUrl}/api/courriers/tous`).subscribe({
+      next: (list) => {
+        this.courriers = Array.isArray(list) ? list : [];
+      },
+      error: () => {}
+    });
   }
 
   libelleFiltresResume(): string {
@@ -100,6 +109,10 @@ export class RapportGlobalComponent implements OnInit {
       parts.push(`Activité : ${a?.nom ?? '—'}`);
     } else {
       parts.push('Activité : toutes');
+    }
+    if (this.courrierId != null) {
+      const c = this.courriers.find((x) => x.id === this.courrierId);
+      parts.push(`Courrier : ${c?.numero ?? c?.objet ?? '—'}`);
     }
     parts.push(`Année : ${this.annee}`);
     if (this.periodeMode === 'mois' && this.mois != null) {
@@ -126,7 +139,7 @@ export class RapportGlobalComponent implements OnInit {
       },
       error: () => {
         this.apercuLoading = false;
-        this.toast.error('Impossible de charger l’aperçu.');
+        this.toast.error("Impossible de charger l'aperçu.");
       }
     });
   }
@@ -141,6 +154,9 @@ export class RapportGlobalComponent implements OnInit {
     }
     if (this.activiteId != null) {
       p = p.set('activiteId', String(this.activiteId));
+    }
+    if (this.courrierId != null) {
+      p = p.set('courrierId', String(this.courrierId));
     }
     return p;
   }

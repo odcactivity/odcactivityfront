@@ -8,7 +8,25 @@
       "class": "",
       "groupTitle": false,
       "submenu": [],
-      "roles": ["SUPERADMIN", "ADMIN", "DIRECTEUR", "DIRECTEUR_ODC"]
+      "roles": [
+        "SUPERADMIN",
+        "ADMIN",
+        "DIRECTEUR",
+        "DIRECTEUR_ODC"
+      ]
+    },
+    {
+      "path": "/pilier-odc",
+      "title": "Piliers ODC",
+      "iconType": "feather",
+      "icon": "grid",
+      "class": "",
+      "groupTitle": false,
+      "submenu": [],
+      "roles": [
+        "SUPERADMIN",
+        "ADMIN"
+      ]
     },
     {
       "path": "/entite",
@@ -20,7 +38,9 @@
       "badge": "",
       "badgeClass": "",
       "submenu": [],
-      "roles": ["DIRECTEUR"]
+      "roles": [
+        "DIRECTEUR"
+      ]
     },
     {
       "path": "/responsable-odk/dashboard",
@@ -30,7 +50,9 @@
       "class": "",
       "groupTitle": false,
       "submenu": [],
-      "roles": ["RESPONSABLE_ODK"]
+      "roles": [
+        "RESPONSABLE_ODK"
+      ]
     },
     {
       "path": "/activite",
@@ -40,7 +62,9 @@
       "class": "",
       "groupTitle": false,
       "submenu": [],
-      "roles": ["RESPONSABLE_ODK"]
+      "roles": [
+        "RESPONSABLE_ODK"
+      ]
     },
     {
       "path": "/responsable-odk/activites",
@@ -50,7 +74,9 @@
       "class": "",
       "groupTitle": false,
       "submenu": [],
-      "roles": ["RESPONSABLE_ODK"]
+      "roles": [
+        "RESPONSABLE_ODK"
+      ]
     },
     {
       "path": "/responsable-odk/courriers",
@@ -60,7 +86,9 @@
       "class": "",
       "groupTitle": false,
       "submenu": [],
-      "roles": ["RESPONSABLE_ODK"]
+      "roles": [
+        "RESPONSABLE_ODK"
+      ]
     },
     {
       "path": "/responsable-fablab/dashboard",
@@ -70,7 +98,9 @@
       "class": "",
       "groupTitle": false,
       "submenu": [],
-      "roles": ["RESPONSABLE_FABLAB"]
+      "roles": [
+        "RESPONSABLE_FABLAB"
+      ]
     },
     {
       "path": "/activite",
@@ -80,7 +110,11 @@
       "class": "",
       "groupTitle": false,
       "submenu": [],
-      "roles": ["RESPONSABLE_FABLAB", "RESPONSABLE_OFAB", "RESPONSABLE_MULTIMEDIA"]
+      "roles": [
+        "RESPONSABLE_FABLAB",
+        "RESPONSABLE_OFAB",
+        "RESPONSABLE_MULTIMEDIA"
+      ]
     },
     {
       "path": "/responsable-fablab/activites",
@@ -90,7 +124,9 @@
       "class": "",
       "groupTitle": false,
       "submenu": [],
-      "roles": ["RESPONSABLE_FABLAB"]
+      "roles": [
+        "RESPONSABLE_FABLAB"
+      ]
     },
     {
       "path": "/responsable-fablab/courriers",
@@ -100,7 +136,9 @@
       "class": "",
       "groupTitle": false,
       "submenu": [],
-      "roles": ["RESPONSABLE_FABLAB"]
+      "roles": [
+        "RESPONSABLE_FABLAB"
+      ]
     },
     {
       "path": "/responsable-ofab/dashboard",
@@ -110,7 +148,9 @@
       "class": "",
       "groupTitle": false,
       "submenu": [],
-      "roles": ["RESPONSABLE_OFAB"]
+      "roles": [
+        "RESPONSABLE_OFAB"
+      ]
     },
     {
       "path": "/responsable-ofab/activites",
@@ -120,7 +160,9 @@
       "class": "",
       "groupTitle": false,
       "submenu": [],
-      "roles": ["RESPONSABLE_OFAB"]
+      "roles": [
+        "RESPONSABLE_OFAB"
+      ]
     },
     {
       "path": "/responsable-ofab/courriers",
@@ -130,7 +172,9 @@
       "class": "",
       "groupTitle": false,
       "submenu": [],
-      "roles": ["RESPONSABLE_OFAB"]
+      "roles": [
+        "RESPONSABLE_OFAB"
+      ]
     },
     {
       "path": "/responsable-multimedia/dashboard",
@@ -140,7 +184,9 @@
       "class": "",
       "groupTitle": false,
       "submenu": [],
-      "roles": ["RESPONSABLE_MULTIMEDIA"]
+      "roles": [
+        "RESPONSABLE_MULTIMEDIA"
+      ]
     },
     {
       "path": "/responsable-multimedia/activites",
@@ -150,7 +196,9 @@
       "class": "",
       "groupTitle": false,
       "submenu": [],
-      "roles": ["RESPONSABLE_MULTIMEDIA"]
+      "roles": [
+        "RESPONSABLE_MULTIMEDIA"
+      ]
     },
     {
       "path": "/responsable-multimedia/courriers",
@@ -160,7 +208,9 @@
       "class": "",
       "groupTitle": false,
       "submenu": [],
-      "roles": ["RESPONSABLE_MULTIMEDIA"]
+      "roles": [
+        "RESPONSABLE_MULTIMEDIA"
+      ]
     },
     {
       "path": "/structure/fondation/courriers",
@@ -170,7 +220,9 @@
       "class": "",
       "groupTitle": false,
       "submenu": [],
-      "roles": ["DIRECTEUR_FONDATION"]
+      "roles": [
+        "DIRECTEUR_FONDATION"
+      ]
     },
     {
       "path": "/structure/rse/courriers",
@@ -180,7 +232,9 @@
       "class": "",
       "groupTitle": false,
       "submenu": [],
-      "roles": ["DIRECTEUR_RSE"]
+      "roles": [
+        "DIRECTEUR_RSE"
+      ]
     },
     {
       "path": "/structure/dci/courriers",
@@ -190,7 +244,9 @@
       "class": "",
       "groupTitle": false,
       "submenu": [],
-      "roles": ["DIRECTEUR_DCI"]
+      "roles": [
+        "DIRECTEUR_DCI"
+      ]
     },
     {
       "path": "/directeur-odc/validation-activites",
@@ -200,7 +256,9 @@
       "class": "",
       "groupTitle": false,
       "submenu": [],
-      "roles": ["DIRECTEUR_ODC"]
+      "roles": [
+        "DIRECTEUR_ODC"
+      ]
     },
     {
       "path": "/directeur-odc/rapport-global",
@@ -210,7 +268,9 @@
       "class": "",
       "groupTitle": false,
       "submenu": [],
-      "roles": ["DIRECTEUR_ODC"]
+      "roles": [
+        "DIRECTEUR_ODC"
+      ]
     },
     {
       "path": "/courrier",
@@ -220,7 +280,10 @@
       "class": "",
       "groupTitle": false,
       "submenu": [],
-      "roles": ["DIRECTEUR", "DIRECTEUR_ODC"]
+      "roles": [
+        "DIRECTEUR",
+        "DIRECTEUR_ODC"
+      ]
     },
     {
       "path": "/utilisateur",
@@ -229,7 +292,9 @@
       "icon": "users",
       "class": "",
       "groupTitle": false,
-      "roles": ["SUPERADMIN"],
+      "roles": [
+        "SUPERADMIN"
+      ],
       "submenu": [
         {
           "path": "/role",
@@ -238,7 +303,9 @@
           "icon": "shield",
           "class": "",
           "submenu": [],
-          "roles": ["SUPERADMIN"]
+          "roles": [
+            "SUPERADMIN"
+          ]
         },
         {
           "path": "/utilisateur",
@@ -247,7 +314,9 @@
           "icon": "users",
           "class": "",
           "submenu": [],
-          "roles": ["SUPERADMIN"]
+          "roles": [
+            "SUPERADMIN"
+          ]
         }
       ]
     },
@@ -258,55 +327,80 @@
       "icon": "zap",
       "class": "",
       "groupTitle": false,
-      "roles": ["PERSONNEL", "SUPERADMIN"],
+      "roles": [
+        "PERSONNEL",
+        "SUPERADMIN"
+      ],
       "submenu": [
         {
           "path": "/dashboardActivite",
           "title": "Dashboard Activité",
           "submenu": [],
-          "roles": ["PERSONNEL", "SUPERADMIN"]
+          "roles": [
+            "PERSONNEL",
+            "SUPERADMIN"
+          ]
         },
         {
           "path": "/typeActivite",
           "title": "Type Activité",
           "submenu": [],
-          "roles": ["SUPERADMIN"]
+          "roles": [
+            "SUPERADMIN"
+          ]
         },
         {
           "path": "/critere",
           "title": "Critère",
           "submenu": [],
-          "roles": ["SUPERADMIN", "PERSONNEL"]
+          "roles": [
+            "SUPERADMIN",
+            "PERSONNEL"
+          ]
         },
         {
           "path": "/etape",
           "title": "Étape",
           "submenu": [],
-          "roles": ["PERSONNEL", "SUPERADMIN"]
+          "roles": [
+            "PERSONNEL",
+            "SUPERADMIN"
+          ]
         },
         {
           "path": "/activite",
           "title": "Liste Activités",
           "submenu": [],
-          "roles": ["PERSONNEL", "SUPERADMIN"]
+          "roles": [
+            "PERSONNEL",
+            "SUPERADMIN"
+          ]
         },
         {
           "path": "/salle",
           "title": "Salle",
           "submenu": [],
-          "roles": ["SUPERADMIN"]
+          "roles": [
+            "SUPERADMIN"
+          ]
         },
         {
           "path": "/activityvalidation",
           "title": "Validation Activité",
           "submenu": [],
-          "roles": ["SUPERADMIN", "PERSONNEL"]
+          "roles": [
+            "SUPERADMIN",
+            "PERSONNEL"
+          ]
         },
         {
           "path": "/participant",
           "title": "Participants",
           "submenu": [],
-          "roles": ["PERSONNEL", "SUPERADMIN"]
+          "roles": [
+            "PERSONNEL",
+            "SUPERADMIN"
+          ]
         }
       ]
     },
@@ -317,25 +411,37 @@
       "icon": "bar-chart",
       "class": "",
       "groupTitle": false,
-      "roles": ["PERSONNEL", "SUPERADMIN"],
+      "roles": [
+        "PERSONNEL",
+        "SUPERADMIN"
+      ],
       "submenu": [
         {
           "path": "/supportactivites",
           "title": "Rapport",
           "submenu": [],
-          "roles": ["PERSONNEL", "SUPERADMIN"]
+          "roles": [
+            "PERSONNEL",
+            "SUPERADMIN"
+          ]
         },
         {
           "path": "/reporting",
           "title": "Reporting KPI",
           "submenu": [],
-          "roles": ["PERSONNEL", "SUPERADMIN"]
+          "roles": [
+            "PERSONNEL",
+            "SUPERADMIN"
+          ]
         },
         {
           "path": "/reportinghebdo",
           "title": "Reporting Hebdomadaire",
           "submenu": [],
-          "roles": ["PERSONNEL", "SUPERADMIN"]
+          "roles": [
+            "PERSONNEL",
+            "SUPERADMIN"
+          ]
         }
       ]
     }

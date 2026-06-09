@@ -21,6 +21,15 @@
       </select>
     </div>
     <div class="col-md-4">
+      <label class="form-label">Courrier (optionnel)</label>
+      <select class="form-select" [(ngModel)]="courrierId">
+        <option [ngValue]="null">Tous les courriers</option>
+        @for (c of courriers; track c.id) {
+          <option [ngValue]="c.id">{{ c.numero ? '[' + c.numero + '] ' : '' }}{{ c.objet || '—' }}</option>
+        }
+      </select>
+    </div>
+    <div class="col-md-4">
       <label class="form-label">Année</label>
       <input type="number" class="form-control" [(ngModel)]="annee" min="2000" max="2100" />
     </div>

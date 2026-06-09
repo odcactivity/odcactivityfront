@@ -13,7 +13,7 @@ import { Activity } from '@core/models/Activity';
 import { Entite } from '@core/models/Entite';
 import { canonicalizeAppRoles, resolveEffectiveRolesFromUser } from '@core/utils/app-roles';
 import { dashboardPathForRoles } from '@core/utils/responsable-entite-config';
-import { filterEntitesOdcPiliers, isOdcPillarEntiteName } from '@core/utils/odc-entite';
+import { filterEntitesOdcPiliers, isOdcPillarEntiteName, isDcireEntiteName } from '@core/utils/odc-entite';
 
 type PeriodKey = 'semaine' | 'mois' | 'annee';
 
@@ -353,15 +353,21 @@ export class MainComponent implements OnInit {
       this.buildEntityChart();
 
       this.structureOptionsCourrier = this.filterEntitesForCourrierScope(rawEntites)
-        .filter((e) => {
-          const type = String(e.type || '').toUpperCase();
-          if (this.courrierStatsDcireTriple) {
-            return (type === 'DIRECTION' || type === 'SERVICE') && e.id != null;
-          }
-          return type === 'DIRECTION' && e.id != null;
-        })
-        .map((e) => ({ id: e.id as number, nom: String(e.nom || '—') }))
-        .sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
+      .filter((e) => {
+        const type = String(e.type || '').toUpperCase();
+        // For DCIRE and DIRECTEUR_ODC, keep the entities as filtered by filterEntitesForCourrierScope
+        if (this.currentRoles.includes('DCIRE') || this.currentRoles.includes('DIRECTEUR_ODC')) {
+          return true;
+        }
+        // ODC product (admin + directeur ODC) should see both DIRECTION and SERVICE
+        if (this.courrierStatsOdcProductTriple) {
+          return (type === 'DIRECTION' || type === 'SERVICE') && e.id != null;
+        }
+        // Default fallback: only DIRECTION
+        return type === 'DIRECTION' && e.id != null;
+      })
+      .map((e) => ({ id: e.id as number, nom: String(e.nom || '—') }))
+      .sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
       this.loadCourrierDashboardBlock();
     });
   }
@@ -1127,8 +1133,16 @@ export class MainComponent implements OnInit {
   }
 
   private filterEntitesForCourrierScope(entites: Entite[]): Entite[] {
-    // Directeur ODC : même périmètre dashboard courrier que l'admin.
-    return this.filterEntitesByScope(entites);
+    let list: Entite[] = [];
+    if (this.currentRoles.includes('DIRECTEUR_ODC')) {
+      list = filterEntitesOdcPiliers(entites);
+    } else if (this.currentRoles.includes('DCIRE')) {
+      list = entites;
+    } else {
+      list = this.filterEntitesByScope(entites);
+    }
+    // Exclure systématiquement l'entité DCIRE de la liste des courriers
+    return list.filter((e) => !isDcireEntiteName(e.nom));
   }
 
   private isActivityAllowedByScope(activity: Activity, allowedEntiteIds: Set<number>): boolean {

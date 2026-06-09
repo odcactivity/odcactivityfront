@@ -21,6 +21,7 @@ export const APP_ROUTE: Route[] = [
       { path: 'role', loadComponent: () => import('./admin/role/role.component').then(c => c.RoleComponent) },
       { path: 'utilisateur', loadComponent: () => import('./admin/utilisateur/utilisateur.component').then(c => c.UtilisateurComponent) },
       { path: 'entite', loadComponent: () => import('./admin/entite/entite.component').then(c => c.EntiteComponent) },
+{ path: 'pilier-odc', loadComponent: () => import('./admin/pilier-odc/pilier-odc.component').then(c => c.PilierOdcComponent) },
 {
             path: 'entiteDetail',
             loadComponent: () => import('./admin/entite-detail/entite-detail.component').then(c => c.EntiteDetailComponent)
