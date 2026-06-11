@@ -223,9 +223,23 @@ export class GlobalService {
       .pipe(catchError(this.handleError.bind(this)));
   }
 
-  patchCourrierArchiverResponsableEntite(courrierId: number): Observable<void> {
+  patchCourrierArchiverResponsableEntite(courrierId: number, fichierArchive?: File): Observable<void> {
+    const fd = new FormData();
+    if (fichierArchive) {
+      fd.append('fichierArchive', fichierArchive);
+    }
     return this.http
-      .patch<void>(`${this.baseUrl}/api/courriers/responsable-entite/${courrierId}/archiver`, {})
+      .post<void>(`${this.baseUrl}/api/courriers/responsable-entite/${courrierId}/archiver`, fd)
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  /** Télécharger le fichier déposé lors de l'archivage d'un courrier. */
+  openCourrierFichierArchive(courrierId: number): Observable<HttpResponse<Blob>> {
+    return this.http
+      .get(`${this.baseUrl}/api/courriers/responsable-entite/${courrierId}/fichier-archive`, {
+        responseType: 'blob',
+        observe: 'response',
+      })
       .pipe(catchError(this.handleError.bind(this)));
   }
 

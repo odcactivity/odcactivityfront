@@ -164,21 +164,78 @@ export class ResponsableOdkDashboardComponent implements OnInit {
     });
   }
 
-  archiverCourrier(row: any): void {
+  telechargerFichierArchive(row: any): void {
     const id = row?.id;
     if (id == null) {
       return;
     }
-    if (!confirm(`Archiver le courrier « ${row.objet || row.numero} » ?`)) {
+    this.global.openCourrierFichierArchive(Number(id)).subscribe({
+      next: (resp) => {
+        const blob = resp.body ?? new Blob();
+        const url = window.URL.createObjectURL(blob);
+        const contentDisposition = resp.headers.get('content-disposition');
+        let filename = `archive_${id}.pdf`;
+        if (contentDisposition) {
+          const matches = /filename="([^"]*)"/.exec(contentDisposition);
+          if (matches && matches[1]) {
+            filename = matches[1];
+          }
+        }
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => window.URL.revokeObjectURL(url), 15000);
+      },
+      error: () => this.toast.error('Téléchargement du fichier d\'archive impossible.'),
+    });
+  }
+
+  // ─── Archivage courrier avec fichier ───────────────────────────────
+  archiveOuverte: any = null;
+  archiveFichier: File | null = null;
+  archiveLoading = false;
+
+  ouvrirArchivage(courrier: any): void {
+    this.archiveOuverte = courrier;
+    this.archiveFichier = null;
+  }
+
+  annulerArchivage(): void {
+    this.archiveOuverte = null;
+    this.archiveFichier = null;
+  }
+
+  onArchiveFichier(event: any): void {
+    const file = event?.target?.files?.[0];
+    if (file) {
+      this.archiveFichier = file;
+    }
+  }
+
+  confirmerArchivage(): void {
+    const id = this.archiveOuverte?.id;
+    if (id == null) {
       return;
     }
-    this.global.patchCourrierArchiverResponsableEntite(Number(id)).subscribe({
+    if (!this.archiveFichier) {
+      this.toast.warning('Veuillez sélectionner un fichier pour l\'archivage.');
+      return;
+    }
+    this.archiveLoading = true;
+    this.global.patchCourrierArchiverResponsableEntite(Number(id), this.archiveFichier).subscribe({
       next: () => {
-        this.toast.success('Courrier archivé.');
+        this.archiveLoading = false;
+        this.toast.success('Courrier archivé avec succès.');
+        this.annulerArchivage();
         this.loadAll();
       },
-      error: (e: { error?: { message?: string } }) =>
-        this.toast.error(e?.error?.message || 'Archivage impossible.'),
+      error: (e: { error?: { message?: string } }) => {
+        this.archiveLoading = false;
+        this.toast.error(e?.error?.message || 'Archivage impossible.');
+      },
     });
   }
 

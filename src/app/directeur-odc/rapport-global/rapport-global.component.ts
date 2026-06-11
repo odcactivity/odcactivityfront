@@ -54,6 +54,8 @@ export class RapportGlobalComponent implements OnInit {
   activites: { id: number; nom: string }[] = [];
   courriers: Courrier[] = [];
 
+  reportType: 'activites' | 'courriers' = 'activites';
+
   entiteId: number | null = null;
   activiteId: number | null = null;
   courrierId: number | null = null;
@@ -63,6 +65,7 @@ export class RapportGlobalComponent implements OnInit {
   periodeMode: 'annee' | 'mois' = 'annee';
 
   apercuLignes: RapportApercuLigne[] = [];
+  apercuCourrierLignes: any[] = [];
   apercuLoading = false;
   apercuCharge = false;
 
@@ -98,21 +101,29 @@ export class RapportGlobalComponent implements OnInit {
 
   libelleFiltresResume(): string {
     const parts: string[] = [];
+    parts.push(`Type : ${this.reportType === 'activites' ? 'Activités' : 'Courriers'}`);
     if (this.entiteId != null) {
       const e = this.entites.find((x) => x.id === this.entiteId);
       parts.push(`Entité : ${e?.nom ?? '—'}`);
     } else {
       parts.push('Entité : toutes (périmètre ODC)');
     }
-    if (this.activiteId != null) {
-      const a = this.activites.find((x) => x.id === this.activiteId);
-      parts.push(`Activité : ${a?.nom ?? '—'}`);
+    if (this.reportType === 'activites') {
+      if (this.activiteId != null) {
+        const a = this.activites.find((x) => x.id === this.activiteId);
+        parts.push(`Activité : ${a?.nom ?? '—'}`);
+      } else {
+        parts.push('Activité : toutes');
+      }
+      if (this.courrierId != null) {
+        const c = this.courriers.find((x) => x.id === this.courrierId);
+        parts.push(`Courrier lié : ${c?.numero ?? c?.objet ?? '—'}`);
+      }
     } else {
-      parts.push('Activité : toutes');
-    }
-    if (this.courrierId != null) {
-      const c = this.courriers.find((x) => x.id === this.courrierId);
-      parts.push(`Courrier : ${c?.numero ?? c?.objet ?? '—'}`);
+      if (this.courrierId != null) {
+        const c = this.courriers.find((x) => x.id === this.courrierId);
+        parts.push(`Courrier : ${c?.numero ?? c?.objet ?? '—'}`);
+      }
     }
     parts.push(`Année : ${this.annee}`);
     if (this.periodeMode === 'mois' && this.mois != null) {
@@ -128,20 +139,38 @@ export class RapportGlobalComponent implements OnInit {
   }
 
   chargerApercu(): void {
-    const url = `${environment.apiUrl}/api/rapport-global/activites-apercu`;
     this.apercuLoading = true;
     this.apercuCharge = false;
-    this.http.get<RapportApercuLigne[]>(url, { params: this.buildParams() }).subscribe({
-      next: (rows) => {
-        this.apercuLignes = Array.isArray(rows) ? rows : [];
-        this.apercuLoading = false;
-        this.apercuCharge = true;
-      },
-      error: () => {
-        this.apercuLoading = false;
-        this.toast.error("Impossible de charger l'aperçu.");
-      }
-    });
+    this.apercuLignes = [];
+    this.apercuCourrierLignes = [];
+
+    if (this.reportType === 'activites') {
+      const url = `${environment.apiUrl}/api/rapport-global/activites-apercu`;
+      this.http.get<RapportApercuLigne[]>(url, { params: this.buildParams() }).subscribe({
+        next: (rows) => {
+          this.apercuLignes = Array.isArray(rows) ? rows : [];
+          this.apercuLoading = false;
+          this.apercuCharge = true;
+        },
+        error: () => {
+          this.apercuLoading = false;
+          this.toast.error("Impossible de charger l'aperçu.");
+        }
+      });
+    } else {
+      const url = `${environment.apiUrl}/api/rapport-global/courriers-apercu`;
+      this.http.get<any[]>(url, { params: this.buildParams() }).subscribe({
+        next: (rows) => {
+          this.apercuCourrierLignes = Array.isArray(rows) ? rows : [];
+          this.apercuLoading = false;
+          this.apercuCharge = true;
+        },
+        error: () => {
+          this.apercuLoading = false;
+          this.toast.error("Impossible de charger l'aperçu.");
+        }
+      });
+    }
   }
 
   private buildParams(): HttpParams {
@@ -152,11 +181,17 @@ export class RapportGlobalComponent implements OnInit {
     if (this.entiteId != null) {
       p = p.set('entiteId', String(this.entiteId));
     }
-    if (this.activiteId != null) {
-      p = p.set('activiteId', String(this.activiteId));
-    }
-    if (this.courrierId != null) {
-      p = p.set('courrierId', String(this.courrierId));
+    if (this.reportType === 'activites') {
+      if (this.activiteId != null) {
+        p = p.set('activiteId', String(this.activiteId));
+      }
+      if (this.courrierId != null) {
+        p = p.set('courrierId', String(this.courrierId));
+      }
+    } else {
+      if (this.courrierId != null) {
+        p = p.set('courrierId', String(this.courrierId));
+      }
     }
     return p;
   }
@@ -171,17 +206,21 @@ export class RapportGlobalComponent implements OnInit {
   }
 
   downloadCsv(): void {
-    const url = `${environment.apiUrl}/api/rapport-global/activites.csv`;
+    const endpoint = this.reportType === 'activites' ? 'activites.csv' : 'courriers.csv';
+    const filename = this.reportType === 'activites' ? 'rapport_activites.csv' : 'rapport_courriers.csv';
+    const url = `${environment.apiUrl}/api/rapport-global/${endpoint}`;
     this.http.get(url, { params: this.buildParams(), responseType: 'blob' }).subscribe({
-      next: (blob) => this.triggerDownload(blob, 'rapport_activites.csv'),
+      next: (blob) => this.triggerDownload(blob, filename),
       error: () => this.toast.error('Export CSV impossible.')
     });
   }
 
   downloadPdf(): void {
-    const url = `${environment.apiUrl}/api/rapport-global/activites.pdf`;
+    const endpoint = this.reportType === 'activites' ? 'activites.pdf' : 'courriers.pdf';
+    const filename = this.reportType === 'activites' ? 'rapport_activites.pdf' : 'rapport_courriers.pdf';
+    const url = `${environment.apiUrl}/api/rapport-global/${endpoint}`;
     this.http.get(url, { params: this.buildParams(), responseType: 'blob' }).subscribe({
-      next: (blob) => this.triggerDownload(blob, 'rapport_activites.pdf'),
+      next: (blob) => this.triggerDownload(blob, filename),
       error: () => this.toast.error('Export PDF impossible.')
     });
   }
