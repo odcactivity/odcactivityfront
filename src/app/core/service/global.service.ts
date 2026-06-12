@@ -1,4 +1,3 @@
-
 import { HttpClient, HttpErrorResponse, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { ActivityValidation } from '@core/models/ActivityValidation';
@@ -17,29 +16,23 @@ export class GlobalService {
   a: any;
   constructor(private http: HttpClient) { }
 
-  /**
-   * Récupère des données à partir d'un point de terminaison spécifié.
-   *
-   * @param {string} name - Le nom du point de l'endpoint.
-   * @return {Observable<any>} Un observable qui émet les données récupérées.
-   */
   get(name: string): Observable<any> {
     const fullUrl = `${this.baseUrl}/${name}`;
-    console.log('🌐 Appel GET à l\'URL complète:', fullUrl);
+    console.log(`🌐 Appel GET à l'URL complète: ${fullUrl}`);
     return this.http.get(fullUrl).pipe(
       catchError(this.handleError.bind(this))
     );
-
   }
+  
   getParticipantByCritere(endpoint: string, dateDebut: string, dateFin: string, activiteId: number, entiteId: number): Observable<any> {
-    console.log('Appel GET à l\'endpoint :', `${this.baseUrl}/${endpoint}/${dateDebut}/${dateFin}/${activiteId}/${entiteId}`);
+    console.log(`Appel GET à l'endpoint : ${this.baseUrl}/${endpoint}/${dateDebut}/${dateFin}/${activiteId}/${entiteId}`);
     return this.http.get<any>(`${this.baseUrl}/${endpoint}`).pipe(
       catchError(this.handleError.bind(this))
     );
   }
 
   getId(name: string, id: number): Observable<any> {
-    console.log('Appel GET à l\'endpoint :', `${this.baseUrl}/${name}/${id}`);
+    console.log(`Appel GET à l'endpoint : ${this.baseUrl}/${name}/${id}`);
     return this.http.get(`${this.baseUrl}/${name}/${id}`).pipe(
       catchError(this.handleError.bind(this))
     );
@@ -57,23 +50,21 @@ export class GlobalService {
   }
 
 
-  /**
-   * Envoie une requête POST à l'endpoint spécifié pour créer une nouvelle ressource.
-   *
-   * @param {string} name - Le nom de l'endpoint.
-   * @param {Object} object - Les données à envoyer dans le corps de la requête.
-   * @return {Observable<Object>} Un observable qui émet la réponse du serveur.
-   */
   post(name: string, object: Object): Observable<Object> {
-    console.log('Appel POST :', `${this.baseUrl}/${name}`);
+    console.log(`Appel POST : ${this.baseUrl}/${name}`);
     return this.http.post(`${this.baseUrl}/${name}`, object).pipe(
       catchError(this.handleError.bind(this))
     );
   }
 
-  /** POST multipart (FormData) — ne pas forcer Content-Type, le navigateur pose le boundary. */
   postMultipart(path: string, formData: FormData): Observable<any> {
     return this.http.post(`${this.baseUrl}/${path}`, formData).pipe(
+      catchError(this.handleError.bind(this))
+    );
+  }
+
+  updateMultipart(name: string, id: number, formData: FormData): Observable<any> {
+    return this.http.put(`${this.baseUrl}/${name}/${id}`, formData).pipe(
       catchError(this.handleError.bind(this))
     );
   }
@@ -194,7 +185,6 @@ export class GlobalService {
       .pipe(catchError(this.handleError.bind(this)));
   }
 
-  /** Réponse à un courrier (multipart, même contrat que l’écran Gestion des courriers). */
   postCourrierReponseMultipart(formData: FormData): Observable<any> {
     return this.http
       .post(`${this.baseUrl}/api/courriers/reponse`, formData)
@@ -233,7 +223,6 @@ export class GlobalService {
       .pipe(catchError(this.handleError.bind(this)));
   }
 
-  /** Télécharger le fichier déposé lors de l'archivage d'un courrier. */
   openCourrierFichierArchive(courrierId: number): Observable<HttpResponse<Blob>> {
     return this.http
       .get(`${this.baseUrl}/api/courriers/responsable-entite/${courrierId}/fichier-archive`, {
@@ -263,7 +252,6 @@ export class GlobalService {
       .pipe(catchError(this.handleError.bind(this)));
   }
 
-  /** Télécharger la pièce jointe du courrier. */
   openCourrierFile(courrierId: number): Observable<HttpResponse<Blob>> {
     return this.http
       .get(`${this.baseUrl}/api/courriers/${courrierId}/ouvrir`, {
@@ -273,7 +261,6 @@ export class GlobalService {
       .pipe(catchError(this.handleError.bind(this)));
   }
 
-  /** Fichier du courrier en validation ODC (sans effet sur le statut). */
   getCourrierFichierValidationDirecteurOdc(courrierId: number): Observable<HttpResponse<Blob>> {
     return this.http
       .get(`${this.baseUrl}/api/courriers/odc-directeur/${courrierId}/fichier`, {
@@ -317,30 +304,14 @@ export class GlobalService {
       .get(`${this.baseUrl}/api/courriers/dashboard/serie`, { params })
       .pipe(catchError(this.handleError.bind(this)));
   }
-  /**
-     * Met à jour un objet dans la collection spécifiée.
-     *
-     * @param {string} name - Le nom de l'endpoint.
-     * @param {number} iduser - L'ID de DU USER createur.
-     * @param {Object} object - L'objet mis à jour.
-     * @return {Observable<Object>} Un observable qui émet l'objet mis à jour.
-     */
 
   postId(name: string, iduser: number, object: Object): Observable<Object> {
-    console.log('Appel POST :', `${this.baseUrl}/${name}/${iduser}`);
+    console.log(`Appel POST : ${this.baseUrl}/${name}/${iduser}`);
     return this.http.post(`${this.baseUrl}/${name}/${iduser}`, object).pipe(
       catchError(this.handleError.bind(this))
     );
   }
 
-  /**
-   * Met à jour un objet dans la collection spécifiée.
-   *
-   * @param {string} name - Le nom de l'endpoint.
-   * @param {number} id - L'ID de l'objet à mettre à jour.
-   * @param {Object} object - L'objet mis à jour.
-   * @return {Observable<Object>} Un observable qui émet l'objet mis à jour.
-   */
   update(name: string, id: number, object: Object): Observable<Object> {
     return this.http.patch(`${this.baseUrl}/${name}/${id}`, object).pipe(
       catchError(this.handleError.bind(this))
@@ -358,14 +329,6 @@ export class GlobalService {
   }
 
 
-  /**
-   * Met à jour un objet dans la collection spécifiée.
-   *
-   * @param {string} name - Le nom de l'endpoint.
-   * @param {number} id - L'ID de l'objet à mettre à jour.
-   * @param {Object} object - L'objet mis à jour.
-   * @return {Observable<Object>} Un observable qui émet l'objet mis à jour.
-   */
   updateId(name: string, id: number, iduser: number, object: Object): Observable<Object> {
     return this.http.patch(`${this.baseUrl}/${name}/${id}/${iduser}`, object).pipe(
       catchError(this.handleError.bind(this))
@@ -375,13 +338,6 @@ export class GlobalService {
     return this.http.put(`${this.baseUrl}/${name}/${id}`, object);
   }
 
-  /**
-   * Supprime un objet d'une collection spécifiée.
-   *
-   * @param {string} name - Le nom de l'endpoint .
-   * @param {number} id - L'ID de l'objet à supprimer.
-   * @return {Observable<any>} Un observable qui émet la réponse du serveur.
-   */
   delete(name: string, id: number): Observable<any> {
     return this.http.delete(`${this.baseUrl}/${name}/${id}`).pipe(
       catchError(this.handleError.bind(this))
@@ -394,25 +350,20 @@ export class GlobalService {
     formData.append('toListeDebut', toListeDebut.toString());
 
     const url = `${environment.uploadUrl}/etape/${id}/participants/upload`;
-    // console.log('Appel API à l\'URL :', url); // Supprimé
+    console.log(`Appel API à l'URL : ${url}`);
 
     return this.http.post(url, formData).pipe(
       catchError(this.handleError.bind(this))
     );
   }
 
-  // Gestion des erreurs améliorée
   private handleError(error: any): Observable<never> {
     let errorMessage = 'Une erreur inconnue est survenue';
     console.error('Erreur capturée dans handleError :', error);
-    // Cas 1: HttpErrorResponse normal
     if (error instanceof HttpErrorResponse) {
-
       if (error.error instanceof ErrorEvent) {
-        // Erreur côté client
         errorMessage = `Erreur réseau : ${error.error.message}`;
       } else {
-        // Erreur côté serveur : message JSON Spring (message / detail) en priorité
         let resolved = false;
         if (error.error && typeof error.error === 'object') {
           const body = error.error as Record<string, unknown>;
@@ -437,7 +388,7 @@ export class GlobalService {
         if (!resolved) {
           switch (error.status) {
             case 403:
-              errorMessage = 'Accès interdit - Vous n\'avez pas les permissions nécessaires';
+              errorMessage = "Accès interdit - Vous n'avez pas les permissions nécessaires";
               break;
             case 404:
               errorMessage = 'Ressource non trouvée';
@@ -460,11 +411,9 @@ export class GlobalService {
         }
       }
     }
-    // Cas 2: Erreur quelconque (réseau, timeout, etc.)
     else if (error instanceof Error) {
       errorMessage = error.message || 'Erreur système';
     }
-    // Cas 3: Objet d'erreur personnalisé
     else if (error && typeof error === 'object') {
       if (error.message) {
         errorMessage = error.message;
@@ -474,31 +423,24 @@ export class GlobalService {
         errorMessage = 'Erreur inconnue';
       }
     }
-    // Cas 4: String
     else if (typeof error === 'string') {
       errorMessage = error;
     }
 
-    // console.log('Message d\'erreur final:', errorMessage); // Supprimé
     return throwError(() => new Error(errorMessage));
   }
 
-  // Méthode utilitaire pour extraire le message d'erreur (optionnelle)
   extractMessageFromError(error: any): string {
-    // console.log('Extraction du message d\'erreur:', error); // Supprimé
-
     let message = 'Une erreur est survenue.';
 
     if (typeof error === 'string' && error.trim()) {
       return error.trim();
     }
 
-    // Si c'est une Error créée par handleError
     if (error instanceof Error) {
       return error.message;
     }
 
-    // Si c'est un HttpErrorResponse direct
     if (error instanceof HttpErrorResponse) {
       if (error.error && typeof error.error === 'object' && error.error.message) {
         message = error.error.message;
@@ -522,8 +464,7 @@ export class GlobalService {
   createValidation(validation: ActivityValidation, fichier?: File, createOrreponse?: String): Observable<ActivityValidation> {
     const formData = new FormData();
     if (fichier) {
-      console.log('Appel GET à l\'endpoint :', `${this.baseUrl}/activitevalidation/create/${createOrreponse}`);
-      // console.log('Fichier à envoyer:', fichier, ) ;    
+      console.log(`Appel GET à l'endpoint : ${this.baseUrl}/activitevalidation/create/${createOrreponse}`);
       formData.append('fichier', fichier);
     }
     formData.append('validation', new Blob([JSON.stringify(validation)], { type: 'application/json' }));
@@ -568,15 +509,4 @@ export class GlobalService {
       catchError(this.handleError.bind(this))
     );
   }
-
-  //   let url = `${this.baseUrl}/participant/${id}${dateDebut}/${dateFin}`;
-  //   if (activiteId) {
-  //     url += `/${activiteId}`;
-  //   }
-  //   if (entiteId) {
-  //     url += `/${entiteId}`;
-  //   }
-  //   console.log("mon url=========",url);
-  //   return this.http.get<any>(url);
-  // } 
 }

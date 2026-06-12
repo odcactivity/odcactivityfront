@@ -106,24 +106,23 @@ export class ActivityComponent {
       fichierjoint: new UntypedFormControl(),
     });
     this.detailForm = this.fb.group({
-      id: new UntypedFormControl(),
-      nom: new UntypedFormControl(),
-      titre: new UntypedFormControl(),
-      lieu: new UntypedFormControl(),
-      description: new UntypedFormControl(),
-      dateDebut: new UntypedFormControl(),
-      dateFin: new UntypedFormControl(),
-      objectifParticipation: new UntypedFormControl(),
-      entite: new UntypedFormControl(),
-      salleId: new UntypedFormControl(),
-      //typeId: new UntypedFormControl(),
-      typeActivite: new UntypedFormControl(),
-      etape: new UntypedFormControl(),
-      selectedEtapeIds: new UntypedFormControl(),
-      commentaire: new UntypedFormControl(),
-      superviseurId: new UntypedFormControl(),
-      fichier: new UntypedFormControl(),
-      fichierjoint: new UntypedFormControl(),
+      id: [''],
+      nom: [{ value: '', disabled: true }, [Validators.required]],
+      titre: ['', [Validators.required]],
+      lieu: ['', [Validators.required]],
+      description: ['', [Validators.required]],
+      dateDebut: ['', [Validators.required]],
+      dateFin: ['', [Validators.required]],
+      objectifParticipation: [null, [Validators.required]],
+      entite: [null, [Validators.required]],
+      etape: [null, [Validators.required]],
+      salleId: [null, [Validators.required]],
+      typeId: [null, [Validators.required]],
+      typeActivite: [null, [Validators.required]],
+      superviseurId: [null],
+      commentaire: [''],
+      fichier: [null],
+      fichierjoint: [''],
     });
     window.onresize = () => {
       this.scrollBarHorizontal = window.innerWidth < 1200;
@@ -378,64 +377,6 @@ export class ActivityComponent {
       }
     })
   }
-
-  //   async onAddRowSave(form: UntypedFormGroup) {
-  //     this.loadingIndicator = true;    
-  //        console.log('Response ajout activite',form.value)
-  //       await this.glogalService.post('activite', form.value).subscribe({
-  //       next: (response) => {
-  //         // Ajouter la nouvelle activite
-  //        this.activite.push(response);
-  //         console.log("Activite crée======",response)
-  //          this.onAddRowSaveValidation(form,response);
-
-  //         // Réinitialiser le formulaire
-  //         form.reset();
-  //         // Fermer les modales si nécessaire
-  //         this.modalService.dismissAll();   
-  //         // Afficher un toast de succès
-  //       //  this.addRecordSuccess();
-  //         this.addSuccessMessage(3000);
-
-  //          // Recharger directement la liste complète des activités depuis le backend
-  //         this.reloadActivities();
-  //       },
-  //       error: (err: { status: number; error: any; message?: string }) => {
-  //         console.error('Erreur reçue:', err);
-  //         let message = 'Une erreur est survenue. Veuillez réessayer.';
-  //         let title = '<span class="text-red-500">Échec</span>';
-  //         if (err.error?.message) {
-  //           message = err.error.message;
-  //         } else if (err.message) {
-  //           message = err.message;
-  //         }
-  //         Swal.fire({
-  //           icon: 'error',
-  //           title: title,
-  //           text: message,
-  //           confirmButtonText: 'Ok',
-  //           customClass: {
-  //             confirmButton: 'bg-red-500 text-white hover:bg-red-600',
-  //           },
-  //         });
-  //       },
-  //       complete: () => {
-  //         this.loadingIndicator = false;
-  //       }
-  //     });
-  //   }
-
-  //   onAddRowSaveValidation(form: UntypedFormGroup,value:ActivityValidation) {
-
-  //   this.glogalService.createValidation(value).subscribe({
-  //     next: (activite) => {
-  //       console.log("Activitevalidtaion crée ", activite);
-  //       }});
-
-  //       error: (err:any) => {
-  //       console.error('Erreur Activitevalidtaion', err);
-  //       this.loadingIndicator = false;}
-  // }
 
   getCurrentUserId(): number | null {
     const raw = localStorage.getItem('bearerid');
@@ -703,7 +644,7 @@ export class ActivityComponent {
         Swal.fire({
           icon: 'success',
           title: 'Supprimé !',
-          text: 'L\'activité a été supprimée avec succès.',
+          text: 'L’activité a été supprimée avec succès.',
           timer: 2000,
           showConfirmButton: false
         });
@@ -824,4 +765,3 @@ export interface selectActiviteInterface {
   typeActivite: TypeActivite;
   etapes: Etape[];
 }
-

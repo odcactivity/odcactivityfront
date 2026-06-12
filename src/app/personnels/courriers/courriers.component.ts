@@ -1540,8 +1540,8 @@ envoyerReponse(modal: any) {
   }
 
   // Ajouter les pièces jointes
-  this.reponse.attachments.forEach((file: any, index: number) => {
-    formData.append(`attachment${index}`, file);
+  this.reponse.attachments.forEach((file: any) => { // Removed index from parameter name
+    formData.append(`attachments`, file); // Append all under the name 'attachments'
   });
 
   this.glogalService.post('api/courriers/reponse', formData).subscribe({

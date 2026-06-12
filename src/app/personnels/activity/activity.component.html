@@ -459,10 +459,12 @@
                         <option *ngFor="let etapes of etape"  [value]="etapes.id">{{etapes.nom}}</option>
                       </select>
                     </div>-->
+                  </div>
+                  <div class="row">
                     <div class="col-xl-12 col-lg-6 col-md-12 col-sm-12 mb-2">
                       <label>Etape <span class="text-danger">*</span></label>
                       <select  class="form-control h-100" multiple="" (ngModelChange)="onEtapesChange($event)" formControlName="etape">
-                        <option value="" [ngValue]="null" disabled>&#45;&#45; Sélectionnez un ou plusieurs Etape &#45;&#45;</option>
+                        <option value="" [ngValue]="null" disabled>-- Sélectionnez un ou plusieurs Etape --</option>
                         <option *ngFor="let etapes of etape" [ngValue]="etapes.id">{{etapes.nom}}</option>
                       </select>
                       @if (!editForm.get('etape')?.valid && editForm.get('etape')?.touched) {
