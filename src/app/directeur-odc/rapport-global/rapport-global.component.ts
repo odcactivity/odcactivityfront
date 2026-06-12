@@ -7,29 +7,7 @@ import { Courrier } from '@core/models/Courrier';
 import { GlobalService } from '@core/service/global.service';
 import { environment } from 'environments/environment';
 import { ToastrService } from 'ngx-toastr';
-
-function normaliserNomEntite(n: string | undefined): string {
-  return (n || '')
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, ' ');
-}
-
-/** Structures sœurs hors périmètre activités ODC dans ce filtre. */
-function estEntiteExclueRapportOdc(nom: string | undefined): boolean {
-  const n = normaliserNomEntite(nom);
-  if (!n) {
-    return false;
-  }
-  const exclus = ['orange digital center', 'dci', 'rse', 'fondation'];
-  return exclus.some(
-    (ex) =>
-      n === ex ||
-      n.startsWith(ex + ' ') ||
-      n.endsWith(' ' + ex) ||
-      n.includes(' ' + ex + ' ')
-  );
-}
+import { isOdcPillarEntiteName } from '@core/utils/odc-entite';
 
 export interface RapportApercuLigne {
   id: number;
@@ -51,7 +29,7 @@ export interface RapportApercuLigne {
 })
 export class RapportGlobalComponent implements OnInit {
   entites: Entite[] = [];
-  activites: { id: number; nom: string }[] = [];
+  activites: any[] = [];
   courriers: Courrier[] = [];
 
   reportType: 'activites' | 'courriers' = 'activites';
@@ -73,29 +51,76 @@ export class RapportGlobalComponent implements OnInit {
     private readonly http: HttpClient,
     private readonly global: GlobalService,
     private readonly toast: ToastrService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.global.get('entite').subscribe({
       next: (list: Entite[]) => {
         const raw = Array.isArray(list) ? list : [];
-        this.entites = raw.filter((e) => !estEntiteExclueRapportOdc(e?.nom));
+        this.entites = raw.filter((e) => isOdcPillarEntiteName(e?.nom));
       },
       error: () => this.toast.error('Impossible de charger les entités.')
     });
     this.global.get('activite').subscribe({
       next: (list: any[]) => {
-        this.activites = (Array.isArray(list) ? list : [])
-          .map((a) => ({ id: a.id, nom: a.nom || 'Sans nom' }))
-          .filter((a) => a.id != null);
+        const raw = Array.isArray(list) ? list : [];
+        this.activites = raw.filter((a) => a.id != null);
       },
-      error: () => {}
+      error: () => { }
     });
     this.http.get<Courrier[]>(`${environment.apiUrl}/api/courriers/tous`).subscribe({
       next: (list) => {
-        this.courriers = Array.isArray(list) ? list : [];
+        const raw = Array.isArray(list) ? list : [];
+        this.courriers = raw.filter((c: any) => {
+          const isOdc = (e: any) => e && isOdcPillarEntiteName(e.nom);
+          return (
+            isOdc(c.entite) ||
+            isOdc(c.structureOrigine) ||
+            isOdc(c.directionInitial) ||
+            isOdc(c.cibleInterneDirection) ||
+            isOdc(c.serviceOdcAffecte)
+          );
+        });
       },
-      error: () => {}
+      error: () => { }
+    });
+  }
+
+  setReportType(type: 'activites' | 'courriers'): void {
+    this.reportType = type;
+    this.entiteId = null;
+    this.activiteId = null;
+    this.courrierId = null;
+    this.apercuLignes = [];
+    this.apercuCourrierLignes = [];
+    this.apercuCharge = false;
+  }
+
+  get filteredActivites(): any[] {
+    if (this.entiteId == null) {
+      return this.activites;
+    }
+    return this.activites.filter((a) => {
+      const ent = a.entite;
+      if (!ent) return false;
+      const id = typeof ent === 'number' ? ent : ent.id;
+      return id === this.entiteId;
+    });
+  }
+
+  get filteredCourriers(): any[] {
+    if (this.entiteId == null) {
+      return this.courriers;
+    }
+    return this.courriers.filter((c: any) => {
+      const checkId = (e: any) => e && e.id === this.entiteId;
+      return (
+        checkId(c.entite) ||
+        checkId(c.structureOrigine) ||
+        checkId(c.directionInitial) ||
+        checkId(c.cibleInterneDirection) ||
+        checkId(c.serviceOdcAffecte)
+      );
     });
   }
 

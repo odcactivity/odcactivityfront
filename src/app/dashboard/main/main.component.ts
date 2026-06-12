@@ -124,7 +124,7 @@ export class MainComponent implements OnInit {
   private currentRoles: string[] = [];
   private readonly router = inject(Router);
 
-  constructor(private globalService: GlobalService, private authService: AuthService) {}
+  constructor(private globalService: GlobalService, private authService: AuthService) { }
 
   /** Fondation / RSE / DCI : pas de stats activités, uniquement courriers reçus / répondus. */
   get isStructureDivisionDashboard(): boolean {
@@ -353,21 +353,26 @@ export class MainComponent implements OnInit {
       this.buildEntityChart();
 
       this.structureOptionsCourrier = this.filterEntitesForCourrierScope(rawEntites)
-      .filter((e) => {
-        const type = String(e.type || '').toUpperCase();
-        // For DCIRE and DIRECTEUR_ODC, keep the entities as filtered by filterEntitesForCourrierScope
-        if (this.currentRoles.includes('DCIRE') || this.currentRoles.includes('DIRECTEUR_ODC')) {
-          return true;
-        }
-        // ODC product (admin + directeur ODC) should see both DIRECTION and SERVICE
-        if (this.courrierStatsOdcProductTriple) {
-          return (type === 'DIRECTION' || type === 'SERVICE') && e.id != null;
-        }
-        // Default fallback: only DIRECTION
-        return type === 'DIRECTION' && e.id != null;
-      })
-      .map((e) => ({ id: e.id as number, nom: String(e.nom || '—') }))
-      .sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
+        .filter((e) => {
+          const type = String(e.type || '').toUpperCase();
+          // For DCIRE and DIRECTEUR_ODC, keep the entities as filtered by filterEntitesForCourrierScope
+          if (
+            this.currentRoles.includes('DCIRE') ||
+            this.currentRoles.includes('DIRECTEUR_ODC') ||
+            this.currentRoles.includes('ADMIN') ||
+            this.currentRoles.includes('SUPERADMIN')
+          ) {
+            return true;
+          }
+          // ODC product (admin + directeur ODC) should see both DIRECTION and SERVICE
+          if (this.courrierStatsOdcProductTriple) {
+            return (type === 'DIRECTION' || type === 'SERVICE') && e.id != null;
+          }
+          // Default fallback: only DIRECTION
+          return type === 'DIRECTION' && e.id != null;
+        })
+        .map((e) => ({ id: e.id as number, nom: String(e.nom || '—') }))
+        .sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
       this.loadCourrierDashboardBlock();
     });
   }
@@ -597,9 +602,9 @@ export class MainComponent implements OnInit {
 
     this.courrierLineBuckets = hasBuckets
       ? rawBuckets.map((b) => ({
-          ...b,
-          details: Array.isArray(b.details) ? b.details : []
-        }))
+        ...b,
+        details: Array.isArray(b.details) ? b.details : []
+      }))
       : [];
 
     const series = keys.map((key, si) => ({
@@ -841,11 +846,11 @@ export class MainComponent implements OnInit {
           const lines =
             stat.breakdown.length > 0
               ? stat.breakdown
-                  .map(
-                    (row) =>
-                      `<div class="odl-tooltip-row"><span class="odl-tooltip-titre">${that.escapeHtml(row.titre)}</span> — H: ${row.hommes}, F: ${row.femmes}, Total: ${row.total}</div>`
-                  )
-                  .join('')
+                .map(
+                  (row) =>
+                    `<div class="odl-tooltip-row"><span class="odl-tooltip-titre">${that.escapeHtml(row.titre)}</span> — H: ${row.hommes}, F: ${row.femmes}, Total: ${row.total}</div>`
+                )
+                .join('')
               : '<div class="odl-tooltip-row">Aucune activité sur ce créneau pour cette entité.</div>';
           return `<div class="odl-tooltip">
             <div class="odl-tooltip-head"><strong>${stat.entiteFull}</strong> · ${stat.bucketLabel}</div>
@@ -1134,7 +1139,11 @@ export class MainComponent implements OnInit {
 
   private filterEntitesForCourrierScope(entites: Entite[]): Entite[] {
     let list: Entite[] = [];
-    if (this.currentRoles.includes('DIRECTEUR_ODC')) {
+    if (
+      this.currentRoles.includes('DIRECTEUR_ODC') ||
+      this.currentRoles.includes('ADMIN') ||
+      this.currentRoles.includes('SUPERADMIN')
+    ) {
       list = filterEntitesOdcPiliers(entites);
     } else if (this.currentRoles.includes('DCIRE')) {
       list = entites;
@@ -1162,20 +1171,20 @@ export class MainComponent implements OnInit {
     return false;
   }
 
-  private resolveStatus(activity: Activity): 'encours' | 'terminee' | 'attente' {
+  private resolveStatus(activity: Activity): 'encours' | 'terminee' | 'attente' | 'autre' {
     const status = String(activity.statut || '')
       .trim()
       .toUpperCase();
-    if (status.includes('VALIDATION_DIRECTEUR') || status.includes('REJET')) {
+    if (status === 'EN_VALIDATION_DIRECTEUR_ODC') {
       return 'attente';
     }
-    if (status.includes('COURS')) {
+    if (status === 'EN_COURS' || status === 'EN_ATTENTE') {
       return 'encours';
     }
-    if (status.includes('TERM')) {
+    if (status === 'TERMINE') {
       return 'terminee';
     }
-    return 'attente';
+    return 'autre';
   }
 
   private normalizeGenre(genre: string | undefined): string {
