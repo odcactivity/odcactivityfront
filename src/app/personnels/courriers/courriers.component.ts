@@ -111,9 +111,13 @@ loading = false;
   ciblesInternesBrouillon: Entite[] = [];
   ciblesEmissionDcire: Entite[] = [];
   dcireDirectionId: number | null = null;
-  /** Filtre DCIRE par entité (direction ou service ODC). */
+  /** Filtre DCIRE par division (ODC, Fondation, RSE, DCI…). */
   dcireEntiteFilterId: number | null = null;
   dcireEntiteOptions: { id: number; nom: string }[] = [];
+  /** Filtre directeur / admin ODC par service ou entité ODC. */
+  odcEntiteFilterId: number | null = null;
+  odcEntiteFilterOptions: { id: number; nom: string }[] = [];
+  directeurOdcCourrierCreate = { expediteur: '', objet: '', fichier: null as File | null };
   /** Liste brute côté DCIRE (filtrée par onglet) */
   private courriersDcireBruts: any[] = [];
   transmitOdcDirectionId: number | null = null;
@@ -334,7 +338,7 @@ loading = false;
         const dc = this.directions.find((e) => this.isDcireDirectionName(e.nom));
         this.dcireDirectionId = dc?.id ?? null;
         if (this.isDcireRole) {
-          this.dcireEntiteOptions = value
+          this.dcireEntiteOptions = this.externalDirections
             .filter((e) => e.id != null)
             .map((e) => ({ id: e.id as number, nom: String(e.nom || '—') }))
             .sort((a, b) => a.nom.localeCompare(b.nom, 'fr'));
@@ -362,6 +366,22 @@ loading = false;
             }
             finishEntiteLoad();
           });
+
+        if (this.isOdcProductCourrierRole) {
+          this.glogalService.getServicesOdcPourDirecteur().subscribe({
+            next: (list) => {
+              this.odcEntiteFilterOptions = Array.isArray(list)
+                ? list
+                    .filter((s) => s?.id != null)
+                    .map((s) => ({ id: Number(s.id), nom: String(s.nom || '—') }))
+                    .sort((a, b) => a.nom.localeCompare(b.nom, 'fr'))
+                : [];
+            },
+            error: () => {
+              this.odcEntiteFilterOptions = [];
+            },
+          });
+        }
       }
     });
   }
@@ -395,6 +415,9 @@ loading = false;
         let merged = [...byId.values()];
         if (this.isOdcProductCourrierRole) {
           merged = this.applyDirecteurOdcTabFilter(merged);
+          if (this.odcEntiteFilterId != null) {
+            merged = merged.filter((c) => this.courrierConcerneEntiteFiltre(c, this.odcEntiteFilterId!));
+          }
         } else if (this.typeliste === 'recus') {
           merged = merged.filter((c) => this.estCourrierRecuSurPilierOdc(c));
         }
@@ -665,6 +688,45 @@ loading = false;
     this.refreshCourriersDcire();
   }
 
+  onOdcEntiteFilterChange(): void {
+    this.loadOdcCourriersMerged();
+  }
+
+  private courrierConcerneEntiteFiltre(row: any, entiteId: number): boolean {
+    const ids = [
+      this.rowEntiteId(row),
+      this.rowStructureOrigineId(row),
+      this.rowDirectionInitialId(row),
+      row?.serviceOdcAffecteId ?? row?.serviceOdcAffecte?.id,
+    ].filter((id) => id != null) as number[];
+    for (const id of ids) {
+      if (this.entiteEstLieeA(id, entiteId)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private entiteEstLieeA(entiteId: number, cibleId: number): boolean {
+    if (entiteId === cibleId) {
+      return true;
+    }
+    const ent = this.entites.find((e) => Number(e.id) === entiteId);
+    if (!ent) {
+      return false;
+    }
+    let parentId = ent.parentId ?? (ent as { parent?: { id?: number } }).parent?.id;
+    let guard = 0;
+    while (parentId != null && guard++ < 16) {
+      if (Number(parentId) === cibleId) {
+        return true;
+      }
+      const p = this.entites.find((e) => Number(e.id) === Number(parentId));
+      parentId = p?.parentId ?? (p as { parent?: { id?: number } })?.parent?.id;
+    }
+    return false;
+  }
+
   refreshCourriersDcire(): void {
     if (!this.isDcireRole) {
       return;
@@ -789,6 +851,17 @@ loading = false;
     return false;
   }
 
+  /** Courrier adressé au hub DCIRE (réception), hors émissions DCIRE. */
+  estCourrierRecuAuHubDcire(row: any): boolean {
+    if (this.dcireDirectionId == null || this.estCourrierEmisParDcireHub(row)) {
+      return false;
+    }
+    if (this.rowEntiteId(row) === this.dcireDirectionId) {
+      return true;
+    }
+    return row?.statut === 'TRANSMIS_DCIRE' && this.isCourrierPhysiquementADcire(row);
+  }
+
   isCourrierPhysiquementADcire(row: any): boolean {
     if (this.dcireDirectionId == null) {
       return false;
@@ -861,7 +934,29 @@ loading = false;
     if (entId == null) {
       return false;
     }
-    return this.odcDirections.some((d) => Number(d.id) === entId);
+    if (this.odcDirections.some((d) => Number(d.id) === entId)) {
+      return false;
+    }
+    return this.estEntiteOdcDelegable(entId);
+  }
+
+  /** Entité ODC déléguable (service / pilier), pas la direction ODC réservée au directeur. */
+  private estEntiteOdcDelegable(entId: number): boolean {
+    if (this.odcEntiteFilterOptions.some((o) => o.id === entId)) {
+      return true;
+    }
+    const ent = this.entites.find((e) => Number(e.id) === entId);
+    if (!ent) {
+      return false;
+    }
+    if (this.isServiceEntiteType(ent.type)) {
+      const parentId = ent.parentId ?? (ent as { parent?: { id?: number } }).parent?.id;
+      return (
+        parentId != null && this.odcDirections.some((d) => Number(d.id) === Number(parentId))
+      );
+    }
+    const parentId = ent.parentId ?? (ent as { parent?: { id?: number } }).parent?.id;
+    return parentId != null && this.odcDirections.some((d) => Number(d.id) === Number(parentId));
   }
 
   peutConfirmerEnvoiPhysiqueOdc(row: any): boolean {
@@ -887,6 +982,9 @@ loading = false;
 
   /** Courrier émis par la DCIRE pour le périmètre ODC (réponse réservée au directeur ODC). */
   isCourrierFluxOdc(row: any): boolean {
+    if (this.estCourrierEmissionDcireVersOdc(row)) {
+      return true;
+    }
     const cibleId =
       row?.cibleInterneDirectionId ??
       row?.cibleInterneDirection?.id ??
@@ -897,6 +995,9 @@ loading = false;
     }
     const entId = this.rowEntiteId(row);
     if (entId != null && this.odcDirections.some((d) => Number(d.id) === entId)) {
+      return true;
+    }
+    if (entId != null && this.estEntiteOdcDelegable(entId)) {
       return true;
     }
     return this.rowServiceOdcAffecte(row);
@@ -915,10 +1016,22 @@ loading = false;
       return false;
     }
     if (this.isDirecteurOdcRole && this.isCourrierFluxOdc(row)) {
-      return s === 'ENVOYER' || s === 'IMPUTER';
-    }
-    if (this.isDcireRole && this.isCourrierPhysiquementADcire(row)) {
+      if (s !== 'ENVOYER' && s !== 'IMPUTER') {
+        return false;
+      }
+      if (s === 'ENVOYER' && this.peutDeleguerCourrierOdc(row)) {
+        return false;
+      }
       return true;
+    }
+    if (this.isDcireRole && this.estCourrierRecuAuHubDcire(row)) {
+      return (
+        s !== 'ARCHIVER' &&
+        s !== 'REPONDU' &&
+        s !== 'ATTENTE_VALIDATION_ODC' &&
+        s !== 'ATTENTE_VALIDATION_DIRECTEUR_ODC' &&
+        s !== 'EN_REVISION_ADMIN_COURRIER'
+      );
     }
     if (this.isCourrierFluxOdc(row)) {
       return false;
@@ -1184,6 +1297,51 @@ loading = false;
   }
 
   // Méthode pour le fichier de création de courrier
+  openDirecteurOdcCreateModal(tpl: unknown): void {
+    this.directeurOdcCourrierCreate = { expediteur: '', objet: '', fichier: null };
+    this.modalService.open(tpl as TemplateRef<unknown>, { size: 'lg', scrollable: true });
+  }
+
+  onDirecteurOdcCreateFile(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.directeurOdcCourrierCreate.fichier = input.files?.[0] ?? null;
+  }
+
+  saveDirecteurOdcCourrier(modal: { close: () => void }): void {
+    const exp = (this.directeurOdcCourrierCreate.expediteur || '').trim();
+    const obj = (this.directeurOdcCourrierCreate.objet || '').trim();
+    const dirId = this.odcDirections[0]?.id;
+    if (!exp || !obj) {
+      this.toastr.warning('Expéditeur et objet sont obligatoires.');
+      return;
+    }
+    if (dirId == null) {
+      this.toastr.error('Direction ODC introuvable.');
+      return;
+    }
+    const fd = new FormData();
+    fd.append('numero', `ODC-${Date.now()}`);
+    fd.append('expediteur', exp);
+    fd.append('objet', obj);
+    fd.append('directionId', String(dirId));
+    if (this.directeurOdcCourrierCreate.fichier) {
+      fd.append('fichier', this.directeurOdcCourrierCreate.fichier);
+    }
+    this.loadingIndicator = true;
+    this.glogalService.postMultipart('api/courriers/reception', fd).subscribe({
+      next: () => {
+        this.loadingIndicator = false;
+        modal.close();
+        this.toastr.success('Courrier enregistré.');
+        this.loadOdcCourriersMerged();
+      },
+      error: (err: { error?: { message?: string } }) => {
+        this.loadingIndicator = false;
+        this.toastr.error(err?.error?.message || 'Enregistrement impossible.');
+      },
+    });
+  }
+
   onFileSelectedCreation(event: any): void {
     const file = event.target.files[0];
     if (file) {
@@ -1249,8 +1407,9 @@ loading = false;
     if (content === 'repondre') {
       this.selectedCourrier = row;
       const user = this.authService.getCurrentUserFromStorage() as { email?: string } | null;
-      const email =
-        (user?.email || this.currenUserData?.email || row.expediteurEmail || '').toString().trim();
+      const email = this.isDirecteurOdcRole
+        ? ''
+        : (user?.email || this.currenUserData?.email || row.expediteurEmail || '').toString().trim();
       this.reponse = {
         emailExpediteur: email,
         objet: `Re: ${row.objet || ''}`,

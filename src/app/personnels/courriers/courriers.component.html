@@ -51,6 +51,13 @@
                           <i class="material-icons">add</i>
                         </button>
                       }
+                      @if (isDirecteurOdcRole) {
+                        <button class="btn btn-icon icon-left bg-primary text-white rounded-button"
+                                (click)="openDirecteurOdcCreateModal(addDirecteurOdcCourrier)"
+                                title="Créer un courrier (réception ODC)">
+                          <i class="material-icons">add</i>
+                        </button>
+                      }
                       <button [hidden]=!isRowSelected class="btn btn-icon icon-left btn-danger rounded-button"
                               (click)='deleteSelected()' title="Supprimer les courriers sélectionnés">
                         <i class="material-icons">delete</i>
@@ -64,14 +71,33 @@
             @if (isDcireRole && dcireEntiteOptions.length > 0) {
               <div class="row mb-3">
                 <div class="col-md-6 col-lg-4">
-                  <label class="form-label small text-muted mb-1">Filtrer par entité</label>
+                  <label class="form-label small text-muted mb-1">Filtrer par division</label>
                   <select
                     class="form-select form-select-sm"
                     [(ngModel)]="dcireEntiteFilterId"
                     (ngModelChange)="onDcireEntiteFilterChange()"
                   >
-                    <option [ngValue]="null">Toutes les entités</option>
+                    <option [ngValue]="null">Toutes les divisions</option>
                     @for (opt of dcireEntiteOptions; track opt.id) {
+                      <option [ngValue]="opt.id">{{ opt.nom }}</option>
+                    }
+                  </select>
+                  <p class="small text-muted mb-0 mt-1">Ex. Division ODC : courriers ODC et ses services.</p>
+                </div>
+              </div>
+            }
+
+            @if (isOdcProductCourrierRole && odcEntiteFilterOptions.length > 0) {
+              <div class="row mb-3">
+                <div class="col-md-6 col-lg-4">
+                  <label class="form-label small text-muted mb-1">Filtrer par entité</label>
+                  <select
+                    class="form-select form-select-sm"
+                    [(ngModel)]="odcEntiteFilterId"
+                    (ngModelChange)="onOdcEntiteFilterChange()"
+                  >
+                    <option [ngValue]="null">Toutes les entités ODC</option>
+                    @for (opt of odcEntiteFilterOptions; track opt.id) {
                       <option [ngValue]="opt.id">{{ opt.nom }}</option>
                     }
                   </select>
@@ -374,8 +400,11 @@
           type="email"
           class="form-control"
           [(ngModel)]="reponse.emailExpediteur"
-          placeholder="exemple@mail.com"
+          [placeholder]="isDirecteurOdcRole ? 'Email de la personne ayant répondu' : 'exemple@mail.com'"
         />
+        @if (isDirecteurOdcRole) {
+          <p class="small text-muted mb-0 mt-1">Saisissez librement l'email du répondant (non figé).</p>
+        }
       </div>
 
       <!-- Objet réponse -->
@@ -702,6 +731,42 @@
     <div class="modal-footer">
       <button class="btn btn-primary" (click)="confirmTransmitToOdc(modal)">Transmettre</button>
       <button class="btn btn-secondary" (click)="modal.dismiss()">Annuler</button>
+    </div>
+  </ng-template>
+
+  <!-- Création courrier réception — directeur ODC -->
+  <ng-template #addDirecteurOdcCourrier let-modal>
+    <div class="modal-header">
+      <h5 class="modal-title">Créer un courrier (réception ODC)</h5>
+      <button type="button" class="btn-close" (click)="modal.dismiss()"></button>
+    </div>
+    <div class="modal-body">
+      <div class="mb-3">
+        <label class="form-label">Expéditeur <span class="text-danger">*</span></label>
+        <input
+          type="text"
+          class="form-control"
+          [(ngModel)]="directeurOdcCourrierCreate.expediteur"
+          placeholder="Nom ou email de l'expéditeur"
+        />
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Objet <span class="text-danger">*</span></label>
+        <input
+          type="text"
+          class="form-control"
+          [(ngModel)]="directeurOdcCourrierCreate.objet"
+          placeholder="Objet du courrier"
+        />
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Fichier joint</label>
+        <input type="file" class="form-control" (change)="onDirecteurOdcCreateFile($event)" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="modal.dismiss()">Annuler</button>
+      <button type="button" class="btn btn-primary" (click)="saveDirecteurOdcCourrier(modal)">Enregistrer</button>
     </div>
   </ng-template>
 
