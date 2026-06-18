@@ -48,6 +48,7 @@ reponse = {
   emailExpediteur: '',
   objet: '',
   message: '',
+  emailDestinataire: '',
   fichier: null,
   attachments: []
 };
@@ -118,6 +119,12 @@ loading = false;
   odcEntiteFilterId: number | null = null;
   odcEntiteFilterOptions: { id: number; nom: string }[] = [];
   directeurOdcCourrierCreate = { expediteur: '', objet: '', fichier: null as File | null };
+  /** Option de réponse du directeur ODC : 'dcire' (Option 1 — retour DCIRE) ou 'externe' (Option 2 — envoi email). */
+  reponseType: 'dcire' | 'externe' = 'dcire';
+  /** Type d'émission directeur ODC : 'dcire' (vers DCIRE) ou 'email' (envoi direct par email). */
+  directeurOdcEmissionType: 'dcire' | 'email' = 'dcire';
+  /** Email saisi pour émission directe (option email). */
+  directeurOdcEmissionEmail: string = '';
   /** Liste brute côté DCIRE (filtrée par onglet) */
   private courriersDcireBruts: any[] = [];
   transmitOdcDirectionId: number | null = null;
@@ -1165,7 +1172,7 @@ loading = false;
     this.loadingIndicator = true;
     this.glogalService.postMultipart('api/courriers/dcire/emission', fd).subscribe({
       next: () => {
-        this.toastr.success('Courrier enregistré.');
+        this.toastr.success('Courrier envoyé.');
         modal.close();
         this.refreshCourriersDcire();
         this.loadingIndicator = false;
@@ -1299,6 +1306,8 @@ loading = false;
   // Méthode pour le fichier de création de courrier
   openDirecteurOdcCreateModal(tpl: unknown): void {
     this.directeurOdcCourrierCreate = { expediteur: '', objet: '', fichier: null };
+    this.directeurOdcEmissionType = 'dcire';
+    this.directeurOdcEmissionEmail = '';
     this.modalService.open(tpl as TemplateRef<unknown>, { size: 'lg', scrollable: true });
   }
 
@@ -1310,11 +1319,50 @@ loading = false;
   saveDirecteurOdcCourrier(modal: { close: () => void }): void {
     const exp = (this.directeurOdcCourrierCreate.expediteur || '').trim();
     const obj = (this.directeurOdcCourrierCreate.objet || '').trim();
-    const dirId = this.odcDirections[0]?.id;
+
     if (!exp || !obj) {
       this.toastr.warning('Expéditeur et objet sont obligatoires.');
       return;
     }
+
+    // Option email direct : envoyer par email sans passer par DCIRE
+    if (this.directeurOdcEmissionType === 'email') {
+      const emailDest = (this.directeurOdcEmissionEmail || '').trim();
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailDest || !emailRegex.test(emailDest)) {
+        this.toastr.error('Veuillez saisir une adresse email destinataire valide.');
+        return;
+      }
+      const fd = new FormData();
+      fd.append('numero', `ODC-${Date.now()}`);
+      fd.append('expediteur', exp);
+      fd.append('objet', obj);
+      fd.append('emailDestinataire', emailDest);
+      const dirId = this.odcDirections[0]?.id;
+      if (dirId != null) {
+        fd.append('directionId', String(dirId));
+      }
+      if (this.directeurOdcCourrierCreate.fichier) {
+        fd.append('fichier', this.directeurOdcCourrierCreate.fichier);
+      }
+      this.loadingIndicator = true;
+      this.glogalService.postMultipart('api/courriers/odc/emission-email', fd).subscribe({
+        next: () => {
+          this.loadingIndicator = false;
+          modal.close();
+          this.toastr.success('Courrier envoyé par email avec succès.');
+          this.loadOdcCourriersMerged();
+        },
+        error: (err: { error?: { message?: string } }) => {
+          this.loadingIndicator = false;
+          this.toastr.error(err?.error?.message || 'Envoi par email impossible.');
+        },
+      });
+      return;
+    }
+
+    // Option DCIRE : flux normal — courrier enregistré vers DCIRE
+    const dirId = this.odcDirections[0]?.id;
     if (dirId == null) {
       this.toastr.error('Direction ODC introuvable.');
       return;
@@ -1332,12 +1380,12 @@ loading = false;
       next: () => {
         this.loadingIndicator = false;
         modal.close();
-        this.toastr.success('Courrier enregistré.');
+        this.toastr.success('Courrier envoyé vers la DCIRE.');
         this.loadOdcCourriersMerged();
       },
       error: (err: { error?: { message?: string } }) => {
         this.loadingIndicator = false;
-        this.toastr.error(err?.error?.message || 'Enregistrement impossible.');
+        this.toastr.error(err?.error?.message || 'Envoi impossible.');
       },
     });
   }
@@ -1414,9 +1462,12 @@ loading = false;
         emailExpediteur: email,
         objet: `Re: ${row.objet || ''}`,
         message: '',
+        emailDestinataire: '',
         fichier: null,
         attachments: []
       };
+      // Réinitialiser le type de réponse — par défaut DCIRE (Option 1)
+      this.reponseType = 'dcire';
       this.modalService.open(this.repondreCourrierModal, { 
         ariaLabelledBy: 'repondreCourrierModal',
         size: 'lg'
@@ -1679,11 +1730,20 @@ envoyerReponse(modal: any) {
     return;
   }
 
-  // Validation de l'email
+  // Validation de l'email expéditeur
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(this.reponse.emailExpediteur)) {
     this.toastr.error('Veuillez entrer une adresse email valide');
     return;
+  }
+
+  // Si Directeur ODC + Option 2 (externe) : valider l'email destinataire
+  if (this.isDirecteurOdcRole && this.reponseType === 'externe') {
+    const destEmail = this.reponse.emailDestinataire || '';
+    if (!destEmail || !emailRegex.test(destEmail)) {
+      this.toastr.error('Veuillez saisir une adresse email destinataire valide (Option 2)');
+      return;
+    }
   }
 
   this.loading = true;
@@ -1694,29 +1754,38 @@ envoyerReponse(modal: any) {
   formData.append('objet', this.reponse.objet);
   formData.append('message', this.reponse.message);
 
+  // Option 2 (externe) : ajouter l'email destinataire pour envoi par email
+  if (this.isDirecteurOdcRole && this.reponseType === 'externe') {
+    formData.append('emailDestinataire', this.reponse.emailDestinataire || '');
+  }
+
   if (this.reponse.fichier) {
     formData.append('file', this.reponse.fichier);
   }
 
   // Ajouter les pièces jointes
-  this.reponse.attachments.forEach((file: any) => { // Removed index from parameter name
-    formData.append(`attachments`, file); // Append all under the name 'attachments'
+  this.reponse.attachments.forEach((file: any) => {
+    formData.append(`attachments`, file);
   });
 
   this.glogalService.post('api/courriers/reponse', formData).subscribe({
     next: (response) => {
       this.loading = false;
       modal.close();
-      this.toastr.success(
-        this.isDirecteurOdcRole && this.isCourrierFluxOdc(this.selectedCourrier)
-          ? 'Réponse enregistrée — transmission DCIRE ou clôture selon le flux.'
-          : 'Réponse envoyée avec succès'
-      );
+
+      if (this.isDirecteurOdcRole && this.reponseType === 'externe') {
+        this.toastr.success('Courrier envoyé par email avec en-tête Orange Digital Center.');
+      } else if (this.isDirecteurOdcRole && this.isCourrierFluxOdc(this.selectedCourrier)) {
+        this.toastr.success('Courrier envoyé — réponse transmise à la DCIRE.');
+      } else {
+        this.toastr.success('Courrier envoyé avec succès');
+      }
 
       this.reponse = {
         emailExpediteur: '',
         objet: '',
         message: '',
+        emailDestinataire: '',
         fichier: null,
         attachments: [],
       };
@@ -1783,7 +1852,7 @@ envoyerReponse(modal: any) {
   }
 
   addRecordSuccess() {
-    this.toastr.success('Record added successfully', 'Success');
+    this.toastr.success('Courrier envoyé avec succès', 'Succès');
   }
 
   filterDatatable(event: any) {
