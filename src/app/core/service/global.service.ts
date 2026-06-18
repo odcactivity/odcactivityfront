@@ -232,6 +232,23 @@ export class GlobalService {
       .pipe(catchError(this.handleError.bind(this)));
   }
 
+  openCourrierFichierArchiveGeneral(courrierId: number): Observable<HttpResponse<Blob>> {
+    return this.http
+      .get(`${this.baseUrl}/api/courriers/${courrierId}/fichier-archive`, {
+        responseType: 'blob',
+        observe: 'response',
+      })
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  postFichierArchiveGeneral(courrierId: number, fichierArchive: File): Observable<void> {
+    const fd = new FormData();
+    fd.append('fichierArchive', fichierArchive);
+    return this.http
+      .post<void>(`${this.baseUrl}/api/courriers/${courrierId}/fichier-archive`, fd)
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
   getCourriersDcire(entiteId?: number | null): Observable<any[]> {
     let params = new HttpParams();
     if (entiteId != null) {
