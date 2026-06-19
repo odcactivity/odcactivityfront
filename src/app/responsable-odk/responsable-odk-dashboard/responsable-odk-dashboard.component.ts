@@ -45,6 +45,7 @@ export class ResponsableOdkDashboardComponent implements OnInit {
   reponseEmail = '';
   reponseObjet = '';
   reponseMessage = '';
+  reponseEmailDestinataire = '';
   reponseFichier: File | null = null;
   reponseLoading = false;
 
@@ -121,15 +122,11 @@ export class ResponsableOdkDashboardComponent implements OnInit {
   telechargerFichierActivite(validationId: number, nom?: string): void {
     this.global.getValidationFileResponse(validationId).subscribe({
       next: (resp) => {
-        const blob = resp.body ?? new Blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = nom || `piece_jointe_${validationId}`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(() => window.URL.revokeObjectURL(url), 15000);
+        try {
+          this.global.triggerFileDownloadFromResponse(resp, nom || `piece_jointe_${validationId}`);
+        } catch {
+          this.toast.error('Téléchargement du fichier joint impossible.');
+        }
       },
       error: () => this.toast.error('Téléchargement du fichier joint impossible.'),
     });
@@ -142,23 +139,11 @@ export class ResponsableOdkDashboardComponent implements OnInit {
     }
     this.global.openCourrierFile(Number(id)).subscribe({
       next: (resp) => {
-        const blob = resp.body ?? new Blob();
-        const url = window.URL.createObjectURL(blob);
-        const contentDisposition = resp.headers.get('content-disposition');
-        let filename = `courrier_${id}.pdf`;
-        if (contentDisposition) {
-          const matches = /filename="([^"]*)"/.exec(contentDisposition);
-          if (matches && matches[1]) {
-            filename = matches[1];
-          }
+        try {
+          this.global.triggerFileDownloadFromResponse(resp, `courrier_${id}.pdf`);
+        } catch {
+          this.toast.error('Téléchargement impossible.');
         }
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(() => window.URL.revokeObjectURL(url), 15000);
       },
       error: () => this.toast.error('Téléchargement impossible.'),
     });
@@ -171,25 +156,13 @@ export class ResponsableOdkDashboardComponent implements OnInit {
     }
     this.global.openCourrierFichierArchive(Number(id)).subscribe({
       next: (resp) => {
-        const blob = resp.body ?? new Blob();
-        const url = window.URL.createObjectURL(blob);
-        const contentDisposition = resp.headers.get('content-disposition');
-        let filename = `archive_${id}.pdf`;
-        if (contentDisposition) {
-          const matches = /filename="([^"]*)"/.exec(contentDisposition);
-          if (matches && matches[1]) {
-            filename = matches[1];
-          }
+        try {
+          this.global.triggerFileDownloadFromResponse(resp, `archive_${id}.pdf`);
+        } catch {
+          this.toast.error("Téléchargement du fichier d'archive impossible.");
         }
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(() => window.URL.revokeObjectURL(url), 15000);
       },
-      error: () => this.toast.error('Téléchargement du fichier d\'archive impossible.'),
+      error: () => this.toast.error("Téléchargement du fichier d'archive impossible."),
     });
   }
 
@@ -349,6 +322,7 @@ export class ResponsableOdkDashboardComponent implements OnInit {
     this.reponseEmail = user?.email || '';
     this.reponseObjet = `Re: ${courrier.objet || ''}`;
     this.reponseMessage = '';
+    this.reponseEmailDestinataire = '';
     this.reponseFichier = null;
   }
 
@@ -357,6 +331,7 @@ export class ResponsableOdkDashboardComponent implements OnInit {
     this.reponseEmail = '';
     this.reponseObjet = '';
     this.reponseMessage = '';
+    this.reponseEmailDestinataire = '';
     this.reponseFichier = null;
   }
 
@@ -375,12 +350,18 @@ export class ResponsableOdkDashboardComponent implements OnInit {
       this.toast.warning('Veuillez remplir tous les champs obligatoires.');
       return;
     }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!this.reponseEmailDestinataire.trim() || !emailRegex.test(this.reponseEmailDestinataire.trim())) {
+      this.toast.warning('Indiquez l\'email du destinataire.');
+      return;
+    }
     this.reponseLoading = true;
     const fd = new FormData();
     fd.append('courrierId', String(this.reponseOuverte.id));
     fd.append('email', this.reponseEmail.trim());
     fd.append('objet', this.reponseObjet.trim());
     fd.append('message', this.reponseMessage.trim());
+    fd.append('emailDestinataire', this.reponseEmailDestinataire.trim());
     if (this.reponseFichier) {
       fd.append('file', this.reponseFichier);
     }

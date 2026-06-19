@@ -58,6 +58,7 @@ loading = false;
   @ViewChild('repondreCourrierModal') repondreCourrierModal!: TemplateRef<any>;
   @ViewChild('transmitOdcModal') transmitOdcModal!: TemplateRef<any>;
   @ViewChild('addDcireExterne') addDcireExterne!: TemplateRef<any>;
+  @ViewChild('dcireArchiveModal') dcireArchiveModal!: TemplateRef<any>;
   
   entites: Entite[] = [];
   directions: Entite[] = [];
@@ -127,6 +128,9 @@ loading = false;
   directeurOdcEmissionEmail: string = '';
   /** Liste brute côté DCIRE (filtrée par onglet) */
   private courriersDcireBruts: any[] = [];
+  dcireArchiveRow: any = null;
+  dcireArchiveFile: File | null = null;
+  dcireArchiveLoading = false;
   transmitOdcDirectionId: number | null = null;
   registerExterne!: UntypedFormGroup;
   
@@ -814,7 +818,7 @@ loading = false;
   }
 
   /** Émission DCIRE vers un pilier ODC (workflow directeur ODC / admin). */
-  private estCourrierEmissionDcireVersOdc(row: any): boolean {
+  estCourrierEmissionDcireVersOdc(row: any): boolean {
     if (!row || row.statut === 'ARCHIVER') {
       return false;
     }
@@ -937,6 +941,14 @@ loading = false;
     if (!this.isDirecteurOdcRole || row?.statut !== 'ENVOYER' || this.rowServiceOdcAffecte(row)) {
       return false;
     }
+    if (this.estCourrierEmissionDcireVersOdc(row)) {
+      const entId = this.rowEntiteId(row);
+      const initId = this.rowDirectionInitialId(row);
+      const directionId = entId ?? initId;
+      if (directionId != null && this.odcDirections.some((d) => Number(d.id) === Number(directionId))) {
+        return true;
+      }
+    }
     const entId = this.rowEntiteId(row);
     if (entId == null) {
       return false;
@@ -1026,7 +1038,7 @@ loading = false;
       if (s !== 'ENVOYER' && s !== 'IMPUTER') {
         return false;
       }
-      if (s === 'ENVOYER' && this.peutDeleguerCourrierOdc(row)) {
+      if (s === 'ENVOYER' && this.peutDeleguerCourrierOdc(row) && !this.estCourrierEmissionDcireVersOdc(row)) {
         return false;
       }
       return true;
@@ -1223,6 +1235,10 @@ loading = false;
   }
 
   archiveCourrier(row: any) {
+    if (this.isDcireRole) {
+      this.openDcireArchiveFichier(row);
+      return;
+    }
     this.glogalService.update("api/courriers/archiver", row.id, {}).subscribe({
       next: (resp) => {
         if (this.isDcireRole) {
@@ -1259,36 +1275,77 @@ loading = false;
     });
   }
 
+  openDcireArchiveFichier(row: any): void {
+    this.dcireArchiveRow = row;
+    this.dcireArchiveFile = null;
+    this.modalService.open(this.dcireArchiveModal, { size: 'md', centered: true });
+  }
+
+  annulerDcireArchiveFichier(modal?: { dismiss: () => void }): void {
+    this.dcireArchiveRow = null;
+    this.dcireArchiveFile = null;
+    modal?.dismiss();
+  }
+
+  onDcireArchiveFile(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.dcireArchiveFile = input.files?.[0] ?? null;
+  }
+
+  confirmerDcireArchiveFichier(modal?: { dismiss: () => void }): void {
+    const id = this.dcireArchiveRow?.id;
+    if (id == null || !this.dcireArchiveFile) {
+      this.toastr.warning('Choisissez le fichier à archiver.');
+      return;
+    }
+    this.dcireArchiveLoading = true;
+    this.glogalService.postFichierArchiveGeneral(Number(id), this.dcireArchiveFile).subscribe({
+      next: () => {
+        this.dcireArchiveLoading = false;
+        this.toastr.success('Fichier archivé.');
+        this.annulerDcireArchiveFichier(modal);
+        this.refreshCourriersDcire();
+      },
+      error: (err: { error?: { message?: string } }) => {
+        this.dcireArchiveLoading = false;
+        this.toastr.error(err?.error?.message || 'Archivage impossible.');
+      },
+    });
+  }
+
+  telechargerFichierArchiveCourrier(row: any): void {
+    const id = row?.id;
+    if (id == null) {
+      return;
+    }
+    this.glogalService.openCourrierFichierArchiveGeneral(Number(id)).subscribe({
+      next: (resp) => {
+        try {
+          this.glogalService.triggerFileDownloadFromResponse(resp, `archive_${id}.pdf`);
+        } catch {
+          this.toastr.error('Téléchargement du fichier archivé impossible.');
+        }
+      },
+      error: () => this.toastr.error('Téléchargement du fichier archivé impossible.'),
+    });
+  }
+
   download(row: any) {
     this.loadingIndicator = true;
-    this.supportactivityService.downloadCourrierFile(row.id).subscribe({
-      next: (value: any) => {
-        const blob = value.body!;
-        const contentDisposition = value.headers.get('content-disposition');
-  
-        let filename = `${row.numero}`;
-        if (contentDisposition) {
-          const match = contentDisposition.match(/filename="(.+)"/);
-          if (match?.[1]) {
-            filename = match[1];
-          }
+    this.glogalService.openCourrierFile(row.id).subscribe({
+      next: (value) => {
+        try {
+          this.glogalService.triggerFileDownloadFromResponse(value, `${row.numero || 'courrier'}.pdf`);
+        } catch {
+          this.toastr.error('Téléchargement impossible.');
         }
-  
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        a.click();
-        window.URL.revokeObjectURL(url);
-
-        setTimeout(() => {
-          this.loadingIndicator = false;
-        }, 500);
+        this.loadingIndicator = false;
       },
-      error: (err) => {
-        console.error('Erreur téléchargement', err);
-      }
-    })
+      error: () => {
+        this.loadingIndicator = false;
+        this.toastr.error('Téléchargement impossible.');
+      },
+    });
   }
 
   getUtilisateur() {

@@ -23,6 +23,7 @@ import { NgForOf, NgIf } from "@angular/common";
 import { RouterLink } from "@angular/router";
 import { AuthService } from "@core";
 import { filterEntitesOdcPiliers } from '@core/utils/odc-entite';
+import { canonicalizeAppRoles } from '@core/utils/app-roles';
 import { timer } from 'rxjs';
 
 import { ActivityValidation } from '@core/models/ActivityValidation';
@@ -63,8 +64,16 @@ export class ActivityComponent {
   useRole: string[];
   validation: ActivityValidation = new ActivityValidation();
   selectedFile: File | null = null;
+  isEditMode = false;
+  editingActiviteId: number | null = null;
+  editNoteResponsable = '';
+  editSuggestionDirecteur = '';
+  existingFichierNom: string | null = null;
+  isPersonnelRole = false;
   currentUserId: number | null = this.getCurrentUserId();
   activityValidation: ActivityValidation = new ActivityValidation();
+  envoyeurMap: { [key: number]: string } = {};
+  superviseurMap: { [key: number]: string } = {};
   columns = [
     { prop: 'nom' },
     { prop: 'titre' },
@@ -130,6 +139,7 @@ export class ActivityComponent {
     this.selection = SelectionType.checkbox;
 
     this.useRole = this.authService.getCurrentUserFromStorage().roles;
+    this.isPersonnelRole = canonicalizeAppRoles(this.useRole).includes('PERSONNEL');
   }
 
   // select record using check box
@@ -170,6 +180,7 @@ export class ActivityComponent {
     this.getAllActivite();
     this.getAllTypeActivite();
     this.getAllSalle();
+    this.getMapEnvoyeur();
     // initialize form creation
     this.register = this.fb.group({
       id: [''],
@@ -397,7 +408,15 @@ export class ActivityComponent {
       return isNaN(val) ? null : val;
     }
   }
-  // CREATION NOVELLE ACTIVITE AVEC OU SANS VALIDATION
+  // CREATION ou MODIFICATION activité (même formulaire)
+  onRegisterSubmit(form: UntypedFormGroup) {
+    if (this.isEditMode) {
+      this.saveEditActivite(form);
+    } else {
+      this.onAddRowSave(form);
+    }
+  }
+
   async onAddRowSave(form: UntypedFormGroup) {
     if (form.invalid) return;
     this.loadingIndicator = true;
@@ -467,6 +486,12 @@ export class ActivityComponent {
   }
   // add new record
   addRow(content: any) {
+    this.isEditMode = false;
+    this.editingActiviteId = null;
+    this.editNoteResponsable = '';
+    this.editSuggestionDirecteur = '';
+    this.existingFichierNom = null;
+    this.selectedFile = null;
     this.register.reset();
     this.modalService.open(content, {
       ariaLabelledBy: 'modal-basic-title',
@@ -513,25 +538,45 @@ export class ActivityComponent {
 
     this.selectedRowData = row;
   }
-  editRow(row: any, rowIndex: number, content: any) {
-    this.ngOnChanges();
-    this.getAllEtape();
-    this.modalService.open(content, {
-      ariaLabelledBy: 'modal-basic-title',
-      size: 'lg',
-    });
-    // Préparer les IDs d'étapes sélectionnées
-    // this.selectedEtapeIds = row.etapes?.map((e: any) => e.id) || []; // Notez: 'etapes' au lieu de 'etape'
-    //code fatou, pour verifier si l'etape est un tableau ou un objet et si c'est null
-    const etapes = Array.isArray(row.etapes)
-      ? row.etapes
-      : row.etapes
-        ? [row.etapes]
-        : [];
+  peutModifierActivite(row: any): boolean {
+    if (!this.isPersonnelRole || row?.createdBy?.id == null || this.currentUserId == null) {
+      return false;
+    }
+    if (Number(row.createdBy.id) !== Number(this.currentUserId)) {
+      return false;
+    }
+    if (row.statut === 'En_Validation_Directeur_ODC') {
+      return false;
+    }
+    if (row.statut === 'En_Validation_Responsable_ODK') {
+      return false;
+    }
+    return true;
+  }
 
+  fichiersActiviteRow(row: any): { id?: number; fichierjoint?: string }[] {
+    const list = row?.activitevalidation;
+    if (!Array.isArray(list)) {
+      return [];
+    }
+    return list.filter((v: { fichierjoint?: string }) => v?.fichierjoint);
+  }
+
+  editRow(row: any, rowIndex: number, content: any) {
+    this.isEditMode = true;
+    this.editingActiviteId = row?.id != null ? Number(row.id) : null;
+    this.editNoteResponsable = row?.noteResponsableOdk || '';
+    this.editSuggestionDirecteur = row?.suggestionDirecteurOdc || '';
+    const fichiers = this.fichiersActiviteRow(row);
+    this.existingFichierNom =
+      fichiers.length > 0 ? (fichiers[fichiers.length - 1].fichierjoint ?? null) : null;
+    this.selectedFile = null;
+
+    const etapes = Array.isArray(row.etapes) ? row.etapes : row.etapes ? [row.etapes] : [];
     this.selectedEtapeIds = etapes.map((e: any) => e.id);
     this.ensureEntiteOptionPresent(row.entite);
-    this.editForm.patchValue({
+
+    this.register.patchValue({
       id: row.id,
       nom: row.nom,
       titre: row.titre,
@@ -541,60 +586,101 @@ export class ActivityComponent {
       dateFin: row.dateFin,
       objectifParticipation: row.objectifParticipation,
       entite: row.entite?.id,
-      etape: this.selectedEtapeIds, // Utiliser directement selectedEtapeIds
       salleId: row.salleId?.id,
       typeActivite: row.typeActivite?.id,
     });
-    // console.log("selectedEtapeIds au niveau composant :", this.selectedEtapeIds);
 
     this.selectedRowData = row;
+    this.modalService.open(content, {
+      ariaLabelledBy: 'modal-basic-title',
+      size: 'lg',
+    });
   }
-  onEditSave(form: UntypedFormGroup) {
-    // console.log("modification++++++++++", form.value);
-    if (form?.value?.id) {
-      // Utiliser les IDs sélectionnés directement depuis selectedEtapeIds
-      const etapeIds = (this.selectedEtapeIds?.length ? this.selectedEtapeIds : form.value.etape) || [];
 
-      const updatedActivite = {
-        ...form.value,
-        etapes: etapeIds.map((id: number) => ({ id })),
-      };
-      this.glogalService.updateP("activite", updatedActivite.id, etapeIds, updatedActivite).subscribe({
-        next: () => {
+  saveEditActivite(form: UntypedFormGroup) {
+    if (form.invalid || this.editingActiviteId == null) {
+      return;
+    }
+    const etapeIds = this.selectedEtapeIds || [];
+    const updatedActivite = {
+      ...form.value,
+      id: this.editingActiviteId,
+      etapes: etapeIds.map((id: number) => ({ id })),
+    };
+
+    this.loadingIndicator = true;
+    this.glogalService.updateP('activite', this.editingActiviteId, etapeIds, updatedActivite).subscribe({
+      next: () => {
+        const finish = () => {
           this.modalService.dismissAll();
           this.editRecordSuccess();
-          setTimeout(() => {
-            this.loadingIndicator = false;
-          }, 500);
+          this.isEditMode = false;
+          this.editingActiviteId = null;
+          this.existingFichierNom = null;
+          this.selectedFile = null;
+          this.loadingIndicator = false;
           this.getAllActivite();
-        },
-        error: (err: unknown) => {
-          console.error('Erreur lors de la mise à jour :', err);
+        };
 
-          let message = this.glogalService.extractMessageFromError(err)
-            || 'Une erreur est survenue. Veuillez réessayer.';
-          let title = '<span class="text-red-500">Échec</span>';
-
-          Swal.fire({
-            icon: 'error',
-            title: title,
-            text: message,
-            confirmButtonText: 'Ok',
-            customClass: {
-              confirmButton: 'bg-red-500 text-white hover:bg-red-600',
+        const file = this.selectedFile;
+        if (file) {
+          this.glogalService.uploadActivitePieceJointe(this.editingActiviteId!, file).subscribe({
+            next: () => finish(),
+            error: (err: unknown) => {
+              const msg = this.glogalService.extractMessageFromError(err);
+              this.toastr.warning(msg || 'Activité modifiée, mais la pièce jointe n’a pas pu être mise à jour.');
+              finish();
             },
           });
+        } else {
+          finish();
         }
-      });
-    }
+      },
+      error: (err: unknown) => {
+        this.loadingIndicator = false;
+        Swal.fire({
+          icon: 'error',
+          title: 'Échec',
+          text: this.glogalService.extractMessageFromError(err) || 'Modification impossible.',
+          confirmButtonText: 'Ok',
+        });
+      },
+    });
+  }
+
+  getMapEnvoyeur() {
+    this.glogalService.get("utilisateur").subscribe({
+      next: (users: any[]) => {
+        this.envoyeurMap = Object.fromEntries(users.map(u => [u.id, u.nom + " - " + u.prenom]));
+        this.superviseurMap = Object.fromEntries(users.map(u => [u.id, u.nom + " - " + u.prenom]));
+      },
+      error: err => {
+        console.error("Erreur lors du chargement des envoyeurs :", err);
+      }
+    });
+  }
+
+  downloadOrOpenFile(validationId: number) {
+    this.glogalService.getValidationFileResponse(validationId).subscribe({
+      next: (res) => {
+        try {
+          this.glogalService.triggerFileDownloadFromResponse(res, `piece_jointe_${validationId}`);
+        } catch (e) {
+          this.toastr.error(e instanceof Error ? e.message : 'Téléchargement impossible.');
+        }
+      },
+      error: () => this.toastr.error('Téléchargement impossible.'),
+    });
   }
   onFileSelected(event: any): void {
     const file = event.target.files[0];
     if (file) {
       this.selectedFile = file;
+      if (this.isEditMode) {
+        return;
+      }
       this.register.patchValue({ fichier: file });
       this.register.get('fichier')?.updateValueAndValidity();
-      console.log('Fichier sélectionné :', file.name);
     }
   }
 
@@ -764,4 +850,5 @@ export interface selectActiviteInterface {
   salleId: Salle;
   typeActivite: TypeActivite;
   etapes: Etape[];
+  activitevalidation?: any[];
 }

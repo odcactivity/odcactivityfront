@@ -221,25 +221,12 @@ export class ValidationCourriersDirecteurComponent implements OnInit {
     }
     const numero = courrier?.numero ?? 'courrier';
     this.global.getCourrierFichierValidationDirecteurOdc(Number(id)).subscribe({
-      next: (value: { body?: Blob; headers?: { get: (h: string) => string | null } }) => {
-        const blob = value.body;
-        if (!blob) {
-          return;
+      next: (resp) => {
+        try {
+          this.global.triggerFileDownloadFromResponse(resp, `${numero}.pdf`);
+        } catch {
+          this.toast.error('Téléchargement impossible.');
         }
-        let filename = String(numero);
-        const cd = value.headers?.get('content-disposition');
-        if (cd) {
-          const match = cd.match(/filename="(.+)"/);
-          if (match?.[1]) {
-            filename = match[1];
-          }
-        }
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        a.click();
-        window.URL.revokeObjectURL(url);
       },
       error: () => this.toast.error('Téléchargement impossible.'),
     });

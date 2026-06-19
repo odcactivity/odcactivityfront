@@ -16,6 +16,38 @@ export class GlobalService {
   a: any;
   constructor(private http: HttpClient) { }
 
+  /** Téléchargement navigateur fiable (blob + Content-Disposition). */
+  triggerFileDownloadFromResponse(resp: HttpResponse<Blob>, defaultFilename: string): void {
+    const body = resp.body;
+    if (!body || body.size === 0) {
+      throw new Error('Fichier vide ou introuvable.');
+    }
+    if (body.type && body.type.includes('json')) {
+      throw new Error('Le serveur a renvoyé une erreur au lieu du fichier.');
+    }
+    let filename = defaultFilename;
+    const disposition = resp.headers.get('content-disposition') || '';
+    const match = /filename\*?=(?:UTF-8''|"?)([^";]+)/i.exec(disposition);
+    if (match?.[1]) {
+      filename = decodeURIComponent(match[1].replace(/"/g, '').trim());
+    }
+    this.triggerFileDownloadBlob(body, filename);
+  }
+
+  triggerFileDownloadBlob(blob: Blob, filename: string): void {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = filename || 'fichier';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    }, 500);
+  }
+
   get(name: string): Observable<any> {
     const fullUrl = `${this.baseUrl}/${name}`;
     console.log(`🌐 Appel GET à l'URL complète: ${fullUrl}`);
@@ -489,6 +521,25 @@ export class GlobalService {
     return this.http.post<ActivityValidation>(`${this.baseUrl}/activitevalidation/create/${createOrreponse}`, formData);
 
   }
+
+  uploadActivitePieceJointe(activiteId: number, fichier: File): Observable<{ message?: string }> {
+    const formData = new FormData();
+    formData.append('fichier', fichier);
+    return this.http.post<{ message?: string }>(
+      `${this.baseUrl}/activite/${activiteId}/piece-jointe`,
+      formData
+    );
+  }
+
+  updateValidationFile(validationId: number, fichier: File): Observable<ActivityValidation> {
+    const formData = new FormData();
+    formData.append('fichier', fichier);
+    return this.http.post<ActivityValidation>(
+      `${this.baseUrl}/activitevalidation/${validationId}/fichier`,
+      formData
+    );
+  }
+
   getActivitesBySuperviseur(superviseurId: number): Observable<any[]> {
     return this.http.get<any[]>(`${this.baseUrl}/activite/superviseur/${superviseurId}`);
   }

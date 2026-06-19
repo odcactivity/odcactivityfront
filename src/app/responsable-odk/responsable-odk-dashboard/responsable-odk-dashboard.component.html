@@ -165,8 +165,17 @@
             <div class="mt-3 p-3 border rounded bg-light">
               <h6 class="fw-bold mb-2"><i class="fas fa-reply text-success me-1"></i> Répondre au courrier</h6>
               <div class="mb-2">
-                <label class="form-label small fw-semibold">Votre email <span class="text-danger">*</span></label>
+                <label class="form-label small fw-semibold">Votre email (expéditeur) <span class="text-danger">*</span></label>
                 <input type="email" class="form-control form-control-sm" [(ngModel)]="reponseEmail" />
+              </div>
+              <div class="mb-2">
+                <label class="form-label small fw-semibold">Email destinataire <span class="text-danger">*</span></label>
+                <input
+                  type="email"
+                  class="form-control form-control-sm"
+                  [(ngModel)]="reponseEmailDestinataire"
+                  placeholder="destinataire@exemple.com"
+                />
               </div>
               <div class="mb-2">
                 <label class="form-label small fw-semibold">Objet <span class="text-danger">*</span></label>

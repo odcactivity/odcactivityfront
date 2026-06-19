@@ -181,10 +181,8 @@
                       <i class="fas fa-eye"></i>
                     </button>
                     <button
-                      *ngIf="useRole.includes('PERSONNEL') && row.createdBy.id === currentUserId
-                        && row.statut !== 'En_Validation_Responsable_ODK'
-                        && row.statut !== 'En_Validation_Directeur_ODC'"
-                      class="btn btn-tbl-edit h-auto" (click)='editRow(row, rowIndex, editRecord)'>
+                      *ngIf="peutModifierActivite(row)"
+                      class="btn btn-tbl-edit h-auto" (click)='editRow(row, rowIndex, addRecord)'>
                       <i class="fas fa-pen"></i>
                     </button>
                     <button
@@ -209,8 +207,18 @@
                 </button>
               </div>
               <div class="modal-body">
-               <h4>Nouvelle Activité</h4> 
-                <form class="register-form" [formGroup]="register" (ngSubmit)="onAddRowSave(register)" enctype="multipart/form-data">
+               <h4>{{ isEditMode ? 'Modifier l\'activité' : 'Nouvelle Activité' }}</h4>
+                @if (isEditMode && editNoteResponsable) {
+                  <div class="alert alert-warning py-2 small mb-3">
+                    <strong>Retour du responsable :</strong> {{ editNoteResponsable }}
+                  </div>
+                }
+                @if (isEditMode && editSuggestionDirecteur) {
+                  <div class="alert alert-info py-2 small mb-3">
+                    <strong>Suggestion directeur ODC :</strong> {{ editSuggestionDirecteur }}
+                  </div>
+                }
+                <form class="register-form" [formGroup]="register" (ngSubmit)="onRegisterSubmit(register)" enctype="multipart/form-data">
                   <div class="row">
                     <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
                       <label>Nom <span class="text-danger">*</span></label>
@@ -313,7 +321,10 @@
                   </div>
                   <div class="row">
                     <div class="col-12 mb-2">
-                      <label for="fichier">Fichier joint :</label>
+                      <label for="fichier">Fichier joint</label>
+                      @if (isEditMode && existingFichierNom && !selectedFile) {
+                        <p class="small text-muted mb-1">Actuel : {{ existingFichierNom }} — remplacez-le ci-dessous si besoin.</p>
+                      }
                       <input
                         type="file"
                         id="fichier"
@@ -321,9 +332,9 @@
                         accept=".pdf,.png,.jpg,.jpeg,.docx"
                         class="form-control"
                       />
-                    </div>
-                    <div *ngIf="selectedFile" class="col-12 mt-2 text-success">
-                      <small>Fichier sélectionné : {{ selectedFile.name }}</small>
+                      @if (selectedFile) {
+                        <small class="text-success d-block mt-1">Nouveau fichier : {{ selectedFile.name }}</small>
+                      }
                     </div>
                   </div>
 
@@ -332,153 +343,6 @@
                       <span *ngIf="loadingIndicator" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
                       {{ loadingIndicator ? 'Chargement...' : 'Enregistre' }}
                     </button>
-                    <button type="button" class="btn btn-dark text-white" (click)="modal.close('Close click')">Fermer</button>
-                  </div>
-                </form>
-              </div>
-            </ng-template>
-            <!-- Edit Record Modal Window -->
-            <ng-template #editRecord let-modal>
-              <div class="modal-header editRowModal">
-                <h4 class="modal-title" id="modal-basic-title">
-                  <div class="table-modal-header">
-                    <div class="modal-about">
-                      <div class="fw-bold p-t-10 font-17">
-                        {{selectedRowData!.nom}}
-                      </div>
-                    </div>
-                  </div>
-                </h4>
-                <button type="button" class="close" aria-label="Close" (click)="modal.dismiss('Cross click')">
-                  <span aria-hidden="true"><i class="material-icons">close</i></span>
-                </button>
-              </div>
-              <div class="modal-body">
-                <form [formGroup]="editForm" (ngSubmit)="onEditSave(editForm)">
-                  <div class="input-field col s12 d-none">
-                    <input formControlName="id" class="form-control" type="hidden">
-                  </div>
-                  <div class="row">
-                    <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
-                      <label>Nom <span class="text-danger">*</span></label>
-                      <input type="text" class="form-control" placeholder="Nom activité" formControlName="nom"
-                             required>
-                      @if (!editForm.get('nom')?.valid && editForm.get('nom')?.touched) {
-                        <small class="form-text text-danger"> Nom activité est obligatoire</small>
-                      }
-                    </div>
-                    <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
-                      <label>Titre <span class="text-danger">*</span></label>
-                      <input type="text" class="form-control" placeholder="Titre activité" formControlName="titre"
-                             required>
-                      @if (!editForm.get('titre')?.valid && editForm.get('titre')?.touched) {
-                        <small class="form-text text-danger"> Titre activité est obligatoire</small>
-                      }
-                    </div>
-                  </div>
-                  <div class="row">
-                    <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
-                      <label>Lieu <span class="text-danger">*</span></label>
-                      <input type="text" class="form-control" placeholder="Lieu activité" formControlName="lieu"
-                             required>
-                      @if (!editForm.get('lieu')?.valid && editForm.get('lieu')?.touched) {
-                        <small class="form-text text-danger"> Lieu activité est obligatoire</small>
-                      }
-                    </div>
-                    <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
-                      <label>Description <span class="text-danger">*</span></label>
-                      <input type="text" class="form-control" placeholder="Description activité" formControlName="description"
-                             required>
-                      @if (!editForm.get('description')?.valid && editForm.get('description')?.touched) {
-                        <small class="form-text text-danger"> Description est obligatoire</small>
-                      }
-                    </div>
-                    <div class="col-xl-12 col-lg-6 col-md-12 col-sm-12 mb-2">
-                      <label>Objectif Participant <span class="text-danger">*</span></label>
-                      <input type="number" class="form-control" placeholder="Objectif activité" formControlName="objectifParticipation"
-                             required>
-                      @if (!editForm.get('objectifParticipation')?.valid && editForm.get('objectifParticipation')?.touched) {
-                        <small class="form-text text-danger"> Objectif est obligatoire</small>
-                      }
-                    </div>
-                  </div>
-
-                  <div class="row">
-                    <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
-                      <label>Date Début <span class="text-danger">*</span></label>
-                      <input type="date" class="form-control" placeholder="Date debut" formControlName="dateDebut"
-                             required>
-                      @if (!editForm.get('dateDebut')?.valid && editForm.get('dateDebut')?.touched) {
-                        <small class="form-text text-danger"> Date est obligatoire</small>
-                      }
-                    </div>
-                    <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
-                      <label>Date Fin <span class="text-danger">*</span></label>
-                      <input type="date" class="form-control" placeholder="Date fin" formControlName="dateFin"
-                             required>
-                      @if (!editForm.get('dateFin')?.valid && editForm.get('dateFin')?.touched) {
-                        <small class="form-text text-danger"> Date Fin est obligatoire</small>
-                      }
-                    </div>
-                  </div>
-                  <div class="row">
-                    <div class="col-xl-6 col-lg-6 col-md-12 col-sm-12 mb-2">
-                      <label>Entite <span class="text-danger">*</span></label>
-                      <select class="form-select form-control" formControlName="entite" required>
-                        <option value="" [ngValue]="null" disabled>-- Sélectionnez une entite --</option>
-                        <option *ngFor="let entite of entite"  [value]="entite.id">{{entite.nom}}</option>
-                      </select>
-                      @if (!editForm.get('entite')?.valid && editForm.get('entite')?.touched) {
-                        <small class="form-text text-danger"> entite est obligatoire</small>
-                      }
-                    </div>
-                    <div class="col-xl-6 col-lg-4 col-md-12 col-sm-12 mb-2">
-                      <label>Salle<span class="text-danger">*</span></label>
-                      <select class="form-select form-control" formControlName="salleId" required>
-                        <option value="" [ngValue]="null" disabled>-- Sélectionnez une salle --</option>
-                        <option *ngFor="let salles of salleId"  [value]="salles.id">{{salles.nom}}</option>
-                      </select>
-                      @if (!editForm.get('salle')?.valid && editForm.get('salle')?.touched) {
-                        <small class="form-text text-danger"> sallw est obligatoire</small>
-                      }
-                    </div>
-                     <div class="col-xl-6 col-lg-4 col-md-12 col-sm-12 mb-2">
-                      <label>Type d'activite<span class="text-danger">*</span></label>
-                      <select class="form-select form-control" formControlName="typeActivite" required>
-                        <option value="" [ngValue]="null" disabled>-- Sélectionnez un type --</option>
-                        <option *ngFor="let typeActivites of typeActivites"  [value]="typeActivites.id">{{typeActivites.type}}</option>
-                      </select>
-                      @if (!editForm.get('typeActivite')?.valid && editForm.get('typeActivite')?.touched) {
-                        <small class="form-text text-danger"> type est obligatoire</small>
-                      }
-                    </div>
-                    <!--<div class="col-xl-6 col-lg-4 col-md-12 col-sm-12 mb-2">
-                      <label>Etape<span class="text-danger">*</span></label>
-                      <select class="form-select form-control" formControlName="etape" required>
-                        <option value="" [ngValue]="null" disabled>&#45;&#45; Sélectionnez une etape &#45;&#45;</option>
-                        <option *ngFor="let etapes of etape"  [value]="etapes.id">{{etapes.nom}}</option>
-                      </select>
-                    </div>-->
-                  </div>
-                  <div class="row">
-                    <div class="col-xl-12 col-lg-6 col-md-12 col-sm-12 mb-2">
-                      <label>Etape <span class="text-danger">*</span></label>
-                      <select  class="form-control h-100" multiple="" (ngModelChange)="onEtapesChange($event)" formControlName="etape">
-                        <option value="" [ngValue]="null" disabled>-- Sélectionnez un ou plusieurs Etape --</option>
-                        <option *ngFor="let etapes of etape" [ngValue]="etapes.id">{{etapes.nom}}</option>
-                      </select>
-                      @if (!editForm.get('etape')?.valid && editForm.get('etape')?.touched) {
-                        <small class="form-text text-danger"> etape est obligatoire</small>
-                      }
-                      <div class="mt-1 text-gray-500 mt-3 text-sm">Maintenez Ctrl (ou Cmd sur Mac) pour sélectionner plusieurs options.</div>
-                    </div>
-                  </div>
-                  <div class="modal-footer">
-                    <button type="submit" class="btn btn-warning" [disabled]="!editForm.valid || loadingIndicator">
-                      <span *ngIf="loadingIndicator" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-                      {{ loadingIndicator ? 'Chargement...' : 'Enregistre' }}
-                    </button>
-
                     <button type="button" class="btn btn-dark text-white" (click)="modal.close('Close click')">Fermer</button>
                   </div>
                 </form>
