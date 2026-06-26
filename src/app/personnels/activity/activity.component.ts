@@ -559,7 +559,14 @@ export class ActivityComponent {
     if (!Array.isArray(list)) {
       return [];
     }
-    return list.filter((v: { fichierjoint?: string }) => v?.fichierjoint);
+    const withFile = list.filter((v: { fichierjoint?: string }) => v?.fichierjoint);
+    if (withFile.length === 0) {
+      return [];
+    }
+    const latest = [...withFile].sort(
+      (a: { id?: number }, b: { id?: number }) => Number(b.id ?? 0) - Number(a.id ?? 0)
+    )[0];
+    return latest ? [latest] : [];
   }
 
   editRow(row: any, rowIndex: number, content: any) {
@@ -607,45 +614,49 @@ export class ActivityComponent {
       id: this.editingActiviteId,
       etapes: etapeIds.map((id: number) => ({ id })),
     };
+    const activiteId = this.editingActiviteId;
+    const file = this.selectedFile;
 
     this.loadingIndicator = true;
-    this.glogalService.updateP('activite', this.editingActiviteId, etapeIds, updatedActivite).subscribe({
-      next: () => {
-        const finish = () => {
-          this.modalService.dismissAll();
-          this.editRecordSuccess();
-          this.isEditMode = false;
-          this.editingActiviteId = null;
-          this.existingFichierNom = null;
-          this.selectedFile = null;
-          this.loadingIndicator = false;
-          this.getAllActivite();
-        };
 
-        const file = this.selectedFile;
-        if (file) {
-          this.glogalService.uploadActivitePieceJointe(this.editingActiviteId!, file).subscribe({
-            next: () => finish(),
-            error: (err: unknown) => {
-              const msg = this.glogalService.extractMessageFromError(err);
-              this.toastr.warning(msg || 'Activité modifiée, mais la pièce jointe n’a pas pu être mise à jour.');
-              finish();
-            },
+    const finish = () => {
+      this.modalService.dismissAll();
+      this.editRecordSuccess();
+      this.isEditMode = false;
+      this.editingActiviteId = null;
+      this.existingFichierNom = null;
+      this.selectedFile = null;
+      this.loadingIndicator = false;
+      this.getAllActivite();
+    };
+
+    const saveActivite = () => {
+      this.glogalService.updateP('activite', activiteId, etapeIds, updatedActivite).subscribe({
+        next: () => finish(),
+        error: (err: unknown) => {
+          this.loadingIndicator = false;
+          Swal.fire({
+            icon: 'error',
+            title: 'Échec',
+            text: this.glogalService.extractMessageFromError(err) || 'Modification impossible.',
+            confirmButtonText: 'Ok',
           });
-        } else {
-          finish();
-        }
-      },
-      error: (err: unknown) => {
-        this.loadingIndicator = false;
-        Swal.fire({
-          icon: 'error',
-          title: 'Échec',
-          text: this.glogalService.extractMessageFromError(err) || 'Modification impossible.',
-          confirmButtonText: 'Ok',
-        });
-      },
-    });
+        },
+      });
+    };
+
+    if (file) {
+      this.glogalService.uploadActivitePieceJointe(activiteId, file).subscribe({
+        next: () => saveActivite(),
+        error: (err: unknown) => {
+          const msg = this.glogalService.extractMessageFromError(err);
+          this.toastr.error(msg || 'La pièce jointe n’a pas pu être mise à jour.');
+          this.loadingIndicator = false;
+        },
+      });
+    } else {
+      saveActivite();
+    }
   }
 
   getMapEnvoyeur() {

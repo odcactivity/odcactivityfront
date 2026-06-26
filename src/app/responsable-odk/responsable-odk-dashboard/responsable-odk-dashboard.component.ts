@@ -116,7 +116,12 @@ export class ResponsableOdkDashboardComponent implements OnInit {
     if (!Array.isArray(list)) {
       return [];
     }
-    return list.filter((v) => v?.fichierjoint);
+    const withFile = list.filter((v) => v?.fichierjoint);
+    if (withFile.length === 0) {
+      return [];
+    }
+    const latest = [...withFile].sort((a, b) => Number(b.id ?? 0) - Number(a.id ?? 0))[0];
+    return latest ? [latest] : [];
   }
 
   telechargerFichierActivite(validationId: number, nom?: string): void {
