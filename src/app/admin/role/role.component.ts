@@ -94,7 +94,7 @@ export class RoleComponent {
 
     this.register = this.fb.group({
       id: [''],
-      nom: ['', [Validators.required, Validators.pattern('[a-zA-Z]+')]],
+      nom: ['', [Validators.required, Validators.pattern('^[A-Za-z][A-Za-z0-9_]*$')]],
     });
   }
   // fetch data

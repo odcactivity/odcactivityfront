@@ -277,35 +277,35 @@ export class MainComponent implements OnInit {
   getNombreUitlisateur() {
     this.globalService.get('utilisateur/nombre').subscribe({
       next: (count) => (this.nombreUtilisateurs = count),
-      error: (err) => console.log(err)
+      error: () => { /* rôle sans accès stats utilisateurs */ },
     });
   }
 
   getNombreActivite() {
     this.globalService.get('activite/nombre').subscribe({
       next: (count) => (this.nombreActivite = count),
-      error: (err) => console.log(err)
+      error: () => { /* ignoré si rôle sans permission */ },
     });
   }
 
   getNombreActiviteEncours() {
     this.globalService.get('activite/nombreActivitesEncours').subscribe({
       next: (count) => (this.nombreActiviteEncours = count),
-      error: (err) => console.log(err)
+      error: () => {},
     });
   }
 
   getNombreActiviteEnAttente() {
     this.globalService.get('activite/nombreActivitesEnAttente').subscribe({
       next: (count) => (this.nombreActiviteEnAttente = count),
-      error: (err) => console.log(err)
+      error: () => {},
     });
   }
 
   getNombreActiviteTerminer() {
     this.globalService.get('activite/nombreActivitesTerminer').subscribe({
       next: (count) => (this.nombreActiviteTerminer = count),
-      error: (err) => console.log(err)
+      error: () => {},
     });
   }
 
