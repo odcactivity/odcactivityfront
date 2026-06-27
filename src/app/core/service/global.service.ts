@@ -1,4 +1,4 @@
-import { HttpClient, HttpErrorResponse, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { ActivityValidation } from '@core/models/ActivityValidation';
 
@@ -211,6 +211,16 @@ export class GlobalService {
       .pipe(catchError(this.handleError.bind(this)));
   }
 
+  postStructureDeleguerEmail(courrierId: number, email: string, note?: string): Observable<any> {
+    const params: any = { email };
+    if (note != null && note.trim() !== '') {
+      params.note = note.trim();
+    }
+    return this.http
+      .post(`${this.baseUrl}/api/courriers/structure-directeur/${courrierId}/deleguer-email`, {}, { params })
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
   getStructureCiblesInternes(): Observable<{ id: number; nom: string }[]> {
     return this.http
       .get<{ id: number; nom: string }[]>(`${this.baseUrl}/api/courriers/structure-directeur/cibles-internes`)
@@ -218,9 +228,26 @@ export class GlobalService {
   }
 
   postCourrierReponseMultipart(formData: FormData): Observable<any> {
+    const headers = this.authHeaders();
     return this.http
-      .post(`${this.baseUrl}/api/courriers/reponse`, formData)
+      .post(`${this.baseUrl}/api/courriers/reponse`, formData, headers ? { headers } : {})
       .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  private authHeaders(): HttpHeaders | null {
+    try {
+      const raw = localStorage.getItem('currentUser');
+      if (!raw) {
+        return null;
+      }
+      const user = JSON.parse(raw) as { bearer?: string };
+      if (!user?.bearer) {
+        return null;
+      }
+      return new HttpHeaders({ Authorization: `Bearer ${user.bearer}` });
+    } catch {
+      return null;
+    }
   }
 
   getCourrierReponses(courrierId: number): Observable<any[]> {

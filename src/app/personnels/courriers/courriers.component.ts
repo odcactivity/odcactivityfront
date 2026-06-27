@@ -104,6 +104,10 @@ loading = false;
   isSuperAdminRole = false;
   /** Directeur produit ODC : bloc validation intégré sur cette page */
   isDirecteurOdcRole = false;
+  isDirecteurOdcOnly = false;
+  deleguerEmail = '';
+  deleguerNote = '';
+  @ViewChild('deleguerStructureEmailTpl') deleguerStructureEmailTpl!: TemplateRef<any>;
   /** Admin + directeur ODC : mêmes onglets courrier (reçus / non répondus / répondus). */
   isOdcProductCourrierRole = false;
   odcDirections: Entite[] = [];
@@ -259,7 +263,7 @@ loading = false;
       return;
     }
     const structurePath = structureCourriersPathForRoles(r);
-    if (structurePath) {
+    if (structurePath && structurePath !== '/courrier') {
       this.router.navigate([structurePath], { replaceUrl: true });
       return;
     }
@@ -324,9 +328,17 @@ loading = false;
     const roles = rawRoles.map((r: string) => String(r).trim().toUpperCase());
     this.isDcireRole = roles.includes('DIRECTEUR');
     this.isAdminCourrierRole = roles.includes('SUPERADMIN') || roles.includes('ADMIN');
+    
+    this.isDirecteurOdcRole =
+      roles.includes('DIRECTEUR_ODC') ||
+      roles.includes('DIRECTEUR_RSE') ||
+      roles.includes('DIRECTEUR_DCI') ||
+      roles.includes('DIRECTEUR_FONDATION');
+      
+    this.isDirecteurOdcOnly = roles.includes('DIRECTEUR_ODC');
+      
     this.isSuperAdminRole =
-      this.isAdminCourrierRole || roles.includes('DIRECTEUR_ODC');
-    this.isDirecteurOdcRole = roles.includes('DIRECTEUR_ODC');
+      this.isAdminCourrierRole || this.isDirecteurOdcRole;
     this.isOdcProductCourrierRole =
       this.isAdminCourrierRole || this.isDirecteurOdcRole;
   }
@@ -361,6 +373,10 @@ loading = false;
           if (this.isDcireRole) {
             this.refreshCourriersDcire();
           } else {
+            const user = this.authService.getCurrentUserFromStorage() as any;
+            if (user?.entite?.id && !this.odcDirections.some(d => d.id === user.entite.id)) {
+              this.odcDirections.push(user.entite);
+            }
             this.loadOdcCourriersMerged();
           }
           setTimeout(() => {
@@ -423,7 +439,7 @@ loading = false;
             }
           }
         }
-        let merged = [...byId.values()];
+        let merged = this.sortCourriersByDateReceptionDesc([...byId.values()]);
         if (this.isOdcProductCourrierRole) {
           merged = this.applyDirecteurOdcTabFilter(merged);
           if (this.odcEntiteFilterId != null) {
@@ -745,7 +761,7 @@ loading = false;
     this.loadingIndicator = true;
     this.glogalService.getCourriersDcire(this.dcireEntiteFilterId).subscribe({
       next: (rows: any[]) => {
-        this.courriersDcireBruts = Array.isArray(rows) ? rows : [];
+        this.courriersDcireBruts = this.sortCourriersByDateReceptionDesc(Array.isArray(rows) ? rows : []);
         this.Courriers = this.applyDcireTabFilter(this.courriersDcireBruts);
         this.filteredData = [...this.Courriers];
         this.loadingIndicator = false;
@@ -753,6 +769,17 @@ loading = false;
       error: () => {
         this.loadingIndicator = false;
       }
+    });
+  }
+
+  private sortCourriersByDateReceptionDesc(rows: any[]): any[] {
+    return [...rows].sort((a, b) => {
+      const da = a?.dateReception ? new Date(a.dateReception).getTime() : 0;
+      const db = b?.dateReception ? new Date(b.dateReception).getTime() : 0;
+      if (db !== da) {
+        return db - da;
+      }
+      return Number(b?.id ?? 0) - Number(a?.id ?? 0);
     });
   }
 
@@ -937,7 +964,34 @@ loading = false;
     return row?.serviceOdcAffecte != null || row?.serviceOdcAffecteId != null;
   }
 
+  get isOtherStructureDirector(): boolean {
+    const rawRoles = this.authService.getCurrentUserFromStorage()?.roles || [];
+    const roles = rawRoles.map((r: string) => String(r).trim().toUpperCase());
+    return roles.includes('DIRECTEUR_RSE') || roles.includes('DIRECTEUR_DCI') || roles.includes('DIRECTEUR_FONDATION');
+  }
+
+  get divisionLabel(): string {
+    const user = this.authService.getCurrentUserFromStorage();
+    const roles = user?.roles ? user.roles.map((r: any) => String(r.authority || r).toUpperCase()) : [];
+    if (roles.some((r: string) => r.includes('FONDATION'))) return 'FONDATION';
+    if (roles.some((r: string) => r.includes('RSE'))) return 'RSE';
+    if (roles.some((r: string) => r.includes('DCI'))) return 'DCI';
+    return 'ODC';
+  }
+
   peutDeleguerCourrierOdc(row: any): boolean {
+    if (this.isOtherStructureDirector) {
+      if (!row || row.statut === 'REPONDU' || row.statut === 'ARCHIVER' || row.statut === 'ATTENTE_VALIDATION_DIRECTEUR_STRUCTURE') {
+        return false;
+      }
+      const user = this.authService.getCurrentUserFromStorage() as any;
+      const monId = user?.entite?.id;
+      if (!monId) return false;
+      const entId = this.rowEntiteId(row);
+      const initId = this.rowDirectionInitialId(row);
+      return entId === monId || initId === monId;
+    }
+
     if (!this.isDirecteurOdcRole || row?.statut !== 'ENVOYER' || this.rowServiceOdcAffecte(row)) {
       return false;
     }
@@ -995,8 +1049,41 @@ loading = false;
     if (!row?.id) {
       return;
     }
+    if (this.isOtherStructureDirector) {
+      this.selectedCourrier = row;
+      this.deleguerEmail = '';
+      this.deleguerNote = '';
+      this.modalService.open(this.deleguerStructureEmailTpl, { size: 'md', backdrop: 'static' });
+      return;
+    }
     this.validationDirecteurOdc?.openDeleguer(Number(row.id));
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  validerDelegationStructure(modal: { close: () => void }): void {
+    if (!this.selectedCourrier?.id) {
+      return;
+    }
+    const email = (this.deleguerEmail || '').trim();
+    if (!email) {
+      this.toastr.warning("L'adresse e-mail est obligatoire.");
+      return;
+    }
+    const note = (this.deleguerNote || '').trim();
+    this.loadingIndicator = true;
+    this.glogalService.postStructureDeleguerEmail(Number(this.selectedCourrier.id), email, note).subscribe({
+      next: () => {
+        this.loadingIndicator = false;
+        this.toastr.success('Le courrier a été délégué avec succès par e-mail.');
+        modal.close();
+        this.loadOdcCourriersMerged();
+      },
+      error: (err: { error?: { message?: string } }) => {
+        this.loadingIndicator = false;
+        const msg = err?.error?.message || 'Impossible de déléguer le courrier.';
+        this.toastr.error(msg);
+      }
+    });
   }
 
   /** Courrier émis par la DCIRE pour le périmètre ODC (réponse réservée au directeur ODC). */
@@ -1391,7 +1478,7 @@ loading = false;
         return;
       }
       const fd = new FormData();
-      fd.append('numero', `ODC-${Date.now()}`);
+      fd.append('numero', `${this.divisionLabel}-${Date.now()}`);
       fd.append('expediteur', exp);
       fd.append('objet', obj);
       fd.append('emailDestinataire', emailDest);
@@ -1425,7 +1512,7 @@ loading = false;
       return;
     }
     const fd = new FormData();
-    fd.append('numero', `ODC-${Date.now()}`);
+    fd.append('numero', `${this.divisionLabel}-${Date.now()}`);
     fd.append('expediteur', exp);
     fd.append('objet', obj);
     fd.append('directionId', String(dirId));

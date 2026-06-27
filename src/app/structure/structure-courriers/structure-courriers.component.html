@@ -1,16 +1,15 @@
 <section class="main-content p-4 structure-courriers-dash">
   <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-3">
     <div>
-      <h4 class="mb-1">@if (receiveOnlyMode) { Gestion des courriers } @else { Tableau de bord courriers }</h4>
+      <h4 class="mb-1">Tableau de bord courriers — {{ structureLabel }}</h4>
     </div>
     <div class="d-flex flex-wrap gap-2">
       @if (!receiveOnlyMode) {
-      <button type="button" class="btn btn-outline-primary btn-sm" (click)="openInterneModal(interneTpl)">
-        Nouveau courrier interne
-      </button>
-      <button type="button" class="btn btn-outline-primary btn-sm" (click)="openExterneModal(externeTpl)">
-        Courrier externe (hub)
-      </button>
+        <button class="btn btn-icon icon-left bg-primary text-white rounded-button"
+                (click)="openStructureCreateModal(addStructureCourrierTpl)"
+                title="Créer un courrier">
+          <i class="material-icons">add</i>
+        </button>
       }
       <button type="button" class="btn btn-outline-secondary btn-sm" (click)="load()" [disabled]="loading">
         Actualiser
@@ -57,33 +56,11 @@
       <button
         type="button"
         class="structure-dash-card w-100 text-start border-0"
-        [class.structure-dash-card--active]="onglet === 'tout'"
-        (click)="setOnglet('tout')">
-        <div class="structure-dash-card__kpi text-dark">{{ tout.length }}</div>
-        <div class="structure-dash-card__title">Tout</div>
-        <div class="structure-dash-card__hint">Vue complète — rien n’est masqué</div>
-      </button>
-    </div>
-    <div class="col-md-3">
-      <button
-        type="button"
-        class="structure-dash-card w-100 text-start border-0"
-        [class.structure-dash-card--active]="onglet === 'attente'"
-        (click)="setOnglet('attente')">
-        <div class="structure-dash-card__kpi text-warning">{{ enAttente.length }}</div>
-        <div class="structure-dash-card__title">En attente</div>
-        <div class="structure-dash-card__hint">À valider par vous avant circulation</div>
-      </button>
-    </div>
-    <div class="col-md-3">
-      <button
-        type="button"
-        class="structure-dash-card w-100 text-start border-0"
         [class.structure-dash-card--active]="onglet === 'recus'"
         (click)="setOnglet('recus')">
-        <div class="structure-dash-card__kpi text-primary">{{ recus.length }}</div>
+        <div class="structure-dash-card__kpi text-primary">{{ listRecus.length }}</div>
         <div class="structure-dash-card__title">Reçus</div>
-        <div class="structure-dash-card__hint">En traitement sur votre direction</div>
+        <div class="structure-dash-card__hint">Courriers arrivés dans votre structure</div>
       </button>
     </div>
     <div class="col-md-3">
@@ -92,32 +69,54 @@
         class="structure-dash-card w-100 text-start border-0"
         [class.structure-dash-card--active]="onglet === 'emis'"
         (click)="setOnglet('emis')">
-        <div class="structure-dash-card__kpi text-success">{{ emis.length }}</div>
+        <div class="structure-dash-card__kpi text-success">{{ listEmis.length }}</div>
         <div class="structure-dash-card__title">Émis</div>
-        <div class="structure-dash-card__hint">Partis de votre structure</div>
+        <div class="structure-dash-card__hint">Courriers créés et envoyés</div>
+      </button>
+    </div>
+    <div class="col-md-3">
+      <button
+        type="button"
+        class="structure-dash-card w-100 text-start border-0"
+        [class.structure-dash-card--active]="onglet === 'repondus'"
+        (click)="setOnglet('repondus')">
+        <div class="structure-dash-card__kpi text-info">{{ listRepondus.length }}</div>
+        <div class="structure-dash-card__title">Répondus</div>
+        <div class="structure-dash-card__hint">Courriers ayant obtenu une réponse</div>
+      </button>
+    </div>
+    <div class="col-md-3">
+      <button
+        type="button"
+        class="structure-dash-card w-100 text-start border-0"
+        [class.structure-dash-card--active]="onglet === 'nonRepondus'"
+        (click)="setOnglet('nonRepondus')">
+        <div class="structure-dash-card__kpi text-warning">{{ listNonRepondus.length }}</div>
+        <div class="structure-dash-card__title">Non répondus</div>
+        <div class="structure-dash-card__hint">Courriers en attente de réponse</div>
       </button>
     </div>
   </div>
 
   <ul class="nav nav-tabs mb-3 flex-wrap">
     <li class="nav-item">
-      <button type="button" class="nav-link" [class.active]="onglet === 'tout'" (click)="setOnglet('tout')">
-        Tout <span class="badge bg-secondary ms-1">{{ tout.length }}</span>
-      </button>
-    </li>
-    <li class="nav-item">
-      <button type="button" class="nav-link" [class.active]="onglet === 'attente'" (click)="setOnglet('attente')">
-        En attente <span class="badge bg-secondary ms-1">{{ enAttente.length }}</span>
-      </button>
-    </li>
-    <li class="nav-item">
       <button type="button" class="nav-link" [class.active]="onglet === 'recus'" (click)="setOnglet('recus')">
-        Reçus <span class="badge bg-secondary ms-1">{{ recus.length }}</span>
+        Reçus <span class="badge bg-secondary ms-1">{{ listRecus.length }}</span>
       </button>
     </li>
     <li class="nav-item">
       <button type="button" class="nav-link" [class.active]="onglet === 'emis'" (click)="setOnglet('emis')">
-        Émis <span class="badge bg-secondary ms-1">{{ emis.length }}</span>
+        Émis <span class="badge bg-secondary ms-1">{{ listEmis.length }}</span>
+      </button>
+    </li>
+    <li class="nav-item">
+      <button type="button" class="nav-link" [class.active]="onglet === 'repondus'" (click)="setOnglet('repondus')">
+        Répondus <span class="badge bg-secondary ms-1">{{ listRepondus.length }}</span>
+      </button>
+    </li>
+    <li class="nav-item">
+      <button type="button" class="nav-link" [class.active]="onglet === 'nonRepondus'" (click)="setOnglet('nonRepondus')">
+        Non répondus <span class="badge bg-secondary ms-1">{{ listNonRepondus.length }}</span>
       </button>
     </li>
   </ul>
@@ -135,7 +134,7 @@
             <th>N°</th>
             <th>Objet</th>
             <th>Étape</th>
-            @if (onglet === 'emis' || onglet === 'tout') {
+            @if (onglet !== 'recus') {
               <th>Statut</th>
             }
             <th></th>
@@ -149,13 +148,18 @@
               <td>{{ $any(r).numero }}</td>
               <td>{{ $any(r).objet }}</td>
               <td>{{ libelleEtapeCourrier($any(r)) }}</td>
-              @if (onglet === 'emis' || onglet === 'tout') {
+              @if (onglet !== 'recus') {
                 <td><code class="small">{{ $any(r).statut }}</code></td>
               }
               <td>
-                @if (receiveOnlyMode && peutRepondre($any(r))) {
+                @if (peutRepondre($any(r))) {
                   <button type="button" class="btn btn-sm btn-success me-1" (click)="preparerReponse(r); $event.stopPropagation()">
                     <i class="fas fa-reply me-1"></i>Répondre
+                  </button>
+                }
+                @if (peutDeleguer($any(r))) {
+                  <button type="button" class="btn btn-sm btn-primary me-1" (click)="openDeleguerModal(deleguerTpl, $any(r)); $event.stopPropagation()">
+                    <i class="fas fa-share me-1"></i>Déléguer
                   </button>
                 }
                 <button type="button" class="btn btn-sm btn-outline-secondary me-1" (click)="openPiece($any(r)); $event.stopPropagation()">
@@ -187,7 +191,7 @@
     </div>
   }
 
-  @if (selected && (onglet === 'recus' || onglet === 'tout' || onglet === 'repondus') && peutAccuserReception(selected)) {
+  @if (selected && (onglet === 'recus' || onglet === 'repondus') && peutAccuserReception(selected)) {
     <div class="card p-3 border-primary mb-3">
       <h6 class="mb-2">Prise en charge — {{ $any(selected).numero }}</h6>
       <p class="small text-muted mb-2">
@@ -243,7 +247,7 @@
     </div>
   }
 
-  @if (selected && (onglet === 'recus' || onglet === 'tout' || onglet === 'repondus') && peutRepondre(selected)) {
+  @if (selected && (onglet === 'recus' || onglet === 'repondus' || onglet === 'nonRepondus') && peutRepondre(selected)) {
     <div id="structure-reponse-courrier" class="card p-3 border-success mb-3">
       <h6 class="mb-2">Répondre au courrier {{ $any(selected).numero }}</h6>
       <p class="small text-muted mb-3">Votre e-mail de compte est utilisé comme expéditeur de la réponse.</p>
@@ -290,80 +294,101 @@
   </div>
 </ng-template>
 
-<ng-template #externeTpl let-modal>
+<ng-template #addStructureCourrierTpl let-modal>
   <div class="modal-header">
-    <h5 class="modal-title">Courrier externe</h5>
-    <button type="button" class="btn-close" aria-label="Fermer" (click)="modal.dismiss()"></button>
+    <h5 class="modal-title">Émettre un courrier (Directeur {{ divisionLabel }})</h5>
+    <button type="button" class="btn-close" (click)="modal.dismiss()"></button>
   </div>
   <div class="modal-body">
-    <p class="small text-muted">Vers le hub. Envoi physique hors appli. Réponse du tiers : le hub la dépose ici (fichier).</p>
-    <div class="mb-2">
-      <label class="form-label">Numéro <span class="text-danger">*</span></label>
-      <input class="form-control" [(ngModel)]="externe.numero" name="numeroExterne" />
+
+    <!-- Choix destination : DCIRE ou Email direct -->
+    <div class="card border mb-3 bg-light">
+      <div class="card-body p-3">
+        <h6 class="fw-bold mb-2"><i class="fas fa-paper-plane me-1"></i> Destination du courrier</h6>
+        <div class="d-flex gap-3">
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="emissionType" id="emissionTypeDcire"
+                   value="dcire" [(ngModel)]="structureEmissionType" />
+            <label class="form-check-label" for="emissionTypeDcire">
+              <strong>DCIRE</strong>
+              <br /><small class="text-muted">Le courrier sera envoyé dans le dashboard DCIRE.</small>
+            </label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="emissionType" id="emissionTypeEmail"
+                   value="email" [(ngModel)]="structureEmissionType" />
+            <label class="form-check-label" for="emissionTypeEmail">
+              <strong>Email direct</strong>
+              <br /><small class="text-muted">Le courrier sera envoyé directement à une adresse email.</small>
+            </label>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="mb-2">
-      <label class="form-label">Objet <span class="text-danger">*</span></label>
-      <input class="form-control" [(ngModel)]="externe.objet" name="objetExterne" />
-    </div>
-    <div class="mb-2">
+
+    <!-- Email destinataire (si option email) -->
+    @if (structureEmissionType === 'email') {
+      <div class="mb-3">
+        <label class="form-label">Email destinataire <span class="text-danger">*</span></label>
+        <input
+          type="email"
+          class="form-control"
+          [(ngModel)]="structureEmissionEmail"
+          placeholder="Adresse email du destinataire"
+        />
+        <p class="small text-muted mb-0 mt-1">Le courrier sera envoyé avec l'en-tête « {{ divisionLabel }} ».</p>
+      </div>
+    }
+
+    <div class="mb-3">
       <label class="form-label">Expéditeur <span class="text-danger">*</span></label>
-      <input class="form-control" [(ngModel)]="externe.expediteur" name="expExterne" />
+      <input
+        type="text"
+        class="form-control"
+        [(ngModel)]="structureCourrierCreate.expediteur"
+        placeholder="Nom ou email de l'expéditeur"
+      />
     </div>
-    <div class="mb-2">
-      <label class="form-label">Précision destinataire (facultatif)</label>
-      <input class="form-control" [(ngModel)]="externe.externePrecision" name="precExterne" />
+    <div class="mb-3">
+      <label class="form-label">Objet <span class="text-danger">*</span></label>
+      <input
+        type="text"
+        class="form-control"
+        [(ngModel)]="structureCourrierCreate.objet"
+        placeholder="Objet du courrier"
+      />
     </div>
-    <div class="mb-2">
-      <label class="form-label">Fichier</label>
-      <input type="file" class="form-control" (change)="onExterneFile($event)" />
+    <div class="mb-3">
+      <label class="form-label">Fichier joint</label>
+      <input type="file" class="form-control" (change)="onStructureCreateFile($event)" />
     </div>
   </div>
   <div class="modal-footer">
-    <button type="button" class="btn btn-primary" (click)="saveExterne(modal)">Enregistrer</button>
     <button type="button" class="btn btn-secondary" (click)="modal.dismiss()">Annuler</button>
+    <button type="button" class="btn btn-primary" (click)="saveStructureCourrier(modal)">
+      {{ structureEmissionType === 'email' ? 'Envoyer par email' : 'Envoyer vers DCIRE' }}
+    </button>
   </div>
 </ng-template>
 
-<ng-template #interneTpl let-modal>
+<ng-template #deleguerTpl let-modal>
   <div class="modal-header">
-    <h5 class="modal-title">Courrier interne</h5>
+    <h5 class="modal-title">Déléguer le courrier</h5>
     <button type="button" class="btn-close" aria-label="Fermer" (click)="modal.dismiss()"></button>
   </div>
   <div class="modal-body">
-    <p class="small text-muted">
-      Envoi vers une autre direction interne. Mêmes règles que l’écran d’administration courrier interne.
-    </p>
-    @if (ciblesInternes.length === 0) {
-      <div class="alert alert-warning">Aucune direction cible disponible (vérifiez les entités en base).</div>
-    }
-    <div class="mb-2">
-      <label class="form-label">Direction cible <span class="text-danger">*</span></label>
-      <select class="form-select" [(ngModel)]="interne.cibleDirectionId" name="cibleInterne">
-        <option [ngValue]="null" disabled>Choisir…</option>
-        @for (c of ciblesInternes; track c.id) {
-          <option [ngValue]="c.id">{{ c.nom }}</option>
-        }
-      </select>
+    <p class="small text-muted">Renseignez l'adresse email de la personne à qui vous souhaitez déléguer ce courrier. Elle recevra une notification avec les détails et la pièce jointe.</p>
+    <div class="mb-3">
+      <label class="form-label font-weight-bold">Adresse Email du destinataire <span class="text-danger">*</span></label>
+      <input type="email" class="form-control" [(ngModel)]="deleguerEmail" placeholder="destinataire@example.com" required />
     </div>
-    <div class="mb-2">
-      <label class="form-label">Numéro <span class="text-danger">*</span></label>
-      <input class="form-control" [(ngModel)]="interne.numero" name="numeroInterne" />
-    </div>
-    <div class="mb-2">
-      <label class="form-label">Objet <span class="text-danger">*</span></label>
-      <input class="form-control" [(ngModel)]="interne.objet" name="objetInterne" />
-    </div>
-    <div class="mb-2">
-      <label class="form-label">Expéditeur (libellé) <span class="text-danger">*</span></label>
-      <input class="form-control" [(ngModel)]="interne.expediteur" name="expInterne" />
-    </div>
-    <div class="mb-2">
-      <label class="form-label">Fichier</label>
-      <input type="file" class="form-control" (change)="onInterneFile($event)" />
+    <div class="mb-3">
+      <label class="form-label font-weight-bold">Note / Consignes de traitement</label>
+      <textarea class="form-control" rows="3" [(ngModel)]="deleguerNote" placeholder="Ajouter des consignes..."></textarea>
     </div>
   </div>
   <div class="modal-footer">
-    <button type="button" class="btn btn-primary" (click)="saveInterne(modal)">Enregistrer</button>
+    <button type="button" class="btn btn-primary" (click)="validerDelegation(modal)" [disabled]="!deleguerEmail">Confirmer</button>
     <button type="button" class="btn btn-secondary" (click)="modal.dismiss()">Annuler</button>
   </div>
 </ng-template>

@@ -31,7 +31,7 @@ interface CibleInterne {
   styleUrl: './structure-courriers.component.scss',
 })
 export class StructureCourriersComponent implements OnInit, OnDestroy {
-  onglet: 'tout' | 'attente' | 'recus' | 'emis' | 'repondus' = 'tout';
+  onglet: 'recus' | 'emis' | 'repondus' | 'nonRepondus' = 'recus';
   loading = false;
   tout: unknown[] = [];
   enAttente: unknown[] = [];
@@ -42,21 +42,14 @@ export class StructureCourriersComponent implements OnInit, OnDestroy {
   structureLabel = 'Structure';
   private dataSub?: Subscription;
 
-  interne = {
-    cibleDirectionId: null as number | null,
-    numero: '',
-    objet: '',
-    expediteur: '',
-    fichier: null as File | null,
-  };
+  // Variables pour la délégation par email
+  deleguerEmail = '';
+  deleguerNote = '';
 
-  externe = {
-    numero: '',
-    objet: '',
-    expediteur: '',
-    externePrecision: '',
-    fichier: null as File | null,
-  };
+  // Variables pour la création de courrier (style ODC director)
+  structureEmissionType: 'dcire' | 'email' = 'dcire';
+  structureEmissionEmail = '';
+  structureCourrierCreate = { expediteur: '', objet: '', fichier: null as File | null };
 
   replyObjet = '';
   replyMessage = '';
@@ -83,13 +76,8 @@ export class StructureCourriersComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     const roles = canonicalizeAppRoles(this.auth.getCurrentUserFromStorage()?.roles || []);
-    this.receiveOnlyMode =
-      roles.includes('DIRECTEUR_FONDATION') ||
-      roles.includes('DIRECTEUR_RSE') ||
-      roles.includes('DIRECTEUR_DCI');
-    if (this.receiveOnlyMode) {
-      this.onglet = 'recus';
-    }
+    // Toutes les structures RSE, DCI et Fondation ont le même workflow complet que ODC
+    this.receiveOnlyMode = false;
     const u = this.auth.getCurrentUserFromStorage() as { entite?: { id?: number } } | null;
     const raw = u?.entite?.id;
     this.maDirectionId = raw != null && Number.isFinite(Number(raw)) ? Number(raw) : null;
@@ -149,13 +137,37 @@ export class StructureCourriersComponent implements OnInit, OnDestroy {
     });
   }
 
-  setOnglet(t: 'tout' | 'attente' | 'recus' | 'emis' | 'repondus'): void {
+  setOnglet(t: 'recus' | 'emis' | 'repondus' | 'nonRepondus'): void {
     this.onglet = t;
     this.selected = null;
     this.historiquesCourrier = [];
     this.replyObjet = '';
     this.replyMessage = '';
     this.replyFichier = null;
+  }
+
+  get listRecus(): unknown[] {
+    return this.recusEtLegacyAttente();
+  }
+
+  get listEmis(): unknown[] {
+    return this.emis;
+  }
+
+  get listRepondus(): unknown[] {
+    return this.tout.filter((row: any) => row.statut === 'REPONDU');
+  }
+
+  get listNonRepondus(): unknown[] {
+    return this.recusEtLegacyAttente().filter((row: any) => row.statut !== 'REPONDU' && row.statut !== 'ARCHIVER');
+  }
+
+  get divisionLabel(): string {
+    const r = canonicalizeAppRoles(this.auth.getCurrentUserFromStorage()?.roles || []);
+    if (r.includes('DIRECTEUR_FONDATION')) return 'FONDATION';
+    if (r.includes('DIRECTEUR_RSE')) return 'RSE';
+    if (r.includes('DIRECTEUR_DCI')) return 'DCI';
+    return 'STRUCTURE';
   }
 
   repondus(): unknown[] {
@@ -186,14 +198,16 @@ export class StructureCourriersComponent implements OnInit, OnDestroy {
       return this.recusEtLegacyAttente();
     }
     switch (this.onglet) {
-      case 'tout':
-        return this.tout;
-      case 'attente':
-        return this.enAttente;
       case 'recus':
-        return this.recus;
+        return this.listRecus;
+      case 'emis':
+        return this.listEmis;
+      case 'repondus':
+        return this.listRepondus;
+      case 'nonRepondus':
+        return this.listNonRepondus;
       default:
-        return this.emis;
+        return this.listRecus;
     }
   }
 
@@ -393,89 +407,86 @@ export class StructureCourriersComponent implements OnInit, OnDestroy {
     this.replyFichier = input.files?.[0] ?? null;
   }
 
-  onInterneFile(ev: Event): void {
-    const input = ev.target as HTMLInputElement;
-    this.interne.fichier = input.files?.[0] ?? null;
+  openStructureCreateModal(tpl: unknown): void {
+    this.structureCourrierCreate = { expediteur: this.structureLabel, objet: '', fichier: null };
+    this.structureEmissionType = 'dcire';
+    this.structureEmissionEmail = '';
+    this.modalService.open(tpl as TemplateRef<unknown>, { size: 'lg', scrollable: true });
   }
 
-  openInterneModal(tpl: TemplateRef<unknown>): void {
-    this.interne = {
-      cibleDirectionId: null,
-      numero: '',
-      objet: '',
-      expediteur: '',
-      fichier: null,
-    };
-    this.modalService.open(tpl, { size: 'lg', scrollable: true });
+  onStructureCreateFile(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.structureCourrierCreate.fichier = input.files?.[0] ?? null;
   }
 
-  openExterneModal(tpl: TemplateRef<unknown>): void {
-    this.externe = {
-      numero: '',
-      objet: '',
-      expediteur: '',
-      externePrecision: '',
-      fichier: null,
-    };
-    this.modalService.open(tpl, { size: 'lg', scrollable: true });
-  }
+  saveStructureCourrier(modal: { close: () => void }): void {
+    const exp = (this.structureCourrierCreate.expediteur || '').trim();
+    const obj = (this.structureCourrierCreate.objet || '').trim();
 
-  saveInterne(modal: { close: () => void }): void {
-    if (
-      this.interne.cibleDirectionId == null ||
-      !this.interne.numero?.trim() ||
-      !this.interne.objet?.trim() ||
-      !this.interne.expediteur?.trim()
-    ) {
-      this.toast.warning('Renseignez la direction cible, le numéro, l’objet et l’expéditeur.');
+    if (!exp || !obj) {
+      this.toast.warning('Expéditeur et objet sont obligatoires.');
+      return;
+    }
+
+    if (this.structureEmissionType === 'email') {
+      const emailDest = (this.structureEmissionEmail || '').trim();
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailDest || !emailRegex.test(emailDest)) {
+        this.toast.error('Veuillez saisir une adresse email destinataire valide.');
+        return;
+      }
+      const fd = new FormData();
+      fd.append('numero', `${this.divisionLabel}-${Date.now()}`);
+      fd.append('expediteur', exp);
+      fd.append('objet', obj);
+      fd.append('emailDestinataire', emailDest);
+      if (this.maDirectionId != null) {
+        fd.append('directionId', String(this.maDirectionId));
+      }
+      if (this.structureCourrierCreate.fichier) {
+        fd.append('fichier', this.structureCourrierCreate.fichier);
+      }
+      this.loading = true;
+      this.global.postMultipart('api/courriers/odc/emission-email', fd).subscribe({
+        next: () => {
+          this.loading = false;
+          modal.close();
+          this.toast.success('Courrier envoyé par email avec succès.');
+          this.load();
+        },
+        error: (err: any) => {
+          this.loading = false;
+          this.toast.error(err?.error?.message || 'Envoi par email impossible.');
+        },
+      });
+      return;
+    }
+
+    // Option DCIRE
+    if (this.maDirectionId == null) {
+      this.toast.error('Direction introuvable.');
       return;
     }
     const fd = new FormData();
-    fd.append('cibleDirectionId', String(this.interne.cibleDirectionId));
-    fd.append('numero', this.interne.numero.trim());
-    fd.append('objet', this.interne.objet.trim());
-    fd.append('expediteur', this.interne.expediteur.trim());
-    if (this.interne.fichier) {
-      fd.append('fichier', this.interne.fichier);
+    fd.append('numero', `${this.divisionLabel}-${Date.now()}`);
+    fd.append('expediteur', exp);
+    fd.append('objet', obj);
+    fd.append('directionId', String(this.maDirectionId));
+    if (this.structureCourrierCreate.fichier) {
+      fd.append('fichier', this.structureCourrierCreate.fichier);
     }
-    this.global.postMultipart('api/courriers/structure-directeur/courrier-interne', fd).subscribe({
+    this.loading = true;
+    this.global.postMultipart('api/courriers/reception', fd).subscribe({
       next: () => {
-        this.toast.success('Courrier interne enregistré.');
+        this.loading = false;
         modal.close();
+        this.toast.success('Courrier envoyé vers la DCIRE.');
         this.load();
       },
-      error: () => this.toast.error('Enregistrement impossible.'),
-    });
-  }
-
-  onExterneFile(ev: Event): void {
-    const input = ev.target as HTMLInputElement;
-    this.externe.fichier = input.files?.[0] ?? null;
-  }
-
-  saveExterne(modal: { close: () => void }): void {
-    if (!this.externe.numero?.trim() || !this.externe.objet?.trim() || !this.externe.expediteur?.trim()) {
-      this.toast.warning('Numéro, objet et expéditeur sont obligatoires.');
-      return;
-    }
-    const fd = new FormData();
-    fd.append('numero', this.externe.numero.trim());
-    fd.append('objet', this.externe.objet.trim());
-    fd.append('expediteur', this.externe.expediteur.trim());
-    const prec = (this.externe.externePrecision || '').trim();
-    if (prec) {
-      fd.append('externePrecision', prec);
-    }
-    if (this.externe.fichier) {
-      fd.append('fichier', this.externe.fichier);
-    }
-    this.global.postMultipart('api/courriers/structure-directeur/courrier-externe', fd).subscribe({
-      next: () => {
-        this.toast.success('Courrier externe envoyé au hub.');
-        modal.close();
-        this.load();
+      error: (err: any) => {
+        this.loading = false;
+        this.toast.error(err?.error?.message || 'Envoi impossible.');
       },
-      error: () => this.toast.error('Enregistrement impossible.'),
     });
   }
 
@@ -552,6 +563,50 @@ export class StructureCourriersComponent implements OnInit, OnDestroy {
         this.load();
       },
       error: () => this.toast.error('Suppression impossible.'),
+    });
+  }
+
+  peutDeleguer(row: Record<string, unknown> | null): boolean {
+    if (!row) {
+      return false;
+    }
+    const s = String(row['statut'] || '');
+    if (s === 'REPONDU' || s === 'ARCHIVER' || s === 'ATTENTE_VALIDATION_DIRECTEUR_STRUCTURE') {
+      return false;
+    }
+    return this.estDetenuParMaStructure(row);
+  }
+
+  openDeleguerModal(tpl: TemplateRef<unknown>, row: Record<string, unknown>): void {
+    this.selected = row;
+    this.deleguerEmail = '';
+    this.deleguerNote = '';
+    this.modalService.open(tpl, { size: 'md', backdrop: 'static' });
+  }
+
+  validerDelegation(modal: { close: () => void }): void {
+    const raw = this.selected?.['id'];
+    const id = typeof raw === 'number' ? raw : Number(raw);
+    if (raw == null || !Number.isFinite(id)) {
+      return;
+    }
+    const email = (this.deleguerEmail || '').trim();
+    if (!email) {
+      this.toast.warning("L'adresse e-mail est obligatoire.");
+      return;
+    }
+    const note = (this.deleguerNote || '').trim();
+
+    this.global.postStructureDeleguerEmail(id, email, note).subscribe({
+      next: () => {
+        this.toast.success('Le courrier a été délégué avec succès par e-mail.');
+        modal.close();
+        this.load();
+      },
+      error: (err: { error?: { message?: string } }) => {
+        const msg = err?.error?.message || 'Impossible de déléguer le courrier.';
+        this.toast.error(msg);
+      }
     });
   }
 

@@ -280,13 +280,24 @@ export class ActivityComponent {
     this.glogalService.get('activite').subscribe({
       next: (value: Activity[]) => {
         console.log("Activites ETAPE :", value)
-        this.activite = value;
-        this.filteredData = [...value];
+        this.activite = this.sortActivitesByDateDesc(value);
+        this.filteredData = [...this.activite];
         setTimeout(() => {
           this.loadingIndicator = false;
         }, 500);
       }
     })
+  }
+
+  private sortActivitesByDateDesc(rows: Activity[]): Activity[] {
+    return [...rows].sort((a, b) => {
+      const da = a?.dateDebut ? new Date(a.dateDebut).getTime() : 0;
+      const db = b?.dateDebut ? new Date(b.dateDebut).getTime() : 0;
+      if (db !== da) {
+        return db - da;
+      }
+      return Number(b?.id ?? 0) - Number(a?.id ?? 0);
+    });
   }
 
   getAllEntite() {

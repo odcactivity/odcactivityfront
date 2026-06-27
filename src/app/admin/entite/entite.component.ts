@@ -97,13 +97,13 @@ export class EntiteComponent {
     tone: string;
     icon: string;
   }> = [
-    { keys: ['m-agri', 'magri', 'm agri'], tone: 'amber', icon: 'fa-seedling' },
+    { keys: ['m-agri', 'magri', 'm agri', 'rural'], tone: 'amber', icon: 'fa-seedling' },
     { keys: ['entrepreunariat', 'entrepreneuriat', 'entrepreneur', 'entrepreneurship'], tone: 'purple', icon: 'fa-rocket' },
     { keys: ['environnement'], tone: 'teal', icon: 'fa-leaf' },
     { keys: ['solidarite'], tone: 'indigo', icon: 'fa-hands-helping' },
     { keys: ['autonomisation', 'autonomie'], tone: 'green', icon: 'fa-hand-holding-heart' },
-    { keys: ['sponsoring', 'sponsor'], tone: 'slate', icon: 'fa-handshake' },
-    { keys: ['presse'], tone: 'blue', icon: 'fa-newspaper' },
+    { keys: ['sponsoring', 'sponsor', 'partenariat'], tone: 'slate', icon: 'fa-handshake' },
+    { keys: ['presse', 'communication'], tone: 'blue', icon: 'fa-newspaper' },
     { keys: ['projet'], tone: 'blue', icon: 'fa-project-diagram' },
     { keys: ['culture'], tone: 'purple', icon: 'fa-palette' },
     { keys: ['education'], tone: 'blue', icon: 'fa-graduation-cap' },
@@ -116,27 +116,20 @@ export class EntiteComponent {
   }> = [
     {
       match: ['fondation'],
-      items: [
-        { nom: 'Sante', description: 'Initiatives et actions de sante portees par la Fondation.' },
-        { nom: 'Education', description: 'Programmes d education, de formation et d accompagnement pedagogique.' },
-        { nom: 'Culture', description: 'Actions culturelles, creatives et de valorisation artistique.' },
-        { nom: 'Solidarite et Autonomisation', description: 'Dispositifs de solidarite, d inclusion et d autonomisation des beneficiaires.' },
-      ],
+      items: [],
     },
     {
       match: ['dci'],
       items: [
-        { nom: 'Sponsoring', description: 'Pilotage des partenariats, appuis et activations de sponsoring.' },
-        { nom: 'Presse', description: 'Relations presse, couverture media et diffusion institutionnelle.' },
+        { nom: 'Service Sponsoring, partenariat et médias sociaux', description: 'Gestion des contrats de sponsoring, des relations de partenariat et animation des plateformes numériques.' },
+        { nom: 'Service Relations Publiques et Presse', description: 'Gestion des relations avec la presse, événements médiatiques et communication institutionnelle.' },
       ],
     },
     {
       match: ['rse'],
       items: [
-        { nom: 'Projet', description: 'Suivi des projets et actions transverses portes par la RSE.' },
-        { nom: 'Environnement', description: 'Actions environnementales, durables et de sensibilisation ecologique.' },
-        { nom: 'Entrepreunariat', description: 'Programmes d accompagnement entrepreneurial et d innovation.' },
-        { nom: 'M-Agri', description: 'Initiatives agricoles et solutions numeriques au service du secteur agri.' },
+        { nom: 'Service Projets RSE', description: 'Coordination, suivi et mise en œuvre des projets à impact social et sociétal sous la RSE.' },
+        { nom: 'Service Rural', description: 'Développement d\'initiatives, d\'infrastructures et de programmes au service du monde rural.' },
       ],
     },
   ];
@@ -159,6 +152,59 @@ export class EntiteComponent {
       }
     }
     return this.entiteAccent(index);
+  }
+
+  /** Détermine l'aspect visuel de la carte de division (couleur d'accentuation, dégradé de fond, icône). */
+  divisionCardVisual(direction: Entite, index: number): { tone: string; gradient: string; icon: string; accentColor: string } {
+    const n = this.normalizeEntiteLabel(direction.nom);
+    if (n.includes('center') || n.includes('odc') || n.includes('digital')) {
+      return {
+        tone: 'orange',
+        gradient: 'linear-gradient(135deg, #FF7900, #E05300)',
+        accentColor: '#FF7900',
+        icon: 'fa-cubes'
+      };
+    } else if (n.includes('fondation')) {
+      return {
+        tone: 'teal',
+        gradient: 'linear-gradient(135deg, #0d9488, #0b6e64)',
+        accentColor: '#0d9488',
+        icon: 'fa-hand-holding-heart'
+      };
+    } else if (n.includes('rse') || n.includes('societale')) {
+      return {
+        tone: 'green',
+        gradient: 'linear-gradient(135deg, #10b981, #047857)',
+        accentColor: '#10b981',
+        icon: 'fa-leaf'
+      };
+    } else if (n.includes('dci') || n.includes('communication') || n.includes('dcire')) {
+      return {
+        tone: 'indigo',
+        gradient: 'linear-gradient(135deg, #6366f1, #3730a3)',
+        accentColor: '#6366f1',
+        icon: 'fa-globe'
+      };
+    }
+    // Default fallback
+    const fallbacks = [
+      { tone: 'orange', gradient: 'linear-gradient(135deg, #FF7900, #E05300)', accentColor: '#FF7900', icon: 'fa-building' },
+      { tone: 'teal', gradient: 'linear-gradient(135deg, #0d9488, #0b6e64)', accentColor: '#0d9488', icon: 'fa-hand-holding-heart' },
+      { tone: 'green', gradient: 'linear-gradient(135deg, #10b981, #047857)', accentColor: '#10b981', icon: 'fa-leaf' },
+      { tone: 'indigo', gradient: 'linear-gradient(135deg, #6366f1, #3730a3)', accentColor: '#6366f1', icon: 'fa-globe' },
+    ];
+    return fallbacks[index % fallbacks.length];
+  }
+
+  /** Vérifie si l'entité dispose d'un logo personnalisé (différent de la valeur par défaut). */
+  hasCustomLogo(logoPath: string | null | undefined): boolean {
+    if (!logoPath || logoPath.trim() === '' || logoPath === 'https://drive.google.com/thumbnail?id=') {
+      return false;
+    }
+    if (logoPath.includes('default-entite.png')) {
+      return false;
+    }
+    return true;
   }
 
   private entiteAccent(index: number): { tone: string; icon: string } {

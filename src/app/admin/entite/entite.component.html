@@ -43,59 +43,69 @@
 
   <!-- Inclusion du template hiérarchique -->
   @if (viewMode === 'directions') {
-    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mt-3">
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-2 g-4 mt-3">
       <div
-        *ngFor="let direction of directions"
+        *ngFor="let direction of directions; let i = index"
         (click)="showDirectionServices(direction)"
         class="col"
       >
-        <div class="card border-0 card-hover cursor-pointer h-100">
-          <div class="position-relative overflow-hidden entite-card-image-wrapper bg-light">
-            @if (getLogoUrl(direction.logo)) {
-              <div class="logo-container w-100 h-100 d-flex align-items-center justify-content-center">
-                <img [src]="getLogoUrl(direction.logo)"
-                     alt="{{ direction.nom }}"
-                     class="entite-card-logo"
-                     (error)="onImageError($event)"
-                />
+        <div class="card border-0 division-card cursor-pointer h-100">
+          <div class="position-relative overflow-hidden division-card__image-wrapper"
+               [style.background]="hasCustomLogo(direction.logo) ? 'linear-gradient(180deg, ' + divisionCardVisual(direction, i).accentColor + '0d 0%, ' + divisionCardVisual(direction, i).accentColor + '03 100%)' : divisionCardVisual(direction, i).gradient">
+            
+            @if (hasCustomLogo(direction.logo)) {
+              <div class="logo-badge-container w-100 h-100 d-flex align-items-center justify-content-center">
+                <div class="logo-badge shadow-sm">
+                  <img [src]="getLogoUrl(direction.logo)"
+                       alt="{{ direction.nom }}"
+                       class="division-card__logo"
+                       (error)="onImageError($event)"
+                  />
+                </div>
               </div>
             } @else {
-              <div class="w-100 h-100 d-flex align-items-center justify-content-center bg-gradient-to-br from-orange-400 to-orange-600">
-                <div class="text-center text-white">
-                  <i class="fas fa-building fa-4x mb-3 opacity-90"></i>
-                  <p class="mb-0 fw-semibold">Pas de logo</p>
+              <div class="w-100 h-100 d-flex align-items-center justify-content-center division-card__graphic">
+                <div class="graphic-icon-wrapper shadow-sm" [style.background]="'rgba(255, 255, 255, 0.15)'">
+                  <i class="fas {{ divisionCardVisual(direction, i).icon }} fa-3x text-white"></i>
                 </div>
               </div>
             }
-            <div class="position-absolute top-0 end-0 m-2">
-              <span class="badge bg-warning text-dark fw-bold px-2 py-1 shadow-sm">Division</span>
+            <div class="position-absolute top-0 end-0 m-3">
+              <span class="badge division-type-badge text-uppercase text-white shadow-sm" [style.background]="divisionCardVisual(direction, i).accentColor">
+                Division
+              </span>
             </div>
           </div>
           
-          <div class="card-body entite-card-body text-white p-4 d-flex flex-column justify-content-between">
+          <div class="card-body division-card__body p-4 d-flex flex-column justify-content-between">
             <div>
-              <h3 class="card-title text-white mb-3">{{ direction.nom }}</h3>
+              <h3 class="division-card__title mb-2 font-20 fw-bold">{{ direction.nom }}</h3>
+              <p class="division-card__desc text-muted mb-4 small">
+                {{ previewDescription(direction.description, 140) }}
+              </p>
             </div>
             
-            <div class="d-flex align-items-center justify-content-between pt-3 border-top border-secondary-subtle mt-auto">
+            <div class="d-flex align-items-center justify-content-between pt-3 border-top border-light mt-auto">
               <div class="d-flex align-items-center gap-2">
-                <div class="activities-indicator-icon">
-                  <i class="fas fa-tasks text-warning"></i>
+                <div class="stat-indicator" [style.background]="divisionCardVisual(direction, i).accentColor + '15'" [style.color]="divisionCardVisual(direction, i).accentColor">
+                  <i class="fas fa-tasks"></i>
                 </div>
                 <div>
-                  <div class="text-muted small-text">Activités en cours</div>
-                  @if (direction.id && activiteCount[direction.id] === undefined) {
-                    <div class="spinner-border spinner-border-sm text-warning" role="status">
-                      <span class="visually-hidden">Chargement...</span>
-                    </div>
-                  } @else {
-                    <div class="activities-count">{{ direction.id ? (activiteCount[direction.id] || 0) : 0 }}</div>
-                  }
+                  <div class="text-muted font-11 mb-0">Activités en cours</div>
+                  <div class="activities-count fw-bold" [style.color]="divisionCardVisual(direction, i).accentColor">
+                    @if (direction.id && activiteCount[direction.id] === undefined) {
+                      <div class="spinner-border spinner-border-sm" role="status" style="width: 0.85rem; height: 0.85rem;" [style.color]="divisionCardVisual(direction, i).accentColor">
+                        <span class="visually-hidden">...</span>
+                      </div>
+                    } @else {
+                      {{ direction.id ? (activiteCount[direction.id] || 0) : 0 }}
+                    }
+                  </div>
                 </div>
               </div>
               
-              <div class="arrow-action-btn">
-                <i class="fas fa-chevron-right"></i>
+              <div class="action-arrow-btn" [style.background]="divisionCardVisual(direction, i).accentColor + '10'" [style.color]="divisionCardVisual(direction, i).accentColor">
+                <i class="fas fa-arrow-right"></i>
               </div>
             </div>
           </div>
@@ -103,68 +113,76 @@
       </div>
     </div>
   } @else {
-    <div class="row g-3 mt-4">
-      <div
-        *ngFor="let service of services; let j = index"
-        (click)="viewEntiteDetails(service)"
-        class="col-12 col-lg-6"
-      >
-        <div class="card entite-info-card card-hover border-0 cursor-pointer h-100">
-          <div class="entite-info-card__body d-flex gap-3 p-3 p-md-4">
-            <div
-              class="entite-info-card__icon flex-shrink-0"
-              [ngClass]="'entite-info-card__icon--' + serviceCardVisual(service, j).tone"
-            >
-              <i class="fas" [ngClass]="serviceCardVisual(service, j).icon"></i>
-            </div>
-            <div class="flex-grow-1 min-w-0">
-              <h3
-                class="entite-info-card__title mb-2"
-                [ngClass]="'entite-info-card__title--' + serviceCardVisual(service, j).tone"
+    @if (services.length === 0) {
+      <div class="alert alert-light border-warning border rounded-3 shadow-sm py-4 px-4 mt-4 text-center">
+        <i class="fas fa-info-circle fa-2x mb-3 text-warning"></i>
+        <h5 class="fw-semibold text-dark">Aucun service</h5>
+        <p class="text-muted mb-0 small">Cette division ne dispose d'aucun service enregistré ou prédéfini actuellement.</p>
+      </div>
+    } @else {
+      <div class="row g-3 mt-4">
+        <div
+          *ngFor="let service of services; let j = index"
+          (click)="viewEntiteDetails(service)"
+          class="col-12 col-lg-6"
+        >
+          <div class="card entite-info-card card-hover border-0 cursor-pointer h-100">
+            <div class="entite-info-card__body d-flex gap-3 p-3 p-md-4">
+              <div
+                class="entite-info-card__icon flex-shrink-0"
+                [ngClass]="'entite-info-card__icon--' + serviceCardVisual(service, j).tone"
               >
-                {{ service.nom }}
-              </h3>
-              <p class="entite-info-card__desc text-muted small mb-0">
-                {{ previewDescription(service.description) }}
-              </p>
+                <i class="fas" [ngClass]="serviceCardVisual(service, j).icon"></i>
+              </div>
+              <div class="flex-grow-1 min-w-0">
+                <h3
+                  class="entite-info-card__title mb-2"
+                  [ngClass]="'entite-info-card__title--' + serviceCardVisual(service, j).tone"
+                >
+                  {{ service.nom }}
+                </h3>
+                <p class="entite-info-card__desc text-muted small mb-0">
+                  {{ previewDescription(service.description) }}
+                </p>
+              </div>
             </div>
-          </div>
-          <div class="entite-info-card__footer d-flex align-items-center justify-content-between flex-wrap gap-2 px-3 px-md-4 py-2 border-top">
-            <div class="d-flex align-items-center flex-wrap gap-1">
-              <i class="fas fa-tasks text-warning me-1"></i>
-              <span class="text-secondary small">Activités :</span>
-              @if (service.id && activiteCount[service.id] === undefined) {
-                <div class="spinner-border spinner-border-sm text-warning ms-1" role="status">
-                  <span class="visually-hidden">Chargement...</span>
+            <div class="entite-info-card__footer d-flex align-items-center justify-content-between flex-wrap gap-2 px-3 px-md-4 py-2 border-top">
+              <div class="d-flex align-items-center flex-wrap gap-1">
+                <i class="fas fa-tasks text-warning me-1"></i>
+                <span class="text-secondary small">Activités :</span>
+                @if (service.id && activiteCount[service.id] === undefined) {
+                  <div class="spinner-border spinner-border-sm text-warning ms-1" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                  </div>
+                } @else {
+                  <span class="ms-1 text-warning fw-bold">{{ service.id ? (activiteCount[service.id] || 0) : 'N/A' }}</span>
+                }
+              </div>
+              @if (service.id) {
+                <div class="d-flex gap-2" (click)="$event.stopPropagation()">
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-warning text-white"
+                    (click)="editRow(service, editRecord); $event.stopPropagation()"
+                    title="Modifier le service"
+                  >
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-danger text-white"
+                    (click)="deleteSingleRow(service); $event.stopPropagation()"
+                    title="Supprimer le service"
+                  >
+                    <i class="fas fa-trash"></i>
+                  </button>
                 </div>
-              } @else {
-                <span class="ms-1 text-warning fw-bold">{{ service.id ? (activiteCount[service.id] || 0) : 'N/A' }}</span>
               }
             </div>
-            @if (service.id) {
-              <div class="d-flex gap-2" (click)="$event.stopPropagation()">
-                <button
-                  type="button"
-                  class="btn btn-sm btn-warning text-white"
-                  (click)="editRow(service, editRecord); $event.stopPropagation()"
-                  title="Modifier le service"
-                >
-                  <i class="fas fa-edit"></i>
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-sm btn-danger text-white"
-                  (click)="deleteSingleRow(service); $event.stopPropagation()"
-                  title="Supprimer le service"
-                >
-                  <i class="fas fa-trash"></i>
-                </button>
-              </div>
-            }
           </div>
         </div>
       </div>
-    </div>
+    }
   }
 
   <!-- Template du formulaire d'ajout -->

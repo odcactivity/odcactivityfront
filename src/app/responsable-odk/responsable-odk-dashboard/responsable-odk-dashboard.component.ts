@@ -89,10 +89,10 @@ export class ResponsableOdkDashboardComponent implements OnInit {
       courriersArchives: this.global.getCourriersArchivesResponsableEntite(),
     }).subscribe({
       next: ({ attente, transmises, courriersDelegues, courriersArchives }) => {
-        this.activites = Array.isArray(attente) ? attente : [];
-        this.activitesTransmises = Array.isArray(transmises) ? transmises : [];
-        this.courriersDelegues = Array.isArray(courriersDelegues) ? courriersDelegues : [];
-        this.courriersArchives = Array.isArray(courriersArchives) ? courriersArchives : [];
+        this.activites = this.sortActivitesByDateDesc(Array.isArray(attente) ? attente : []);
+        this.activitesTransmises = this.sortActivitesTransmisesDesc(Array.isArray(transmises) ? transmises : []);
+        this.courriersDelegues = this.sortCourriersByDateReceptionDesc(Array.isArray(courriersDelegues) ? courriersDelegues : []);
+        this.courriersArchives = this.sortCourriersByDateReceptionDesc(Array.isArray(courriersArchives) ? courriersArchives : []);
       },
       error: () => {
         this.activites = [];
@@ -377,10 +377,75 @@ export class ResponsableOdkDashboardComponent implements OnInit {
         this.annulerReponse();
         this.loadAll();
       },
-      error: (e: { error?: { message?: string } }) => {
+      error: (e: unknown) => {
         this.reponseLoading = false;
-        this.toast.error(e?.error?.message || 'Échec de l\'envoi de la réponse.');
+        this.toast.error(this.extractErrorMessage(e) || 'Échec de l\'envoi de la réponse.');
       },
     });
+  }
+
+  private sortCourriersByDateReceptionDesc(rows: any[]): any[] {
+    return [...rows].sort((a, b) => {
+      const da = a?.dateReception ? new Date(a.dateReception).getTime() : 0;
+      const db = b?.dateReception ? new Date(b.dateReception).getTime() : 0;
+      if (db !== da) {
+        return db - da;
+      }
+      return Number(b?.id ?? 0) - Number(a?.id ?? 0);
+    });
+  }
+
+  private sortActivitesByDateDesc(rows: any[]): any[] {
+    return [...rows].sort((a, b) => {
+      const da = a?.dateDebut ? new Date(a.dateDebut).getTime() : 0;
+      const db = b?.dateDebut ? new Date(b.dateDebut).getTime() : 0;
+      if (db !== da) {
+        return db - da;
+      }
+      return Number(b?.id ?? 0) - Number(a?.id ?? 0);
+    });
+  }
+
+  private sortActivitesTransmisesDesc(rows: any[]): any[] {
+    return [...rows].sort((a, b) => {
+      const da = a?.transmiseDirecteurOdcLe
+        ? new Date(a.transmiseDirecteurOdcLe).getTime()
+        : a?.dateDebut
+          ? new Date(a.dateDebut).getTime()
+          : 0;
+      const db = b?.transmiseDirecteurOdcLe
+        ? new Date(b.transmiseDirecteurOdcLe).getTime()
+        : b?.dateDebut
+          ? new Date(b.dateDebut).getTime()
+          : 0;
+      if (db !== da) {
+        return db - da;
+      }
+      return Number(b?.id ?? 0) - Number(a?.id ?? 0);
+    });
+  }
+
+  private extractErrorMessage(e: unknown): string | null {
+    if (e instanceof Error && e.message) {
+      return e.message;
+    }
+    if (typeof e === 'object' && e !== null) {
+      const err = e as { error?: { message?: string } | string; message?: string };
+      if (typeof err.error === 'string') {
+        try {
+          const parsed = JSON.parse(err.error) as { message?: string };
+          return parsed.message || err.error;
+        } catch {
+          return err.error;
+        }
+      }
+      if (typeof err.error === 'object' && err.error?.message) {
+        return err.error.message;
+      }
+      if (err.message) {
+        return err.message;
+      }
+    }
+    return null;
   }
 }

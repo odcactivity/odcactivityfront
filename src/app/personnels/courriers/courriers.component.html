@@ -20,7 +20,7 @@
     }
   </p>
 
-  @if (isDirecteurOdcRole) {
+  @if (isDirecteurOdcOnly) {
     <app-validation-courriers-directeur [embedded]="true" (workflowChanged)="onDirecteurOdcWorkflowChanged()" />
   }
 
@@ -781,7 +781,7 @@
   <!-- Création courrier émission — directeur ODC -->
   <ng-template #addDirecteurOdcCourrier let-modal>
     <div class="modal-header">
-      <h5 class="modal-title">Émettre un courrier (Directeur ODC)</h5>
+      <h5 class="modal-title">Émettre un courrier (Directeur {{ divisionLabel }})</h5>
       <button type="button" class="btn-close" (click)="modal.dismiss()"></button>
     </div>
     <div class="modal-body">
@@ -821,7 +821,7 @@
             [(ngModel)]="directeurOdcEmissionEmail"
             placeholder="Adresse email du destinataire"
           />
-          <p class="small text-muted mb-0 mt-1">Le courrier sera envoyé avec l'en-tête « Orange Digital Center ».</p>
+          <p class="small text-muted mb-0 mt-1">Le courrier sera envoyé avec l'en-tête « {{ divisionLabel }} ».</p>
         </div>
       }
 
@@ -930,6 +930,28 @@
         }
         Archiver le fichier
       </button>
+    </div>
+  </ng-template>
+
+  <!-- Modal Délégation par email pour RSE / DCI / Fondation -->
+  <ng-template #deleguerStructureEmailTpl let-modal>
+    <div class="modal-header">
+      <h5 class="modal-title"><i class="fas fa-share me-1"></i> Déléguer le courrier</h5>
+      <button type="button" class="btn-close" (click)="modal.dismiss()"></button>
+    </div>
+    <div class="modal-body">
+      <div class="mb-3">
+        <label class="form-label">Email du destinataire <span class="text-danger">*</span></label>
+        <input type="email" class="form-control" [(ngModel)]="deleguerEmail" placeholder="destinataire@orange-sonatel.com" />
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Note / Consigne</label>
+        <textarea class="form-control" rows="3" [(ngModel)]="deleguerNote" placeholder="Saisissez une note..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="modal.dismiss()">Annuler</button>
+      <button class="btn btn-primary" (click)="validerDelegationStructure(modal)">Déléguer par e-mail</button>
     </div>
   </ng-template>
 </section>
